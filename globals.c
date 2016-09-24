@@ -10,6 +10,8 @@ char *server_name = "";
 char buffer[MAX_BUFFER];
 int image_count = 1;
 int port = 32768;
+int tile_width = 16;
+int tile_height = 24;
 
 SDL_Event event;
 SDL_Window *window = NULL;
@@ -28,6 +30,10 @@ tile* getTile(unsigned int value) {
 
 	to_return->base = (value & BASE_MASK) >> 30;
 
+	to_return->depth = 0;
+	to_return->dir = 0;
+	to_return->flam = 0;
+
 	switch (to_return->base) {
 		case LIQUID:
 			{
@@ -36,8 +42,13 @@ tile* getTile(unsigned int value) {
 				to_return->type = (value & L_TYPE_MASK) >> 19;
 			}
 			break;
-		case NOTHING:
 		case GROUND:
+			{
+				to_return->flam = (value & G_FLAM_MASK) >> 29;
+				to_return->type = (value & G_TYPE_MASK) >> 19;
+			}
+			break;
+		case NOTHING:
 		case WALL:
 			{
 				to_return->type = (value & TYPE_MASK) >> 19;
@@ -57,6 +68,7 @@ unsigned int makeTile(
 	unsigned int type,
 	unsigned int depth,
 	unsigned int dir,
+	unsigned int flam,
 	unsigned int perm,
 	unsigned int temp,
 	unsigned int duration) {
@@ -68,8 +80,13 @@ unsigned int makeTile(
 				type = (type << 19) & L_TYPE_MASK;
 			}
 			break;
-		case NOTHING:
 		case GROUND:
+			{
+				flam = (flam << 29) & G_FLAM_MASK;
+				type = (type << 18) & G_TYPE_MASK;
+			}
+			break;
+		case NOTHING:
 		case WALL:
 			{
 				type = (type << 19) & TYPE_MASK;
@@ -77,13 +94,8 @@ unsigned int makeTile(
 			break;
 	}
 
-	if (base == LIQUID) {
-		base = (base << 30) & BASE_MASK;
-		return (base | type | depth | dir | perm | temp | duration);
-	}
-
 	base = (base << 30) & BASE_MASK;
-	return (base | type | perm | temp | duration);
+	return (base | type | depth | dir | flam | perm | temp | duration);
 }
 
 int initializeSDL() {
@@ -95,7 +107,7 @@ int initializeSDL() {
 		}
 		
 		if ((status & SDL_OK) == SDL_OK) {
-			window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, 0);
+			window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, COLS*16, ROWS*16, FULLSCREEN ? SDL_WINDOW_FULLSCREEN : 0);
 			
 			if (window != NULL) {
 				status = status | WINDOW_OK;
@@ -106,7 +118,29 @@ int initializeSDL() {
 			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 			if (renderer != NULL) {
-				status = status | RENDER_OK;
+				int width,
+					height;
+				SDL_GetRendererOutputSize(renderer, &width, &height);
+
+				if ((width > 768) && (height > 576)) {
+					if ((width >= 6144) && (height >= 4608)) {
+						tile_width = 64;
+						tile_height = 96;
+						port_x = (width-6144)/2;
+						port_y = (height-4608)/2;
+					} else if ((width >= 3072) && (height >= 2304)) {
+						tile_width = 32;
+						tile_height = 48;
+					} else if ((width >= 1536) && (height >= 1152)) {
+						tile_width = 16;
+						tile_height = 24;
+					} else if ((width >= 768) && (height >= 576)) {
+						tile_width = 8;
+						tile_height = 12;
+					}
+
+					status = status | RENDER_OK;
+				}
 			}
 		}
 
@@ -180,6 +214,9 @@ int pollEvents() {
 			case SDL_QUIT:
 				return -1;
 			case SDL_KEYDOWN:
+				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+					return -1;
+				}
 				break;
 			case SDL_KEYUP:
 				break;

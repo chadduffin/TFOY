@@ -6,11 +6,13 @@
 #include <SDL2/SDL_image.h>
 
 /*
+** defines
 */
 
 #define TITLE "The Fellowships Of Yendor"
 #define VERSION "v0.0.1"
 
+#define FULLSCREEN 0
 #define DEBUGGING 0
 #define ONLINE 0
 
@@ -25,8 +27,8 @@
 #define GRPHCS_OK 8
 #define NETWRK_OK 16
 
-#define COLS 128
-#define ROWS 64
+#define COLS 96
+#define ROWS 48
 #define DCOLS (COLS - STAT_BAR_WIDTH - 1)
 #define DROWS (ROWS - CHAT_ROWS - MESSAGE_ROWS - 2)
 
@@ -46,6 +48,9 @@
 #define TEMP_MASK 8064
 #define TIME_MASK 127
 
+#define G_FLAM_MASK 536870912
+#define G_TYPE_MASK 536346624
+
 #define L_DPTH_MASK 805306368
 #define L_DIRS_MASK 234881024
 #define L_TYPE_MASK 33030144
@@ -60,6 +65,12 @@ extern char *server_name;
 extern char buffer[MAX_BUFFER];
 extern int image_count;
 extern int port;
+extern int tile_width;
+extern int tile_height;
+extern int port_x;
+extern int port_y;
+extern int port_width;
+extern int port_height;
 
 extern SDL_Event event;
 extern SDL_Window *window;
@@ -105,6 +116,7 @@ typedef struct tile {
 		type,
 		depth,
 		dir,
+		flam,
 		perm,
 		temp,
 		duration;
@@ -142,6 +154,7 @@ enum TileCategory {
 enum LiquidTileTypes {
 	L_WATER = 0,
 	L_WATER_SWAMP,
+	L_WATER_OCEAN,
 
 	L_LAVA,
 	L_MAGMA,
@@ -174,6 +187,7 @@ unsigned int makeTile(
 	unsigned int type,
 	unsigned int depth,
 	unsigned int dir,
+	unsigned int flam,
 	unsigned int perm,
 	unsigned int temp,
 	unsigned int duration);
