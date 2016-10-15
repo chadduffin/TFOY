@@ -127,7 +127,7 @@ int initializeSDL() {
 			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 			if (SDL_GetRendererOutputSize(renderer, &window_width, &window_height) == 0) {
-				updateRenderingInfo();
+				updateRenderingInfo(1);
 
 				if (renderer != NULL) {
 					status = status | RENDER_OK;
@@ -236,13 +236,24 @@ int pollEvents() {
 				break;
 			case SDL_MOUSEBUTTONUP:
 				break;
+			case SDL_WINDOWEVENT:
+				{
+					switch (event.window.event) {
+						case SDL_WINDOWEVENT_RESIZED:
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+						case SDL_WINDOWEVENT_MAXIMIZED:
+							updateRenderingInfo(0);
+							break;
+					}
+				}
+				break;
 		}
 	}
 
 	return 0;
 }
 
-void updateRenderingInfo() {
+void updateRenderingInfo(int initial) {
 	double tile_ratio = ((double)(COLS*TILE_SOURCE_WIDTH))/(ROWS*TILE_SOURCE_HEIGHT),
 		window_ratio = ((double)window_width)/window_height;
 
@@ -263,12 +274,18 @@ void updateRenderingInfo() {
 	tile_width = dport.w/COLS;
 	tile_height = dport.h/ROWS;
 
-	printf("Initializing graphics .. PENDING.\n");
-	printf("> window width ......... %d.\n", window_width);
-	printf("> window height ........ %d.\n", window_height);
-	printf("> port width ........... %d.\n", dport.w);
-	printf("> port height .......... %d.\n", dport.h);
-	printf("> tile width ........... %d.\n", tile_width);
-	printf("> tile height .......... %d.\n", tile_height);
-	printf("Initializing graphics .. SUCCESS.\n");
+	if (initial == 1) {
+		printf("Initializing graphics .. PENDING.\n");
+		printf("> window width ......... %d.\n", window_width);
+		printf("> window height ........ %d.\n", window_height);
+		printf("> port width ........... %d.\n", dport.w);
+		printf("> port height .......... %d.\n", dport.h);
+		printf("> tile width ........... %d.\n", tile_width);
+		printf("> tile height .......... %d.\n", tile_height);
+		printf("Initializing graphics .. SUCCESS.\n");
+	}
+}
+
+int getExperienceNeeded(int level) {
+	return (level == 1) ? EXPERIENCE_OFFSET : 10*((EXPERIENCE_OFFSET+(2 << (level+3)))/10);
 }

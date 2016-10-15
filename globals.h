@@ -57,29 +57,8 @@
 #define L_DIRS_MASK 234881024
 #define L_TYPE_MASK 33030144
 
-/*
-** externs
-*/
-
-extern char *name;
-extern char *images[];
-extern char *server_name;
-extern char buffer[MAX_BUFFER];
-extern int image_count;
-extern int port;
-extern int tile_width;
-extern int tile_height;
-extern int window_width;
-extern int window_height;
-
-extern SDL_Rect dport;
-extern SDL_Event event;
-extern SDL_Window *window;
-extern SDL_Renderer *renderer;
-extern SDL_Texture *textures[TEXTURE_COUNT];
-
-extern IPaddress ipaddress;
-extern TCPsocket socket;
+#define LEVEL_CAP 16
+#define EXPERIENCE_OFFSET 42
 
 /*
 ** typedefs
@@ -112,6 +91,7 @@ typedef struct dcell {
 	lightSource source;
 } dcell;
 
+// struct tile offers an easier way to access attributes.
 typedef struct tile {
 	unsigned int base,
 		type,
@@ -122,6 +102,31 @@ typedef struct tile {
 		temp,
 		duration;
 } tile;
+
+/*
+** externs
+*/
+
+extern char *name;
+extern char *images[];
+extern char *server_name;
+extern char buffer[MAX_BUFFER];
+extern int image_count;
+extern int port;
+extern int tile_width;
+extern int tile_height;
+extern int window_width;
+extern int window_height;
+
+extern SDL_Rect dport;
+extern SDL_Event event;
+extern SDL_Window *window;
+extern SDL_Renderer *renderer;
+extern SDL_Texture *textures[TEXTURE_COUNT];
+
+extern IPaddress ipaddress;
+extern TCPsocket socket;
+
 
 /*
 ** enumerations
@@ -197,6 +202,7 @@ void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
 void updateRenderingInfo();
+int getExperienceNeeded(int level);
 
 /*
 */
