@@ -12,7 +12,10 @@ int image_count = 1;
 int port = 32768;
 int tile_width = 16;
 int tile_height = 24;
+int window_width = 300;
+int window_height = 300;
 
+SDL_Rect dport;
 SDL_Event event;
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
@@ -104,42 +107,38 @@ int initializeSDL() {
 	if ((status & NOT_OK) == NOT_OK) {
 		if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
 			status = status | SDL_OK;
+			printf("Initializing SDL2 ...... SUCCESS.\n");
+		} else {
+			printf("Initializing SDL2 ...... FAILURE.\n");
 		}
 		
 		if ((status & SDL_OK) == SDL_OK) {
-			window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, COLS*16, ROWS*16, FULLSCREEN ? SDL_WINDOW_FULLSCREEN : 0);
+			window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
 			
 			if (window != NULL) {
 				status = status | WINDOW_OK;
+				printf("Opening window ......... SUCCESS.\n");
+			} else {
+				printf("Opening window ......... FAILURE.\n");
 			}
 		}
 
 		if ((status & WINDOW_OK) == WINDOW_OK) {
 			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-			if (renderer != NULL) {
-				int width,
-					height;
-				SDL_GetRendererOutputSize(renderer, &width, &height);
+			if (SDL_GetRendererOutputSize(renderer, &window_width, &window_height) == 0) {
+				updateRenderingInfo();
 
-				if ((width > 768) && (height > 576)) {
-					if ((width >= 6144) && (height >= 4608)) {
-						tile_width = 64;
-						tile_height = 96;
-						port_x = (width-6144)/2;
-						port_y = (height-4608)/2;
-					} else if ((width >= 3072) && (height >= 2304)) {
-						tile_width = 32;
-						tile_height = 48;
-					} else if ((width >= 1536) && (height >= 1152)) {
-						tile_width = 16;
-						tile_height = 24;
-					} else if ((width >= 768) && (height >= 576)) {
-						tile_width = 8;
-						tile_height = 12;
-					}
-
+				if (renderer != NULL) {
 					status = status | RENDER_OK;
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+					SDL_RenderClear(renderer);
+					SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+					SDL_RenderFillRect(renderer, &dport);
+					SDL_RenderPresent(renderer);
+					printf("Creating renderer ...... SUCCESS.\n");
+				} else {
+					printf("Creating renderer ...... FAILURE.\n");
 				}
 			}
 		}
@@ -157,17 +156,28 @@ int initializeSDL() {
 
 			IMG_Quit();
 			status = status | GRPHCS_OK;
+			printf("Loading textures ....... SUCCESS.\n");
 		}
 
 		if ((status & GRPHCS_OK) == GRPHCS_OK) {
 			if (SDLNet_Init() == 0) {
+				printf("Initializing SDLNet .... SUCCESS.\n");
+
 				if (SDLNet_ResolveHost(&ipaddress, server_name, port) == 0) {
 					socket = SDLNet_TCP_Open(&ipaddress);
+					printf("Connecting to server ... SUCCESS.\n");
 					
 					if (socket) {
 						status = status | NETWRK_OK;
+						printf("Opening socket ......... SUCCESS.\n");
+					} else {
+						printf("Opening socket ......... FAILURE.\n");
 					}
-				}
+				} else {
+					printf("Connecting to server ... FAILURE.\n");
+				} 
+			} else {
+				printf("Initializing SDLNet .... FAILURE.\n");
 			}
 		}
 	}
@@ -230,4 +240,35 @@ int pollEvents() {
 	}
 
 	return 0;
+}
+
+void updateRenderingInfo() {
+	double tile_ratio = ((double)(COLS*TILE_SOURCE_WIDTH))/(ROWS*TILE_SOURCE_HEIGHT),
+		window_ratio = ((double)window_width)/window_height;
+
+	if (tile_ratio > window_ratio) {
+		dport.w = window_width;
+		dport.h = window_width/tile_ratio;
+	} else if (tile_ratio < window_ratio) {
+		dport.w = window_height*tile_ratio;
+		dport.h = window_height;
+	} else {
+		dport.w = window_width;
+		dport.h = window_height;
+	}
+
+	dport.x = (window_width-dport.w)/2;
+	dport.y = (window_height-dport.h)/2;
+
+	tile_width = dport.w/COLS;
+	tile_height = dport.h/ROWS;
+
+	printf("Initializing graphics .. PENDING.\n");
+	printf("> window width ......... %d.\n", window_width);
+	printf("> window height ........ %d.\n", window_height);
+	printf("> port width ........... %d.\n", dport.w);
+	printf("> port height .......... %d.\n", dport.h);
+	printf("> tile width ........... %d.\n", tile_width);
+	printf("> tile height .......... %d.\n", tile_height);
+	printf("Initializing graphics .. SUCCESS.\n");
 }

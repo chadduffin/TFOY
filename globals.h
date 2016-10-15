@@ -27,14 +27,16 @@
 #define GRPHCS_OK 8
 #define NETWRK_OK 16
 
-#define COLS 96
-#define ROWS 48
-#define DCOLS (COLS - STAT_BAR_WIDTH - 1)
-#define DROWS (ROWS - CHAT_ROWS - MESSAGE_ROWS - 2)
+#define TILE_SOURCE_WIDTH 16
+#define TILE_SOURCE_HEIGHT 24
 
-#define CHAT_ROWS (ONLINE * 8)
-#define MESSAGE_ROWS 4
-#define STAT_BAR_WIDTH 32
+#define COLS 108
+#define ROWS 42
+#define DCOLS (COLS - STAT_BAR_WIDTH - 2)
+#define DROWS (ROWS - MESSAGE_ROWS - 2)
+
+#define MESSAGE_ROWS 8
+#define STAT_BAR_WIDTH 20
 
 #define MIN_DUNGEON_DEPTH 1
 #define MAX_DUNGEON_DEPTH 64
@@ -67,11 +69,10 @@ extern int image_count;
 extern int port;
 extern int tile_width;
 extern int tile_height;
-extern int port_x;
-extern int port_y;
-extern int port_width;
-extern int port_height;
+extern int window_width;
+extern int window_height;
 
+extern SDL_Rect dport;
 extern SDL_Event event;
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
@@ -195,6 +196,7 @@ int initializeSDL();
 void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
+void updateRenderingInfo();
 
 /*
 */
