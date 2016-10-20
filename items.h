@@ -1,0 +1,70 @@
+#ifndef __ITEMS__
+#define __ITEMS__
+
+/*
+** enums
+*/
+
+enum WeaponTypes {
+	AXE,
+	DAGGER,
+	MACE,
+	SPEAR,
+	SWORD,
+	WAND,
+
+	BROADSWORD,
+	POLEARM,
+	STAFF,
+	WARAXE,
+	WARHAMMER,
+
+	BOW,
+	CROSSBOW,
+	MUSKET,
+
+	SHIELD,
+	OFFHAND,
+
+	WEAPON_TYPE_COUNT
+};
+
+enum ArmourTypes {
+	CLOTH,
+	LEATHER,
+	SCALE,
+	CHAIN,
+	SPLINT,
+	PLATE,
+
+	AMULET,
+	RING_ONE,
+	RING_TWO,
+	TRINKET,
+
+	ARMOR_TYPE_COUNT
+};
+
+enum EquipmentSlots {
+	HEAD,
+	BACK,
+	CHEST,
+	WAIST,
+	HANDS,
+	LEGS,
+	FEET,
+
+	NECK,
+	FINGER_ONE,
+	FINGER_TWO,
+	
+	MAIN_HAND,
+	OFF_HAND,
+
+	EQUIPMENT_SLOT_COUNT
+};
+
+/*
+*/
+
+#endif /* __ITEMS__ */

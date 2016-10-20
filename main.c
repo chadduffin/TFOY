@@ -1,9 +1,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_image.h>
-#include <stdio.h>
 
 #include "globals.h"
+
 
 int main(int argc, char **argv) {
 	int status = initializeSDL(),
