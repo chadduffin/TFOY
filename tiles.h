@@ -5,18 +5,11 @@
 ** defines
 */
 
-#define BASE_MASK 3221225472
-#define TYPE_MASK 1073217536
-#define PERM_MASK 516096
-#define TEMP_MASK 8064
-#define TIME_MASK 127
-
-#define G_FLAM_MASK 536870912
-#define G_TYPE_MASK 536346624
-
-#define L_DPTH_MASK 805306368
-#define L_DIRS_MASK 234881024
-#define L_TYPE_MASK 33030144
+#define BASE_MASK 0xC0000000
+#define TYPE_MASK 0x3FFD0000
+#define PERM_MASK 0x0001F000
+#define TEMP_MASK 0x00000F80
+#define TIME_MASK 0x0000007F
 
 /*
 ** enums
@@ -81,9 +74,6 @@ typedef struct tile {
 	unsigned int
 		base,
 		type,
-		depth,
-		dir,
-		flam,
 		perm,
 		temp,
 		duration;
@@ -97,9 +87,6 @@ tile* getTile(unsigned int value);
 unsigned int makeTile(
 	unsigned int base,
 	unsigned int type,
-	unsigned int depth,
-	unsigned int dir,
-	unsigned int flam,
 	unsigned int perm,
 	unsigned int temp,
 	unsigned int duration);
