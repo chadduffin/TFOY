@@ -7,6 +7,7 @@
 
 #include "attributes.h"
 #include "creatures.h"
+#include "overworld.h"
 #include "tiles.h"
 #include "items.h"
 
@@ -40,14 +41,11 @@
 #define DCOLS (COLS - STAT_BAR_WIDTH - 2)
 #define DROWS (ROWS - MESSAGE_ROWS - 2)
 
-#define MESSAGE_ROWS 8
+#define MESSAGE_ROWS 5
 #define STAT_BAR_WIDTH 20
 
 #define MIN_DUNGEON_DEPTH 1
 #define MAX_DUNGEON_DEPTH 64
-
-#define WORLD_COLS 10240
-#define WORLD_ROWS 8192
 
 /*
 ** typedefs
@@ -93,6 +91,11 @@ extern int window_width;
 extern int window_height;
 extern int next_actor_id;
 
+// view is the in world x & y
+extern SDL_Rect view;
+// dview is where the view is drawn on screen
+extern SDL_Rect dview;
+// dport is the net area to be drawn and still maintain aspect ratio
 extern SDL_Rect dport;
 extern SDL_Event event;
 extern SDL_Window *window;

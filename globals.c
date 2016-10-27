@@ -16,6 +16,7 @@ int window_width = 300;
 int window_height = 300;
 int next_actor_id = 0;
 
+SDL_Rect dview;
 SDL_Rect dport;
 SDL_Event event;
 SDL_Window *window = NULL;
@@ -63,6 +64,8 @@ int initializeSDL() {
 					SDL_RenderClear(renderer);
 					SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 					SDL_RenderFillRect(renderer, &dport);
+					SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+					SDL_RenderFillRect(renderer, &dview);
 					SDL_RenderPresent(renderer);
 					printf("Creating renderer ...... SUCCESS.\n");
 				} else {
@@ -201,6 +204,11 @@ void updateRenderingInfo(int initial) {
 
 	tile_width = dport.w/COLS;
 	tile_height = dport.h/ROWS;
+
+	dview.w = tile_width*DCOLS;
+	dview.h = tile_height*DROWS;
+	dview.x = dport.x+dport.w-dview.w-tile_width;
+	dview.y = dport.y+dport.h-dview.h-tile_height;
 
 	if (initial == 1) {
 		printf("Initializing graphics .. PENDING.\n");
