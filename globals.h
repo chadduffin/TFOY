@@ -34,7 +34,7 @@
 #define NETWRK_OK 16
 
 #define TILE_SOURCE_WIDTH 16
-#define TILE_SOURCE_HEIGHT 24
+#define TILE_SOURCE_HEIGHT 16
 
 #define COLS 108
 #define ROWS 42

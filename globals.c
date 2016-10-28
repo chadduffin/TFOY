@@ -154,8 +154,6 @@ int pollEvents() {
 				return -1;
 			case SDL_KEYDOWN:
 				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-					printf("Quit pressed.\n");
-					fflush(stdout);
 					return -1;
 				}
 				break;
@@ -230,7 +228,7 @@ SDL_Rect getCharTile(unsigned char value) {
 	}
 
 	to_return.x = (value%16)*TILE_SOURCE_WIDTH;
-	to_return.y = (1+(value/16))*TILE_SOURCE_HEIGHT;
+	to_return.y = (value/16)*TILE_SOURCE_HEIGHT;
 	to_return.w = TILE_SOURCE_WIDTH;
 	to_return.h = TILE_SOURCE_HEIGHT;
 
@@ -240,12 +238,12 @@ SDL_Rect getCharTile(unsigned char value) {
 void drawMainMenu() {
 	const int
 		title_width = 106,
-		title_height = 23;
+		title_height = 25;
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 	
-	const char title_characters[23][106] = {
+	const char title_characters[25][106] = {
 		"                                                                                                          ",
 		"                                  T H E    F E L L O W S H I P S    O F                                   ",
 		"                                                                                                          ",
@@ -268,6 +266,8 @@ void drawMainMenu() {
 		"           BBB         WWWWWWWWWWWWW WWWW         WW  WWWWWWWWWW              WWWWWW       WWWW       WWW ",
 		"         BBBBBBB                                                                                          ",
 		"         WWWWWWW                                                                                          ",
+		"                                                                                                          ",
+		"                                                                                                          ",
 		"                                                                                                          "
 	};
 
@@ -281,11 +281,9 @@ void drawMainMenu() {
 	dest.h = tile_height;
 
 	for (y = 0; y < title_height; y += 1) {
-		dest.x = (tile_width/2)+dport.x;
+		dest.x = (window_width-(tile_width*title_width))/2;
 	
 	for (x = 0; x < title_width; x += 1) {
-			dest.x += tile_width;
-
 			switch (title_characters[y][x]) {
 				case 'B':
 					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -305,6 +303,8 @@ void drawMainMenu() {
 			} else {
 				SDL_RenderFillRect(renderer, &dest);	
 			}
+
+			dest.x += tile_width;
 		}
 		dest.y += tile_height;
 	}
