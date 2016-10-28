@@ -114,6 +114,8 @@ void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
 void updateRenderingInfo();
+SDL_Rect getCharTile(unsigned char value);
+void drawMainMenu();
 
 /*
 */
