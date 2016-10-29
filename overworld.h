@@ -1,6 +1,8 @@
 #ifndef __OVERWORLD__
 #define __OVERWORLD__
 
+#include "globals.h"
+
 /*
 ** defines
 */

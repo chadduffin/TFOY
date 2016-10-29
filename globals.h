@@ -5,12 +5,6 @@
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_image.h>
 
-#include "attributes.h"
-#include "creatures.h"
-#include "overworld.h"
-#include "tiles.h"
-#include "items.h"
-
 /*
 ** defines
 */
@@ -48,6 +42,18 @@
 #define MAX_DUNGEON_DEPTH 64
 
 /*
+** enums
+*/
+
+enum ButtonStates {
+	B_NORMAL = 0,
+	B_HOVER,
+	B_PRESSED,
+
+	BUTTON_STATE_COUNT
+};
+
+/*
 ** typedefs
 */
 
@@ -75,6 +81,35 @@ typedef struct dcell {
 	lightSource source;
 } dcell;
 
+typedef struct gameButton {
+	char
+		text[64],
+		hotkey;
+	int
+		x,
+		y,
+		state;
+} gameButton;
+
+typedef struct gameTextLabel {
+	char text[512];
+	int
+		x,
+		y;
+} gameTextLabel;
+
+typedef struct gameTextField {
+	char text[512];
+	unsigned char password;
+	int
+		x,
+		y,
+		min,
+		max,
+		current,
+		state;
+} gameTextField;
+
 /*
 ** externs
 */
@@ -89,7 +124,7 @@ extern int tile_width;
 extern int tile_height;
 extern int window_width;
 extern int window_height;
-extern int next_actor_id;
+extern gameTextField *tf_focus;
 
 // view is the in world x & y
 extern SDL_Rect view;
@@ -115,7 +150,7 @@ int frameCap(int last_update);
 int pollEvents();
 void updateRenderingInfo();
 SDL_Rect getCharTile(unsigned char value);
-void drawMainMenu();
+void drawTextToScreen(char *text, int x, int y);
 
 /*
 */
