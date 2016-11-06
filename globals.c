@@ -14,7 +14,7 @@ int tile_width = 16;
 int tile_height = 24;
 int window_width = 300;
 int window_height = 300;
-gameTextField *tf_focus = NULL;
+int target_buffer = 0;
 
 SDL_Rect dview;
 SDL_Rect dport;
@@ -22,6 +22,7 @@ SDL_Event event;
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 SDL_Texture *textures[TEXTURE_COUNT];
+SDL_Texture *render_buffers[2];
 
 IPaddress ipaddress;
 TCPsocket socket;
@@ -64,6 +65,9 @@ int initializeSDL() {
 					SDL_RenderClear(renderer);
 					SDL_RenderPresent(renderer);
 
+					render_buffers[0] = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, window_width, window_height);
+					render_buffers[1] = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, window_width, window_height);
+
 					printf("Creating renderer ...... SUCCESS.\n");
 				} else {
 					printf("Creating renderer ...... FAILURE.\n");
@@ -86,7 +90,8 @@ int initializeSDL() {
 			status = status | GRPHCS_OK;
 			printf("Loading textures ....... SUCCESS.\n");
 
-			drawTextToScreen("Loading...\0", (window_width-(10*tile_width))/2, (window_height-tile_height)/2);
+			drawTextToScreen("Loading...\0", '\0', (window_width-(10*tile_width))/2, (window_height-tile_height)/2);
+			SDL_RenderPresent(renderer);
 		}
 
 		if ((status & GRPHCS_OK) == GRPHCS_OK) {
@@ -128,6 +133,8 @@ void exitSDL(int status) {
 		}
 	}
 	if ((status & RENDER_OK) == RENDER_OK) {
+		SDL_DestroyTexture(render_buffers[0]);
+		SDL_DestroyTexture(render_buffers[1]);
 		SDL_DestroyRenderer(renderer);
 	}
 	if ((status & WINDOW_OK) == WINDOW_OK) {
@@ -236,8 +243,9 @@ SDL_Rect getCharTile(unsigned char value) {
 	return to_return;
 }
 
-void drawTextToScreen(char *text, int x, int y) {
-	int i;
+void drawTextToScreen(char *text, char hotkey, int x, int y) {
+	int i,
+		used = 0;
 
 	SDL_Rect dest;
 	dest.x = x;
@@ -252,13 +260,19 @@ void drawTextToScreen(char *text, int x, int y) {
 			dest.x = x;
 			dest.y += tile_height;
 		} else {
-			SDL_Rect src = getCharTile(text[i]);
-			SDL_RenderCopy(renderer, textures[0], &src, &dest);
+			if ((used == 0) && (text[i] == hotkey)) {
+				SDL_SetTextureColorMod(textures[0], 255, 255, 0);
+				SDL_Rect src = getCharTile(text[i]);
+				SDL_RenderCopy(renderer, textures[0], &src, &dest);
+				SDL_SetTextureColorMod(textures[0], 255, 255, 255);
+				used = 1;
+			} else {
+				SDL_Rect src = getCharTile(text[i]);
+				SDL_RenderCopy(renderer, textures[0], &src, &dest);
+			}
 			dest.x += tile_width;
 		}
 	}
-	
-	SDL_RenderPresent(renderer);
 }
 
 /*

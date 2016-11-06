@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
 	int status = initializeSDL(),
 		last_update = SDL_GetTicks();
 
+	initMainMenu();
 	drawMainMenu();
 
 	if (status > GRPHCS_OK) {

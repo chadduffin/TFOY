@@ -45,12 +45,20 @@
 ** enums
 */
 
-enum ButtonStates {
-	B_NORMAL = 0,
-	B_HOVER,
-	B_PRESSED,
+enum WidgetStates {
+	W_NORMAL = 0,
+	W_HOVER,
+	W_PRESSED,
 
-	BUTTON_STATE_COUNT
+	WIDGET_STATE_COUNT
+};
+
+enum WidgetTypes {
+	W_LABEL = 0,
+	W_FIELD,
+	W_BUTTON,
+
+	WIDGET_TYPE_COUNT
 };
 
 /*
@@ -81,34 +89,20 @@ typedef struct dcell {
 	lightSource source;
 } dcell;
 
-typedef struct gameButton {
+typedef struct gameWidget {
 	char
-		text[64],
+		text[140],
 		hotkey;
-	int
-		x,
-		y,
-		state;
-} gameButton;
-
-typedef struct gameTextLabel {
-	char text[512];
-	int
-		x,
-		y;
-} gameTextLabel;
-
-typedef struct gameTextField {
-	char text[512];
 	unsigned char password;
 	int
 		x,
 		y,
 		min,
 		max,
-		current,
-		state;
-} gameTextField;
+		state,
+		type,
+		current;
+} gameWidget;
 
 /*
 ** externs
@@ -124,7 +118,9 @@ extern int tile_width;
 extern int tile_height;
 extern int window_width;
 extern int window_height;
-extern gameTextField *tf_focus;
+extern int target_buffer;
+
+extern gameWidget *focus;
 
 // view is the in world x & y
 extern SDL_Rect view;
@@ -136,6 +132,7 @@ extern SDL_Event event;
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
 extern SDL_Texture *textures[TEXTURE_COUNT];
+extern SDL_Texture *render_buffers[2];
 
 extern IPaddress ipaddress;
 extern TCPsocket socket;
@@ -150,7 +147,7 @@ int frameCap(int last_update);
 int pollEvents();
 void updateRenderingInfo();
 SDL_Rect getCharTile(unsigned char value);
-void drawTextToScreen(char *text, int x, int y);
+void drawTextToScreen(char *text, char hotkey, int x, int y);
 
 /*
 */
