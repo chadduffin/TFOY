@@ -4,6 +4,72 @@
 ** externs
 */
 
+char title[ROWS][COLS] = {
+		"                                                                                                            ",
+		"                                   T H E    F E L L O W S H I P S    O F                                    ",
+		"                                                                                                            ",
+		"  BBBBBBB         BBBBBBB                                                                                   ",
+		"    BBB             BBB                                                                                     ", 
+		"     BBB           BBB                                                                                      ",
+		"      BBB         BBB   BBBBBBBBBBBBB BBB         BBBB BBBBBBBBBB              BBBBBB       BBBBBBBB        ",
+		"       BBB       BBB     BBBBBBBBBBBB  BBB         BB   BBBBBBBBBBBB         BBBBBBBBBB      BBBBBBBBB      ",
+		"        BBB     BBB      BB         B  BBBB        BB   BB        BBB      BBB        BBB    BB     BBB     ",
+		"         BBB   BBB       BB            BB BB       BB   BB          BB    BB            BB   BB       BB    ",
+		"          BBB BBB        BB            BB  BB      BB   BB           BB  BB              BB  BB       BB    ",
+		"           BBBBB         BB        B   BB   BB     BB   BB           BB  BB     BBBB     BB  BB       BB    ",
+		"            BBB          BBBBBBBBBBB   BB    BB    BB   BB           BB  BB     BBBB     BB  BB     BBB     ",
+		"            BBB          BB        B   BB     BB   BB   BB           BB  BB     BBBB     BB  BBBBBBBB       ",
+		"            BBB          BB            BB      BB  BB   BB           BB  BB              BB  BB    BB       ",
+		"            BBB          BB            BB       BB BB   BB          BB    BB            BB   BB     BB      ",
+		"            BBB          BB         B  BB        BBBB   BB        BBB      BBB        BBB    BB      BB     ",
+		"            BBB          BBBBBBBBBBBB  BB         BBB   BBBBBBBBBBBB         BBBBBBBBBB      BB       BB    ",
+		"            BBB         BBBBBBBBBBBBB BBBB         BB  BBBBBBBBBB              BBBBBB       BBBB       BBB  ",
+		"            BBB                                                                  BB                         ",
+		"            BBB                                                                  BB                         ",
+		"          BBBBBBB                                                          BBBBBBBBBBBBBB                   ",
+		"                                                                                 BB                         ",
+		"                                                                                 BB                         ",
+		"                                                                                 BB                         ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            ",
+		"                                                                                                            "
+	};
+
 char *name = "The Fellowships Of Yendor";
 char *images[] = {"images.png"};
 char *server_name = "";
@@ -248,21 +314,6 @@ void updateRenderingInfo(int initial) {
 	}
 }
 
-SDL_Rect getCharTile(unsigned char value) {
-	SDL_Rect to_return;
-
-	if ((value < 32) || (value > 126)) {
-		value = 'X';
-	}
-
-	to_return.x = (value%16)*TILE_SOURCE_WIDTH;
-	to_return.y = (value/16)*TILE_SOURCE_HEIGHT;
-	to_return.w = TILE_SOURCE_WIDTH;
-	to_return.h = TILE_SOURCE_HEIGHT;
-
-	return to_return;
-}
-
 void render() {
 	// clear new buffer to be drawn to
 	SDL_SetRenderTarget(renderer, render_buffers[target_buffer]);
@@ -320,24 +371,32 @@ void renderChanges() {
 	int
 		x,
 		y;
-	SDL_Rect dest;
-	dest.w = tile_width;
-	dest.h = tile_height;
+	SDL_Rect dst;
+	dst.w = tile_width;
+	dst.h = tile_height;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
 			if (dmatrix[x][y].changed == 1) {
-				if (dmatrix[x][y].empty == 1) {
-					short
-						red = dmatrix[x][y].bg.rgb[0],
-						green = dmatrix[x][y].bg.rgb[1],
-						blue = dmatrix[x][y].bg.rgb[2];
-					dest.x = dport.x+(x*tile_width);
-					dest.y = dport.y+(y*tile_height);
-					SDL_SetRenderDrawColor(renderer, red, green, blue, 255);
-					SDL_RenderFillRect(renderer, &dest);	
-				} else {
-					//lookup tile
+				short
+					red = dmatrix[x][y].bg.rgb[0],
+					green = dmatrix[x][y].bg.rgb[1],
+					blue = dmatrix[x][y].bg.rgb[2];
+				dst.x = dport.x+(x*tile_width);
+				dst.y = dport.y+(y*tile_height);
+
+				SDL_SetRenderDrawColor(renderer, red, green, blue, 255);
+				SDL_RenderFillRect(renderer, &dst);	
+
+				if (dmatrix[x][y].empty != 1) {
+					red = dmatrix[x][y].fg.rgb[0];
+					green = dmatrix[x][y].fg.rgb[1];
+					blue = dmatrix[x][y].fg.rgb[2];
+					
+					SDL_SetTextureColorMod(textures[0], red, green, blue);
+					SDL_Rect src = findTile(dmatrix[x][y].tile.tile);
+					SDL_RenderCopy(renderer, textures[0], &src, &dst);
+					SDL_SetTextureColorMod(textures[0], 255, 255, 255);
 				}
 				dmatrix[x][y].changed = 0;
 			}
@@ -351,24 +410,53 @@ void initializeScreen() {
 	int
 		x,
 		y;
-	dcell empty;
-	empty.empty = 1;
-	empty.changed = 1;
-	empty.fg.rgb[0] = 0;
-	empty.fg.rgb[1] = 0;
-	empty.fg.rgb[2] = 0;
-	empty.bg.rgb[0] = 52;
-	empty.bg.rgb[1] = 132;
-	empty.bg.rgb[2] = 0;
+	dcell cell;
+	cell.changed = 1;
+	cell.fg.rgb[0] = 0;
+	cell.fg.rgb[1] = 0;
+	cell.fg.rgb[2] = 0;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
-			empty.bg.rgb[0] = 125;
-			empty.bg.rgb[1] = x;
-			empty.bg.rgb[2] = 125;
-			dmatrix[x][y] = empty;
+			cell.empty = 1;
+			if (title[y][x] == 'B') {
+				cell.bg.rgb[0] = 0;
+				cell.bg.rgb[1] = 0;
+				cell.bg.rgb[2] = 0;
+			} else if ((title[y][x] != 'B') && (title[y][x] != ' ')) {
+				cell.empty = 0;
+				cell.fg.rgb[0] = 255;
+				cell.fg.rgb[1] = 255;
+				cell.fg.rgb[2] = 255;
+				cell.bg.rgb[0] = 0;
+				cell.bg.rgb[1] = 0;
+				cell.bg.rgb[2] = 0;
+				cell.tile.tile = title[y][x];
+			} else if ((y > 0) && (title[y-1][x] == 'B')) {
+				cell.bg.rgb[0] = 255-y;
+				cell.bg.rgb[1] = 255-y;
+				cell.bg.rgb[2] = 255-y;
+			} else {
+				cell.bg.rgb[0] = 255-(y*1.5);
+				cell.bg.rgb[1] = 0;
+				cell.bg.rgb[2] = 255-(y*1.5);
+			}
+			dmatrix[x][y] = cell;
 		}
 	}
+}
+
+SDL_Rect findTile(unsigned int value) {
+	SDL_Rect to_return;
+
+	if (value < 256) {
+		to_return.x = (value%16)*TILE_SOURCE_WIDTH;
+		to_return.y = (value/16)*TILE_SOURCE_HEIGHT;
+		to_return.w = TILE_SOURCE_WIDTH;
+		to_return.h = TILE_SOURCE_HEIGHT;
+	}
+	
+	return to_return;
 }
 
 /*

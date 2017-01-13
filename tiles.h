@@ -1,6 +1,8 @@
 #ifndef __TILES__
 #define __TILES__
 
+#include <SDL/SDL.h>
+
 /*
 ** defines
 */
@@ -29,7 +31,9 @@ typedef struct etile {
 		ornm,
 		perm,
 		temp,
-		time;
+		time,
+
+		tile;
 } etile;
 
 /*

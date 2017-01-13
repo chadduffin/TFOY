@@ -33,7 +33,7 @@
 #define TILE_SOURCE_HEIGHT 16
 
 #define COLS 108
-#define ROWS 42
+#define ROWS 64
 #define DCOLS (COLS - STAT_BAR_WIDTH - 2)
 #define DROWS (ROWS - MESSAGE_ROWS - 2)
 
@@ -65,6 +65,7 @@ typedef struct dcell {
 ** externs
 */
 
+extern char title[ROWS][COLS];
 extern char *name;
 extern char *images[];
 extern char *server_name;
@@ -104,11 +105,11 @@ void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
 void updateRenderingInfo();
-SDL_Rect getCharTile(unsigned char value);
 void render();
 void renderSalvage();
 void renderChanges();
 void initializeScreen();
+SDL_Rect findTile(unsigned int value);
 
 /*
 */
