@@ -4,21 +4,21 @@
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_image.h>
 
-#include "main_menu.h"
+#include "globals.h"
 
 
 int main(int argc, char **argv) {
 	int status = initializeSDL(),
 		last_update = SDL_GetTicks();
 
-	initMainMenu();
-	drawMainMenu();
+	initializeScreen();
 
 	if (status > GRPHCS_OK) {
 		while (1) {
 			if (pollEvents() == -1) {
 				break;
 			}
+			render();
 			last_update = frameCap(last_update);
 		}
 	}

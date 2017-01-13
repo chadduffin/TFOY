@@ -5,6 +5,8 @@
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_image.h>
 
+#include "tiles.h"
+
 /*
 ** defines
 */
@@ -42,26 +44,6 @@
 #define MAX_DUNGEON_DEPTH 64
 
 /*
-** enums
-*/
-
-enum WidgetStates {
-	W_NORMAL = 0,
-	W_HOVER,
-	W_PRESSED,
-
-	WIDGET_STATE_COUNT
-};
-
-enum WidgetTypes {
-	W_LABEL = 0,
-	W_FIELD,
-	W_BUTTON,
-
-	WIDGET_TYPE_COUNT
-};
-
-/*
 ** typedefs
 */
 
@@ -69,40 +51,15 @@ typedef struct color {
 	short rgb[3];
 } color;
 
-typedef struct lightSource {
-	short 
-		flickering,
-		intensity,
-		range,
-		light[3];
-} lightSource;
-
-typedef struct lightValue {
-	short intensity,
-		light[3];
-} lightValue;
-
 typedef struct dcell {
-	short changed;
-	unsigned int tile;
-	lightValue value;
-	lightSource source;
+	short
+		empty,
+		changed;
+	etile tile;
+	color
+		fg,
+		bg;
 } dcell;
-
-typedef struct gameWidget {
-	char
-		text[140],
-		hotkey;
-	unsigned char password;
-	int
-		x,
-		y,
-		min,
-		max,
-		state,
-		type,
-		current;
-} gameWidget;
 
 /*
 ** externs
@@ -119,13 +76,14 @@ extern int tile_height;
 extern int window_width;
 extern int window_height;
 extern int target_buffer;
+extern int mouse_x;
+extern int mouse_y;
 
-extern gameWidget *focus;
+extern dcell dmatrix[COLS][ROWS];
 
 // view is the in world x & y
 extern SDL_Rect view;
-// dview is where the view is drawn on screen
-extern SDL_Rect dview;
+extern SDL_Rect view_previous;
 // dport is the net area to be drawn and still maintain aspect ratio
 extern SDL_Rect dport;
 extern SDL_Event event;
@@ -147,7 +105,10 @@ int frameCap(int last_update);
 int pollEvents();
 void updateRenderingInfo();
 SDL_Rect getCharTile(unsigned char value);
-void drawTextToScreen(char *text, char hotkey, int x, int y);
+void render();
+void renderSalvage();
+void renderChanges();
+void initializeScreen();
 
 /*
 */

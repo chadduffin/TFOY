@@ -5,8 +5,8 @@
 ** functions
 */
 
-tile* getTile(unsigned int value) {
-	tile *to_return = (tile*)malloc(sizeof(tile));
+etile* expandTile(unsigned int value) {
+	etile *to_return = (etile*)malloc(sizeof(etile));
 
 	to_return->base = (value & BASE_MASK) >> 30;
 	to_return->type = (value & TYPE_MASK) >> 25;
@@ -18,13 +18,14 @@ tile* getTile(unsigned int value) {
 	return to_return;
 }
 
-unsigned int makeTile(
+ctile* compressTile(
 	unsigned int base,
 	unsigned int type,
 	unsigned int ornm,
 	unsigned int perm,
 	unsigned int temp,
 	unsigned int time) {
+	ctile *to_return = (ctile*)malloc(sizeof(ctile));
 
 	base = (base << 30) & BASE_MASK;
 	type = (type << 25) & TYPE_MASK;
@@ -33,7 +34,8 @@ unsigned int makeTile(
 	temp = (temp << 7) & TEMP_MASK;
 	time = time & TIME_MASK;
 
-	return (base | type | ornm | perm | temp | time);
+	to_return->tile = (base | type | ornm | perm | temp | time);
+	return to_return;
 }
 
 /*

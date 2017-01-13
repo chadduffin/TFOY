@@ -1,5 +1,5 @@
 CC = gcc
-TARGET = TFOY
+TARGET = tfoy
 LIBS = -lSDL2 -lSDL2_image -lSDL2_net
 CFLAGS = -g -Wall -pedantic
 
