@@ -11,9 +11,9 @@ int main(int argc, char **argv) {
 	int status = initializeSDL(),
 		last_update = SDL_GetTicks();
 
-	initializeScreen();
-
 	if (status > GRPHCS_OK) {
+		initializeScreen();
+
 		while (1) {
 			if (pollEvents() == -1) {
 				break;

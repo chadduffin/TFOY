@@ -48,7 +48,16 @@
 */
 
 typedef struct color {
-	short rgb[3];
+	short
+		red,
+		green,
+		blue,
+		
+		redRand,
+		greenRand,
+		blueRand,
+		
+		flickers;
 } color;
 
 typedef struct dcell {
@@ -108,8 +117,9 @@ void updateRenderingInfo();
 void render();
 void renderSalvage();
 void renderChanges();
+void clearScreen();
 void initializeScreen();
-SDL_Rect findTile(unsigned int value);
+void lookupTile(SDL_Rect *source, unsigned int value);
 
 /*
 */

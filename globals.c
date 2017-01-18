@@ -67,6 +67,7 @@ char title[ROWS][COLS] = {
 		"                                                                                                            ",
 		"                                                                                                            ",
 		"                                                                                                            ",
+		"                                                                                                            ",
 		"                                                                                                            "
 	};
 
@@ -78,8 +79,8 @@ int image_count = 1;
 int port = 32768;
 int tile_width = 16;
 int tile_height = 24;
-int window_width = 300;
-int window_height = 300;
+int window_width = 320;
+int window_height = 240;
 int target_buffer = 0;
 int mouse_x = 0;
 int mouse_y = 0;
@@ -97,6 +98,23 @@ SDL_Texture *render_buffers[2];
 
 IPaddress ipaddress;
 TCPsocket socket;
+
+	/*
+	** colors
+	**													r			g			b			rRand	gRand	bRand	flicker
+	*/
+
+	const color c_black 	= 		{0,		0,		0,		0,		0,		0,		0};
+	const color c_white 	= 		{255,	255,	255,	0,		0,		0,		0};
+	const color c_red 		= 		{255,	0,		0,		0,		0,		0,		0};
+	const color c_yellow	= 		{255,	255,	0,		0,		0,		0,		0};
+	const color c_magenta = 		{255,	0,		255,	0,		0,		0,		0};
+	const color c_green 	= 		{0,		255,	0,		0,		0,		0,		0};
+	const color c_blue 		= 		{0,		0,		255,	0,		0,		0,		0};
+	const color c_aqua 		= 		{0,		255,	255,	0,		0,		0,		0};
+
+	/*
+	*/
 
 /*
 ** functions
@@ -371,39 +389,62 @@ void renderChanges() {
 	int
 		x,
 		y;
-	SDL_Rect dst;
+	SDL_Rect
+		src,
+		dst;
 	dst.w = tile_width;
 	dst.h = tile_height;
+	src.w = TILE_SOURCE_WIDTH;
+	src.h = TILE_SOURCE_HEIGHT;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
 			if (dmatrix[x][y].changed == 1) {
 				short
-					red = dmatrix[x][y].bg.rgb[0],
-					green = dmatrix[x][y].bg.rgb[1],
-					blue = dmatrix[x][y].bg.rgb[2];
+					r = dmatrix[x][y].bg.red,
+					g = dmatrix[x][y].bg.green,
+					b = dmatrix[x][y].bg.blue;
+
 				dst.x = dport.x+(x*tile_width);
 				dst.y = dport.y+(y*tile_height);
 
-				SDL_SetRenderDrawColor(renderer, red, green, blue, 255);
+				SDL_SetRenderDrawColor(renderer, r, g, b, 255);
 				SDL_RenderFillRect(renderer, &dst);	
 
 				if (dmatrix[x][y].empty != 1) {
-					red = dmatrix[x][y].fg.rgb[0];
-					green = dmatrix[x][y].fg.rgb[1];
-					blue = dmatrix[x][y].fg.rgb[2];
-					
-					SDL_SetTextureColorMod(textures[0], red, green, blue);
-					SDL_Rect src = findTile(dmatrix[x][y].tile.tile);
+					r = dmatrix[x][y].fg.red;
+					g = dmatrix[x][y].fg.green;
+					b = dmatrix[x][y].fg.blue;
+
+					SDL_SetTextureColorMod(textures[0], r, g, b);
+					lookupTile(&src, dmatrix[x][y].tile.tile);
+
 					SDL_RenderCopy(renderer, textures[0], &src, &dst);
 					SDL_SetTextureColorMod(textures[0], 255, 255, 255);
 				}
-				dmatrix[x][y].changed = 0;
+				dmatrix[x][y].changed = dmatrix[x][y].fg.flickers | dmatrix[x][y].bg.flickers;
 			}
 		}
 	}
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+}
+
+void clearScreen() {
+	int
+		x,
+		y;
+	dcell cell;
+	cell.empty = 1;
+	cell.changed = 1;
+	cell.fg = c_black;
+	cell.bg = c_black;
+
+	for (y = 0; y < ROWS; y += 1) {
+		for (x = 0; x < COLS; x += 1) {
+			dmatrix[x][y] = cell;
+		}
+	}
 }
 
 void initializeScreen() {
@@ -412,51 +453,36 @@ void initializeScreen() {
 		y;
 	dcell cell;
 	cell.changed = 1;
-	cell.fg.rgb[0] = 0;
-	cell.fg.rgb[1] = 0;
-	cell.fg.rgb[2] = 0;
+	cell.fg = c_black;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
 			cell.empty = 1;
 			if (title[y][x] == 'B') {
-				cell.bg.rgb[0] = 0;
-				cell.bg.rgb[1] = 0;
-				cell.bg.rgb[2] = 0;
+				cell.bg = c_black;
 			} else if ((title[y][x] != 'B') && (title[y][x] != ' ')) {
 				cell.empty = 0;
-				cell.fg.rgb[0] = 255;
-				cell.fg.rgb[1] = 255;
-				cell.fg.rgb[2] = 255;
-				cell.bg.rgb[0] = 0;
-				cell.bg.rgb[1] = 0;
-				cell.bg.rgb[2] = 0;
+				cell.fg = c_white;
+				cell.bg = c_black;
 				cell.tile.tile = title[y][x];
 			} else if ((y > 0) && (title[y-1][x] == 'B')) {
-				cell.bg.rgb[0] = 255-y;
-				cell.bg.rgb[1] = 255-y;
-				cell.bg.rgb[2] = 255-y;
+				cell.bg = c_white;
+				cell.bg.red = 255-y;
+				cell.bg.green = 255-y;
+				cell.bg.blue = 255-y;
 			} else {
-				cell.bg.rgb[0] = 255-(y*1.5);
-				cell.bg.rgb[1] = 0;
-				cell.bg.rgb[2] = 255-(y*1.5);
+				cell.bg = c_magenta;
+				cell.bg.red -= (y*1.5);
+				cell.bg.blue -= (y*1.5);
 			}
 			dmatrix[x][y] = cell;
 		}
 	}
 }
 
-SDL_Rect findTile(unsigned int value) {
-	SDL_Rect to_return;
-
-	if (value < 256) {
-		to_return.x = (value%16)*TILE_SOURCE_WIDTH;
-		to_return.y = (value/16)*TILE_SOURCE_HEIGHT;
-		to_return.w = TILE_SOURCE_WIDTH;
-		to_return.h = TILE_SOURCE_HEIGHT;
-	}
-	
-	return to_return;
+void lookupTile(SDL_Rect *source, unsigned int value) {
+	source->x = (value%16)*TILE_SOURCE_WIDTH;
+	source->y = (value/16)*TILE_SOURCE_HEIGHT;
 }
 
 /*
