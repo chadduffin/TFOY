@@ -64,7 +64,7 @@ typedef struct dcell {
 	short
 		empty,
 		changed;
-	etile tile;
+	ctile tile;
 	color
 		fg,
 		bg;

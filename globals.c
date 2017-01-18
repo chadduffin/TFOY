@@ -103,7 +103,7 @@ TCPsocket socket;
 	** colors
 	**													r			g			b			rRand	gRand	bRand	flicker
 	*/
-
+	
 	const color c_black 	= 		{0,		0,		0,		0,		0,		0,		0};
 	const color c_white 	= 		{255,	255,	255,	0,		0,		0,		0};
 	const color c_red 		= 		{255,	0,		0,		0,		0,		0,		0};
@@ -112,7 +112,7 @@ TCPsocket socket;
 	const color c_green 	= 		{0,		255,	0,		0,		0,		0,		0};
 	const color c_blue 		= 		{0,		0,		255,	0,		0,		0,		0};
 	const color c_aqua 		= 		{0,		255,	255,	0,		0,		0,		0};
-
+	
 	/*
 	*/
 

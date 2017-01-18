@@ -2,41 +2,46 @@
 #include <stdlib.h>
 
 /*
-** functions
+** externs
 */
 
-etile* expandTile(unsigned int value) {
-	etile *to_return = (etile*)malloc(sizeof(etile));
+dtile descriptor_tiles[TILE_TYPE_COUNT] = {
+	{"empty", "description", EMPTY_TILE, 0, 0},
+		{"chasm", "description", EMPTY_TILE, 0, 0},
 
-	to_return->base = (value & BASE_MASK) >> 30;
-	to_return->type = (value & TYPE_MASK) >> 25;
-	to_return->ornm = (value & ORNM_MASK) >> 17;
-	to_return->perm = (value & PERM_MASK) >> 12;
-	to_return->temp = (value & TEMP_MASK) >> 7;
-	to_return->time = (value & TIME_MASK);
-
-	return to_return;
-}
-
-ctile* compressTile(
-	unsigned int base,
-	unsigned int type,
-	unsigned int ornm,
-	unsigned int perm,
-	unsigned int temp,
-	unsigned int time) {
-	ctile *to_return = (ctile*)malloc(sizeof(ctile));
-
-	base = (base << 30) & BASE_MASK;
-	type = (type << 25) & TYPE_MASK;
-	type = (ornm << 17) & ORNM_MASK;
-	perm = (perm << 12) & PERM_MASK;
-	temp = (temp << 7) & TEMP_MASK;
-	time = time & TIME_MASK;
-
-	to_return->tile = (base | type | ornm | perm | temp | time);
-	return to_return;
-}
+	{"ground", "description", GROUND_TILE, 0, 0},
+		{"mud", "description", GROUND_TILE, 0, 0},
+		{"dirt", "description", GROUND_TILE, 0, 0},
+		{"soil", "description", GROUND_TILE, 0, 0},
+		{"moss", "description", GROUND_TILE, FLAMMABLE | FREEZABLE, 0},
+		{"light snow", "description", GROUND_TILE, 0, IS_FROZEN},
+		{"medium snow", "description", GROUND_TILE, 0, IS_FROZEN},
+		{"heavy snow", "description", GROUND_TILE, 0, IS_FROZEN},
+		{"rock", "description", GROUND_TILE, 0, 0},
+		{"mossy rock", "description", GROUND_TILE, FLAMMABLE | FREEZABLE, 0},
+		{"grass", "description", GROUND_TILE, FLAMMABLE | FREEZABLE, 0},
+		{"dead grass", "description", GROUND_TILE, FLAMMABLE, 0},
+		{"stone", "description", GROUND_TILE, 0, 0},
+			{"mossy stone", "description", GROUND_TILE, FLAMMABLE | FREEZABLE, 0},
+			{"cracked stone", "description", GROUND_TILE, 0, 0},
+		{"fungus", "description", GROUND_TILE, FLAMMABLE | FREEZABLE, 0},
+			{"bioluminescent fungus", "description", GROUND_TILE, FLAMMABLE | FREEZABLE, 0},
+		{"gravel", "description", GROUND_TILE, 0, 0},
+		{"wood", "description", GROUND_TILE, 0, 0},
+		{"rotting wood", "description", GROUND_TILE, 0, 0},
+		{"polished wood", "description", GROUND_TILE, 0, 0},
+		{"tile", "description", GROUND_TILE, 0, 0},
+		{"smooth tile", "description", GROUND_TILE, 0, 0},
+		{"cracked tile", "description", GROUND_TILE, 0, 0},
+		{"carpet", "description", GROUND_TILE, FLAMMABLE, 0},
+		{"torn carpet", "description", GROUND_TILE, FLAMMABLE, 0},
+		{"marble", "description", GROUND_TILE, 0, 0},
+		{"cracked marble", "description", GROUND_TILE, 0, 0},
+		{"polished marble", "description", GROUND_TILE, 0, 0},
+		{"granite", "description", GROUND_TILE, 0, 0},
+		{"cracked granite", "description", GROUND_TILE, 0, 0},
+		{"polished granite", "description", GROUND_TILE, 0, 0},
+};
 
 /*
 */
