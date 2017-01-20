@@ -5,12 +5,6 @@
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_image.h>
 
-#include "tiles.h"
-#include "colors.h"
-#include "overworld.h"
-#include "character.h"
-#include "attributes.h"
-
 /*
 ** defines
 */
@@ -43,40 +37,18 @@
 #define ROWS 64
 #define DCOLS (COLS - STAT_BAR_WIDTH - 2)
 #define DROWS (ROWS - MESSAGE_ROWS - 2)
-#define DELTA_COL (COLS - DCOLS)
-#define DELTA_ROW (ROWS - DROWS)
+// the offset of the actual game view
+#define DCOLS_OFFSET (COLS - DCOLS)
+#define DROWS_OFFSET (ROWS - DROWS)
 
 #define MESSAGE_ROWS 5
 #define STAT_BAR_WIDTH 20
 
+#define WORLD_COLS 86
+#define WORLD_ROWS 57
+
 #define MIN_DUNGEON_DEPTH 1
 #define MAX_DUNGEON_DEPTH 64
-
-/*
-** enums
-*/
-
-enum LocationTypes {
-	MAIN_MENU = 0,
-	OVERWORLD,
-	INSTANCE,
-
-	LOCATION_TYPE_COUNT
-};
-
-/*
-** typedefs
-*/
-
-typedef struct dcell {
-	short
-		empty,
-		changed;
-	ctile tile;
-	color
-		fg,
-		bg;
-} dcell;
 
 /*
 ** externs
@@ -87,7 +59,6 @@ extern char *name;
 extern char *images[];
 extern char *server_name;
 extern char buffer[MAX_BUFFER];
-extern short location;
 extern int image_count;
 extern int port;
 extern int tile_width;
@@ -97,8 +68,6 @@ extern int window_height;
 extern int target_buffer;
 extern int mouse_x;
 extern int mouse_y;
-
-extern dcell dmatrix[COLS][ROWS];
 
 // view is the in world x & y
 extern SDL_Rect view;
@@ -113,8 +82,6 @@ extern SDL_Texture *render_buffers[2];
 
 extern IPaddress ipaddress;
 extern TCPsocket socket;
-
-extern character player;
 
 /*
 */

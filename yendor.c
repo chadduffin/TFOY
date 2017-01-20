@@ -130,6 +130,12 @@ int pollEvents() {
 			case SDL_KEYDOWN:
 				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
 					return -1;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+					if (location == &menu) {
+						changeScene(&overworld);
+					} else {
+						changeScene(&menu);
+					}
 				}
 				break;
 			case SDL_KEYUP:
@@ -222,7 +228,7 @@ void render() {
 	SDL_RenderClear(renderer);
 
 	// attempt to salvage data from previous screen
-	if (location != MAIN_MENU) {
+	if (location != &menu) {
 		renderSalvage();
 	} else {
 		SDL_RenderCopy(renderer, render_buffers[!target_buffer], NULL, NULL);
@@ -258,16 +264,16 @@ void renderSalvage() {
 		src.w = (xdiff < 0) ? (view.w+xdiff) : (view.w-xdiff);
 		src.h = (ydiff < 0) ? (view.h+ydiff) : (view.h-ydiff);
 		
-		src.x += dport.x+(DELTA_COL)*tile_width;
-		src.y += dport.y+(DELTA_ROW)*tile_height;
+		src.x += dport.x+(DCOLS_OFFSET)*tile_width;
+		src.y += dport.y+(DROWS_OFFSET)*tile_height;
 
 		dst.x = (xdiff < 0) ? (-xdiff) : 0;
 		dst.y = (ydiff < 0) ? (-ydiff) : 0;
 		dst.w = src.w;
 		dst.h = src.h;
 
-		dst.x += dport.x+(DELTA_COL)*tile_width;
-		dst.y += dport.y+(DELTA_ROW)*tile_height;
+		dst.x += dport.x+(DCOLS_OFFSET)*tile_width;
+		dst.y += dport.y+(DROWS_OFFSET)*tile_height;
 
 		SDL_RenderCopy(renderer, render_buffers[!target_buffer], &src, &dst);
 	}
@@ -287,13 +293,18 @@ void renderChanges() {
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
+			int to_draw = dmatrix[x][y].tile.tile;
+			color
+				fg = (to_draw < 256) ? white : (descriptor_tiles[to_draw-256].fg),
+				bg = (to_draw < 256) ? black : (descriptor_tiles[to_draw-256].bg);
+
 			if (dmatrix[x][y].changed == 1) {
 				short
 					r,
 					g,
 					b;
 
-				evaluateRGB(dmatrix[x][y].bg, &r, &g, &b);
+				evaluateRGB(bg, &r, &g, &b);
 
 				dst.x = dport.x+(x*tile_width);
 				dst.y = dport.y+(y*tile_height);
@@ -301,16 +312,16 @@ void renderChanges() {
 				SDL_SetRenderDrawColor(renderer, r, g, b, 255);
 				SDL_RenderFillRect(renderer, &dst);	
 
-				if (dmatrix[x][y].empty != 1) {
-					evaluateRGB(dmatrix[x][y].fg, &r, &g, &b);
+				if (&fg != &bg) {
+					evaluateRGB(fg, &r, &g, &b);
 
 					SDL_SetTextureColorMod(textures[0], r, g, b);
-					lookupTile(&src, dmatrix[x][y].tile.tile);
+					lookupTile(&src, to_draw);
 
 					SDL_RenderCopy(renderer, textures[0], &src, &dst);
 					SDL_SetTextureColorMod(textures[0], 255, 255, 255);
 				}
-				dmatrix[x][y].changed = dmatrix[x][y].fg.flickers | dmatrix[x][y].bg.flickers;
+				dmatrix[x][y].changed = fg.flickers | bg.flickers;
 			}
 		}
 	}
@@ -322,68 +333,14 @@ void clearScreen() {
 	int
 		x,
 		y;
+
 	dcell cell;
-	cell.empty = 1;
 	cell.changed = 1;
-	cell.fg = black;
-	cell.bg = black;
+	cell.tile.tile = SOLID_BLACK;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
 			dmatrix[x][y] = cell;
-		}
-	}
-}
-
-void initializeMenu() {
-	int
-		x,
-		y;
-	dcell cell;
-	cell.changed = 1;
-	cell.fg = black;
-
-	for (y = 0; y < ROWS; y += 1) {
-		for (x = 0; x < COLS; x += 1) {
-			cell.empty = 1;
-			if (title[y][x] == 'B') {
-				cell.bg = black;
-			} else if ((title[y][x] != 'B') && (title[y][x] != ' ')) {
-				cell.empty = 0;
-				cell.fg = white;
-				cell.bg = black;
-				cell.tile.tile = title[y][x];
-			} else if ((y > 0) && (title[y-1][x] == 'B')) {
-				cell.bg = white;
-				cell.bg.red = 255-y;
-				cell.bg.green = 255-y;
-				cell.bg.blue = 255-y;
-			} else {
-				cell.bg = magenta;
-				cell.bg.red -= (y*1.5);
-				cell.bg.blue -= (y*1.5);
-			}
-			dmatrix[x][y] = cell;
-		}
-	}
-}
-
-// WORKING ON CHARACTER
-
-void renderWorld() {
-	int
-		x,
-		y;
-	dcell cell;
-	cell.empty = 0;
-	cell.changed = 1;
-
-	for (y = 0; y < DROWS; y += 1) {
-		for (x = 0; x < DCOLS; x += 1) {
-			cell.fg = white;
-			cell.bg = black;
-			cell.tile.tile = overworld[x][y].tile;
-			dmatrix[x+DELTA_COL][y+DELTA_ROW] = cell;
 		}
 	}
 }
@@ -399,20 +356,20 @@ void lookupTile(SDL_Rect *source, unsigned int value) {
 	}
 }
 
-void evaluateRGB(color col, short *r, short *g, short*b) {
+void evaluateRGB(color col, short *r, short *g, short *b) {
 	*r = col.red;
 	*g = col.green;
 	*b = col.blue;
 
 	if (!DISABLE_COLOR_MOD) {
 		if (col.redRand != 0) {
-			*r += (rand()%col.redRand)-(rand()%col.redRand);
+			*r += (rand()%(col.redRand))-(rand()%(col.redRand));
 		}
 		if (col.greenRand != 0) {
-			*g += (rand()%col.greenRand)-(rand()%col.greenRand);
+			*g += (rand()%(col.greenRand))-(rand()%(col.greenRand));
 		}
 		if (col.blueRand != 0) {
-			*b += (rand()%col.blueRand)-(rand()%col.blueRand);
+			*b += (rand()%(col.blueRand))-(rand()%(col.blueRand));
 		}
 
 		if (*r < 0) {
@@ -431,6 +388,29 @@ void evaluateRGB(color col, short *r, short *g, short*b) {
 			*b = 0;
 		} else if (*b > 255) {
 			*b = 255;
+		}
+	}
+}
+
+void changeScene(scene *dest) {
+	int
+		x,
+		y;
+	location = dest;
+	
+	if (location == &menu) {
+		for (y = 0; y < ROWS; y += 1) {
+			for (x = 0; x < COLS; x += 1) {
+				dmatrix[x][y].changed = 1;
+				dmatrix[x][y].tile = location->tiles[x][y];
+			}
+		}
+	} else {
+		for (y = 0; y < DROWS; y += 1) {
+			for (x = 0; x < DCOLS; x += 1) {
+				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].changed = 1;
+				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].tile = location->tiles[x][y];
+			}
 		}
 	}
 }

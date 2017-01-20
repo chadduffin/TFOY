@@ -12,8 +12,7 @@ enum TileCategories {
 	SOLID_TILE,
 	LIQUID_TILE,
 	GROUND_TILE,
-	
-	CHARACTER_TILE,
+	COLOR_TILE,
 
 	TILE_CATEGORY_COUNT
 };
@@ -41,44 +40,19 @@ enum TileEffects {
 
 enum TileIndexs {
 	EMPTY = 256,
-		CHASM,
 
 	GROUND,
-		MUD,
-		DIRT,
-		SOIL,
-		MOSS,
-		SNOW,
-			LIGHT_SNOW,
-			HEAVY_SNOW,
-		ROCK,
-			MOSSY_ROCK,
-		GRASS,
-			DEAD_GRASS,
-		STONE,
-			MOSSY_STONE,
-			CRACKED_STONE,
-		FUNGUS,
-			BIO_FUNGUS,
-		GRAVEL,
-		WOOD,
-			ROTTING_WOOD,
-			POLISHED_WOOD,
-		TILE,
-			SMOOTH_TILE,
-			CRACKED_TILE,
-		CARPET,
-			TORN_CARPET,
-		MARBLE,
-			CRACKED_MARBLE,
-			POLISHED_MARBLE,
-		GRANITE,
-			CRACKED_GRANITE,
-			POLISHED_GRANITE,
 
 	WALL,
 
-	PLAYER,
+	SOLID_BLACK,
+	SOLID_WHITE,
+	SOLID_RED,
+	SOLID_GREEN,
+	SOLID_BLUE,
+	SOLID_YELLOW,
+	SOLID_MAGENTA,
+	SOLID_AQUA,
 
 	END_TILE,
 	TILE_TYPE_COUNT = (END_TILE-EMPTY)
@@ -101,6 +75,9 @@ typedef struct dtile {
 		// x & y of tile display source
 		x,
 		y;
+	const color
+		fg,
+		bg;
 } dtile;
 
 // compressed tile

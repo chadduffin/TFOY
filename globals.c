@@ -75,7 +75,6 @@ char *name = "The Fellowships Of Yendor";
 char *images[] = {"images.png"};
 char *server_name = "";
 char buffer[MAX_BUFFER];
-short location = MAIN_MENU;
 int image_count = 1;
 int port = 32768;
 int tile_width = 16;
@@ -85,8 +84,6 @@ int window_height = 240;
 int target_buffer = 0;
 int mouse_x = 0;
 int mouse_y = 0;
-
-dcell dmatrix[COLS][ROWS];
 
 SDL_Rect view;
 SDL_Rect view_previous;
@@ -99,8 +96,6 @@ SDL_Texture *render_buffers[2];
 
 IPaddress ipaddress;
 TCPsocket socket;
-
-character player;
 
 /*
 */
