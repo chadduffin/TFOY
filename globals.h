@@ -6,6 +6,10 @@
 #include <SDL2/SDL_image.h>
 
 #include "tiles.h"
+#include "colors.h"
+#include "overworld.h"
+#include "character.h"
+#include "attributes.h"
 
 /*
 ** defines
@@ -17,6 +21,9 @@
 #define FULLSCREEN 0
 #define DEBUGGING 0
 #define ONLINE 0
+
+#define DISABLE_LIGHT 0
+#define DISABLE_COLOR_MOD 1
 
 #define FPS 60
 #define MAX_BUFFER 1024
@@ -36,6 +43,8 @@
 #define ROWS 64
 #define DCOLS (COLS - STAT_BAR_WIDTH - 2)
 #define DROWS (ROWS - MESSAGE_ROWS - 2)
+#define DELTA_COL (COLS - DCOLS)
+#define DELTA_ROW (ROWS - DROWS)
 
 #define MESSAGE_ROWS 5
 #define STAT_BAR_WIDTH 20
@@ -44,21 +53,20 @@
 #define MAX_DUNGEON_DEPTH 64
 
 /*
-** typedefs
+** enums
 */
 
-typedef struct color {
-	short
-		red,
-		green,
-		blue,
-		
-		redRand,
-		greenRand,
-		blueRand,
-		
-		flickers;
-} color;
+enum LocationTypes {
+	MAIN_MENU = 0,
+	OVERWORLD,
+	INSTANCE,
+
+	LOCATION_TYPE_COUNT
+};
+
+/*
+** typedefs
+*/
 
 typedef struct dcell {
 	short
@@ -79,6 +87,7 @@ extern char *name;
 extern char *images[];
 extern char *server_name;
 extern char buffer[MAX_BUFFER];
+extern short location;
 extern int image_count;
 extern int port;
 extern int tile_width;
@@ -105,21 +114,7 @@ extern SDL_Texture *render_buffers[2];
 extern IPaddress ipaddress;
 extern TCPsocket socket;
 
-/*
-** functions
-*/
-
-int initializeSDL();
-void exitSDL(int status);
-int frameCap(int last_update);
-int pollEvents();
-void updateRenderingInfo();
-void render();
-void renderSalvage();
-void renderChanges();
-void clearScreen();
-void initializeScreen();
-void lookupTile(SDL_Rect *source, unsigned int value);
+extern character player;
 
 /*
 */

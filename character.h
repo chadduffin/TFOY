@@ -1,11 +1,7 @@
 #ifndef __CHARACTER__
 #define __CHARACTER__
 
-#include "attribute.h"
-
-/*
-** defines
-*/
+#include "attributes.h"
 
 /*
 ** enums
@@ -51,11 +47,17 @@ enum CharacterFlags {
 */
 
 typedef struct character {
+	short
+		x,
+		y,
+		z;
 	unsigned int
 		id,
 		flags,
 		category,
-		alignment;
+		alignment,
+		
+		tile;
 	int attributes[ATTRIBUTE_TYPE_COUNT];
 } character;
 

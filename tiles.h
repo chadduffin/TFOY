@@ -1,7 +1,7 @@
 #ifndef __TILES__
 #define __TILES__
 
-#include <SDL/SDL.h>
+#include "colors.h"
 
 /*
 ** enums
@@ -12,6 +12,8 @@ enum TileCategories {
 	SOLID_TILE,
 	LIQUID_TILE,
 	GROUND_TILE,
+	
+	CHARACTER_TILE,
 
 	TILE_CATEGORY_COUNT
 };
@@ -38,7 +40,7 @@ enum TileEffects {
 };
 
 enum TileIndexs {
-	EMPTY = 0,
+	EMPTY = 256,
 		CHASM,
 
 	GROUND,
@@ -74,7 +76,12 @@ enum TileIndexs {
 			CRACKED_GRANITE,
 			POLISHED_GRANITE,
 
-	TILE_TYPE_COUNT
+	WALL,
+
+	PLAYER,
+
+	END_TILE,
+	TILE_TYPE_COUNT = (END_TILE-EMPTY)
 };
 
 /*
@@ -89,7 +96,11 @@ typedef struct dtile {
 	short
 		base,
 		flags,
-		effect;
+		effect,
+	
+		// x & y of tile display source
+		x,
+		y;
 } dtile;
 
 // compressed tile
