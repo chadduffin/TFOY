@@ -1,8 +1,12 @@
 #include "entity.h"
 
-entity* createEntity() {
+entity* createEntity(unsigned int id) {
 	int i;
 	entity *instance = (entity*)malloc(sizeof(entity));
+
+	instance->id = id;
+	instance->prev = NULL;
+	instance->next = NULL;
 
 	for (i = 0; i < COMPONENT_TYPE_COUNT; i += 1) {
 		instance->components[i] = NULL;

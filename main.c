@@ -22,8 +22,8 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	cleanupMenu();
-	cleanupOverworld();
+	cleanupScene(&menu);
+	cleanupScene(&overworld);
 	exitSDL(status);
   return 0;
 }

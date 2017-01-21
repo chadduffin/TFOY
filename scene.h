@@ -6,21 +6,18 @@
 #include "globals.h"
 
 /*
-** defines
-*/
-
-#define MAX_ENTITY_COUNT 1
-
-/*
 ** typedefs
 */
 
 typedef struct scene {
 	short
 		w,
-		h;
+		h,
+		entity_count;
 	ctile **tiles;
-	entity *entities[MAX_ENTITY_COUNT];
+	entity
+		*head,
+		*tail;
 } scene;
 
 /*
@@ -38,9 +35,10 @@ extern scene *location;
 
 void initializeMenu();
 void initializeOverworld();
-void cleanupMenu();
-void cleanupOverworld();
+void cleanupScene(scene *target);
 void addEntity(scene *dest, entity *target);
+void delEntity(scene *dest, entity *target);
+entity* getEntities(scene *source);
 
 /*
 */

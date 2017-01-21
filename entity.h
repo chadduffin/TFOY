@@ -13,15 +13,15 @@ typedef struct entity {
 	unsigned int id;
 	void
 		*components[COMPONENT_TYPE_COUNT],
-		*next,
-		*prev;
+		*prev,
+		*next;
 } entity;
 
 /*
 ** functions
 */
 
-entity* createEntity();
+entity* createEntity(unsigned int id);
 void addComponent(entity *target, int component_type, void *component);
 void removeComponent(entity *target, int component_type);
 void* getComponent(entity *target, int component_type);
