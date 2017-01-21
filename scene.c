@@ -39,6 +39,10 @@ void initializeMenu() {
 			}
 		}
 	}
+
+	for (x = 0; x < MAX_ENTITY_COUNT; x += 1) {
+		menu.entities[x] = NULL;
+	}
 }
 
 void initializeOverworld() {
@@ -63,6 +67,10 @@ void initializeOverworld() {
 			}
 		}
 	}
+
+	for (x = 0; x < MAX_ENTITY_COUNT; x += 1) {
+		overworld.entities[x] = NULL;
+	}
 }
 
 void cleanupMenu() {
@@ -71,6 +79,12 @@ void cleanupMenu() {
 
 void cleanupOverworld() {
 	free(overworld.tiles);
+}
+
+void addEntity(scene *dest, entity *target) {
+	if (dest->entities[0] == NULL) {
+		dest->entities[0] = target;
+	}
 }
 
 /*

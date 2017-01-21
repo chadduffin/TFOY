@@ -2,7 +2,14 @@
 #define __SCENE__
 
 #include "tiles.h"
+#include "entity.h"
 #include "globals.h"
+
+/*
+** defines
+*/
+
+#define MAX_ENTITY_COUNT 1
 
 /*
 ** typedefs
@@ -13,6 +20,7 @@ typedef struct scene {
 		w,
 		h;
 	ctile **tiles;
+	entity *entities[MAX_ENTITY_COUNT];
 } scene;
 
 /*
@@ -32,6 +40,7 @@ void initializeMenu();
 void initializeOverworld();
 void cleanupMenu();
 void cleanupOverworld();
+void addEntity(scene *dest, entity *target);
 
 /*
 */

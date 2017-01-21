@@ -4,11 +4,14 @@
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_image.h>
 
+#include "globals.h"
+
+#include "entity.h"
+#include "components.h"
+#include "attributes.h"
+
 #include "scene.h"
 #include "display.h"
-#include "globals.h"
-#include "character.h"
-#include "attributes.h"
 
 /*
 ** functions
