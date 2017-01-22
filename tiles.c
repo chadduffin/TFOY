@@ -1,5 +1,5 @@
-#include "tiles.h"
-#include <stdlib.h>
+#include "yendor.h"
+#include "globals.h"
 
 /*
 ** externs

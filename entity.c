@@ -1,4 +1,5 @@
-#include "entity.h"
+#include "yendor.h"
+#include "globals.h"
 
 entity* createEntity(unsigned int id) {
 	int i;
@@ -15,10 +16,37 @@ entity* createEntity(unsigned int id) {
 	return instance;
 }
 
-void addComponent(entity *target, int component_type, void *component) {
-	if (target->components[component_type] == NULL) {
-		target->components[component_type] = component;
+void* addComponent(entity *target, int component_type) {
+	switch (component_type) {
+		case CREATURE_COMPONENT:
+			{
+				creature_component *value = (creature_component*)malloc(sizeof(creature_component));
+				target->components[CREATURE_COMPONENT] = value;
+				return value;
+			}
+			break;
+		case LOCATION_COMPONENT:
+			{
+				location_component *value = (location_component*)malloc(sizeof(location_component));
+				target->components[LOCATION_COMPONENT] = value;
+				return value;
+			}
+			break;
+		case RENDER_COMPONENT:
+			{
+				render_component *value = (render_component*)malloc(sizeof(render_component));
+				target->components[RENDER_COMPONENT] = value;
+				return value;
+			}
+			break;
+		default:
+			printf("Invalid component type.\n");
+			return NULL;
 	}
+}
+
+void* getComponent(entity *target, int component_type) {
+	return target->components[component_type];
 }
 
 void removeComponent(entity *target, int component_type) {
@@ -26,8 +54,4 @@ void removeComponent(entity *target, int component_type) {
 		free(target->components[component_type]);
 		target->components[component_type] = NULL;
 	}
-}
-
-void* getComponent(entity *target, int component_type) {
-	return target->components[component_type];
 }

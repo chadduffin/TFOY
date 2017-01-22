@@ -1,4 +1,5 @@
 #include "yendor.h"
+#include "globals.h"
 
 int initializeSDL() {
 	int status = NOT_OK;
@@ -411,6 +412,22 @@ void changeScene(scene *dest) {
 				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].changed = 1;
 				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].tile = location->tiles[x][y];
 			}
+		}
+
+		entity *node = getEntities(dest);
+
+		while (node != NULL) {
+			render_component *r = (render_component*)getComponent(node, RENDER_COMPONENT);
+			location_component *l = (location_component*)getComponent(node, LOCATION_COMPONENT);
+
+			if ((r != NULL) && (l != NULL)) {
+				if ((l->x >= view.x) && (l->x < view.x+view.w) &&
+						(l->y >= view.y) && (l->y < view.y+view.h)) {
+					dmatrix[(l->x)-(view.x)+DCOLS_OFFSET][(l->y)-(view.y)+DROWS_OFFSET].tile.tile = r->tile;
+				}
+			}
+
+			node = (entity*)(node->next);
 		}
 	}
 }

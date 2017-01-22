@@ -1,4 +1,4 @@
-#include "globals.h"
+#include "yendor.h"
 
 /*
 ** externs
@@ -96,6 +96,8 @@ SDL_Texture *render_buffers[2];
 
 IPaddress ipaddress;
 TCPsocket socket;
+
+dcell dmatrix[COLS][ROWS];
 
 /*
 */

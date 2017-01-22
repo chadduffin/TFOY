@@ -1,4 +1,5 @@
-#include "colors.h"
+#include "yendor.h"
+#include "globals.h"
 
 /*
 ** externs

@@ -1,5 +1,5 @@
-#include "attributes.h"
-#include <stdio.h>
+#include "yendor.h"
+#include "globals.h"
 
 /*
 ** externs

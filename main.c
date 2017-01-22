@@ -1,4 +1,5 @@
 #include "yendor.h"
+#include "globals.h"
 
 
 int main(int argc, char **argv) {

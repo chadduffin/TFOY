@@ -6,51 +6,6 @@
 #include <SDL2/SDL_image.h>
 
 /*
-** defines
-*/
-
-#define TITLE "The Fellowships Of Yendor"
-#define VERSION "v0.0.1"
-
-#define FULLSCREEN 0
-#define DEBUGGING 0
-#define ONLINE 0
-
-#define DISABLE_LIGHT 0
-#define DISABLE_COLOR_MOD 1
-
-#define FPS 60
-#define MAX_BUFFER 1024
-#define TEXTURE_COUNT 1
-
-#define NOT_OK 0
-#define SDL_OK 1
-#define WINDOW_OK 2
-#define RENDER_OK 4
-#define GRPHCS_OK 8
-#define NETWRK_OK 16
-
-#define TILE_SOURCE_WIDTH 16
-#define TILE_SOURCE_HEIGHT 16
-
-#define COLS 108
-#define ROWS 64
-#define DCOLS (COLS - STAT_BAR_WIDTH - 2)
-#define DROWS (ROWS - MESSAGE_ROWS - 2)
-// the offset of the actual game view
-#define DCOLS_OFFSET (COLS - DCOLS)
-#define DROWS_OFFSET (ROWS - DROWS)
-
-#define MESSAGE_ROWS 5
-#define STAT_BAR_WIDTH 20
-
-#define WORLD_COLS 86
-#define WORLD_ROWS 57
-
-#define MIN_DUNGEON_DEPTH 1
-#define MAX_DUNGEON_DEPTH 64
-
-/*
 ** externs
 */
 
@@ -82,6 +37,29 @@ extern SDL_Texture *render_buffers[2];
 
 extern IPaddress ipaddress;
 extern TCPsocket socket;
+
+extern attribute attributes[ATTRIBUTE_TYPE_COUNT];
+
+extern const color red;
+extern const color blue;
+extern const color aqua;
+extern const color black;
+extern const color white;
+extern const color green;
+extern const color yellow;
+extern const color magenta;
+
+extern const color brown;
+extern const color grey;
+extern const color dark_blue;
+
+extern dcell dmatrix[COLS][ROWS];
+
+extern scene menu;
+extern scene overworld;
+extern scene *location;
+
+extern dtile descriptor_tiles[TILE_TYPE_COUNT];
 
 /*
 */
