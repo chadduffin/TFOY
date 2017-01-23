@@ -220,7 +220,20 @@ void updateRenderingInfo(int initial) {
 }
 
 void update() {
+	entity *node = getEntities(location);
 
+	while (node != NULL) {
+		render_component *comp = (render_component*)getComponent(node, RENDER_COMPONENT);
+
+		if (comp != NULL) {
+			if ((comp->x >= view.x) && (comp->x < view.x+view.w) &&
+					(comp->y >= view.y) && (comp->y < view.y+view.h)) {
+				dmatrix[(comp->x)-(view.x)+DCOLS_OFFSET][(comp->y)-(view.y)+DROWS_OFFSET].tile.tile = comp->tile;
+			}
+		}
+
+		node = (entity*)(node->next);
+	}
 }
 
 void render() {
@@ -316,6 +329,7 @@ void renderChanges() {
 				if (&fg != &bg) {
 					evaluateRGB(fg, &r, &g, &b);
 
+					SDL_SetTextureAlphaMod(textures[0], dmatrix[x][y].alpha);
 					SDL_SetTextureColorMod(textures[0], r, g, b);
 					lookupTile(&src, to_draw);
 
@@ -336,6 +350,7 @@ void clearScreen() {
 		y;
 
 	dcell cell;
+	cell.alpha = 255;
 	cell.changed = 1;
 	cell.tile.tile = SOLID_BLACK;
 
@@ -414,21 +429,6 @@ void changeScene(scene *dest) {
 			}
 		}
 
-		entity *node = getEntities(dest);
-
-		while (node != NULL) {
-			render_component *r = (render_component*)getComponent(node, RENDER_COMPONENT);
-			location_component *l = (location_component*)getComponent(node, LOCATION_COMPONENT);
-
-			if ((r != NULL) && (l != NULL)) {
-				if ((l->x >= view.x) && (l->x < view.x+view.w) &&
-						(l->y >= view.y) && (l->y < view.y+view.h)) {
-					dmatrix[(l->x)-(view.x)+DCOLS_OFFSET][(l->y)-(view.y)+DROWS_OFFSET].tile.tile = r->tile;
-				}
-			}
-
-			node = (entity*)(node->next);
-		}
 	}
 }
 

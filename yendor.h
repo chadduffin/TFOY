@@ -107,7 +107,6 @@ enum AttributeTypes {
 
 enum ComponentTypes {
 	CREATURE_COMPONENT = 1,
-	LOCATION_COMPONENT,
 	RENDER_COMPONENT,
 
 	COMPONENT_TYPE_COUNT
@@ -139,6 +138,9 @@ enum TileCategories {
 	SOLID_TILE,
 	LIQUID_TILE,
 	GROUND_TILE,
+
+	CHARACTER_TILE,
+
 	COLOR_TILE,
 
 	TILE_CATEGORY_COUNT
@@ -165,19 +167,21 @@ enum TileEffects {
 	IS_POISONOUS_GAS = 256,
 };
 
-enum TileIndexs {
+enum TileIndexes {
 	EMPTY = 256,
 	GROUND,
 	WALL,
 
-	SOLID_BLACK,
-	SOLID_WHITE,
-	SOLID_RED,
-	SOLID_GREEN,
-	SOLID_BLUE,
-	SOLID_YELLOW,
-	SOLID_MAGENTA,
-	SOLID_AQUA,
+	CHARACTER,
+
+	AQUA,
+	BLACK,
+	BLUE,
+	GREEN,
+	MAGENTA,
+	RED,
+	WHITE,
+	YELLOW,
 
 	END_TILE,
 	TILE_TYPE_COUNT = (END_TILE-EMPTY)
@@ -223,7 +227,6 @@ typedef struct dtile {
 		bg;
 } dtile;
 
-// compressed tile
 typedef struct ctile {
 	unsigned char
 		effect,
@@ -233,6 +236,7 @@ typedef struct ctile {
 
 typedef struct dcell {
 	short
+		alpha,
 		empty,
 		changed;
 	ctile tile;
@@ -253,15 +257,12 @@ typedef struct creature_component {
 	int base_attributes[ATTRIBUTE_TYPE_COUNT];
 } creature_component;
 
-typedef struct location_component {
+typedef struct render_component {
 	short
 		x,
 		y,
-		z;
-} location_component;
-
-typedef struct render_component {
-	short tile;
+		z,
+		tile;
 } render_component;
 
 typedef struct scene {

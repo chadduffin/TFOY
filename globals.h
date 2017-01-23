@@ -24,10 +24,10 @@ extern int target_buffer;
 extern int mouse_x;
 extern int mouse_y;
 
-// view is the in world x & y
+// view is the in-world x & y
 extern SDL_Rect view;
 extern SDL_Rect view_previous;
-// dport is the net area to be drawn and still maintain aspect ratio
+// dport is the net screen area to be drawn and still maintain aspect ratio
 extern SDL_Rect dport;
 extern SDL_Event event;
 extern SDL_Window *window;
@@ -38,7 +38,13 @@ extern SDL_Texture *render_buffers[2];
 extern IPaddress ipaddress;
 extern TCPsocket socket;
 
+extern dcell dmatrix[COLS][ROWS];
+extern dtile descriptor_tiles[TILE_TYPE_COUNT];
 extern attribute attributes[ATTRIBUTE_TYPE_COUNT];
+
+extern scene menu;
+extern scene overworld;
+extern scene *location;
 
 extern const color red;
 extern const color blue;
@@ -52,14 +58,6 @@ extern const color magenta;
 extern const color brown;
 extern const color grey;
 extern const color dark_blue;
-
-extern dcell dmatrix[COLS][ROWS];
-
-extern scene menu;
-extern scene overworld;
-extern scene *location;
-
-extern dtile descriptor_tiles[TILE_TYPE_COUNT];
 
 /*
 */

@@ -72,11 +72,10 @@ void initializeOverworld() {
 	}
 
 	entity *player = createEntity(0);
-	location_component *l = (location_component*)addComponent(player, LOCATION_COMPONENT);
-	l->x = 1;
-	l->y = 1;
 	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
-	r->tile = SOLID_YELLOW;
+	r->tile = CHARACTER;
+	r->x = 1;
+	r->y = 1;
 	addEntity(&overworld, player);
 }
 

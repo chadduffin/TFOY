@@ -25,13 +25,6 @@ void* addComponent(entity *target, int component_type) {
 				return value;
 			}
 			break;
-		case LOCATION_COMPONENT:
-			{
-				location_component *value = (location_component*)malloc(sizeof(location_component));
-				target->components[LOCATION_COMPONENT] = value;
-				return value;
-			}
-			break;
 		case RENDER_COMPONENT:
 			{
 				render_component *value = (render_component*)malloc(sizeof(render_component));
