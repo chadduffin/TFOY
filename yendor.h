@@ -53,19 +53,6 @@
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
 
-#define BLACK {0, 0, 0, 0, 0, 0, 0}
-#define WHITE {255, 255, 255, 0, 0, 0, 0}
-#define RED {255, 0, 0, 0, 0, 0, 0}
-#define GREEN {0, 255, 0, 0, 0, 0, 0}
-#define BLUE {0, 0, 255, 0, 0, 0, 0}
-#define YELLOW {255, 255, 0, 0, 0, 0, 0}
-#define MAGENTA {255, 0, 255, 0, 0, 0, 0}
-#define AQUA {0, 255, 255, 0, 0, 0, 0}
-
-#define BROWN {105, 90, 70, 24, 20, 16, 0}
-#define GREY {225, 225, 225, 24, 24, 24, 0}
-#define DARK_BLUE {0, 0, 75, 8, 8, 12, 0}
-
 /*
 ** enums
 */
@@ -134,14 +121,12 @@ enum CreatureCategories {
 };
 
 enum TileCategories {
-	EMPTY_TILE = 0,
-	SOLID_TILE,
-	LIQUID_TILE,
-	GROUND_TILE,
-
-	CHARACTER_TILE,
-
-	COLOR_TILE,
+	EMPTY = 0,
+	SOLID,
+	LIQUID,
+	GROUND,
+	CHARACTER,
+	COLOR,
 
 	TILE_CATEGORY_COUNT
 };
@@ -168,11 +153,11 @@ enum TileEffects {
 };
 
 enum TileIndexes {
-	EMPTY = 256,
-	GROUND,
-	WALL,
+	NOTHING = 256,
+	DIRT,
+	WOODEN_WALL,
 
-	CHARACTER,
+	HUMAN,
 
 	AQUA,
 	BLACK,
@@ -223,8 +208,8 @@ typedef struct dtile {
 		x,
 		y;
 	const color
-		fg,
-		bg;
+		*fg,
+		*bg;
 } dtile;
 
 typedef struct ctile {

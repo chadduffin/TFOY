@@ -309,8 +309,8 @@ void renderChanges() {
 		for (x = 0; x < COLS; x += 1) {
 			int to_draw = dmatrix[x][y].tile.tile;
 			color
-				fg = (to_draw < 256) ? white : (descriptor_tiles[to_draw-256].fg),
-				bg = (to_draw < 256) ? black : (descriptor_tiles[to_draw-256].bg);
+				fg = (to_draw < 256) ? white : *(descriptor_tiles[to_draw-256].fg),
+				bg = (to_draw < 256) ? black : *(descriptor_tiles[to_draw-256].bg);
 
 			if (dmatrix[x][y].changed == 1) {
 				short
@@ -327,14 +327,15 @@ void renderChanges() {
 				SDL_RenderFillRect(renderer, &dst);	
 
 				if (&fg != &bg) {
-					evaluateRGB(fg, &r, &g, &b);
-
-					SDL_SetTextureAlphaMod(textures[0], dmatrix[x][y].alpha);
-					SDL_SetTextureColorMod(textures[0], r, g, b);
 					lookupTile(&src, to_draw);
+					evaluateRGB(fg, &r, &g, &b);
+					SDL_SetTextureColorMod(textures[0], r, g, b);
+					SDL_SetTextureAlphaMod(textures[0], dmatrix[x][y].alpha);
 
 					SDL_RenderCopy(renderer, textures[0], &src, &dst);
+
 					SDL_SetTextureColorMod(textures[0], 255, 255, 255);
+					SDL_SetTextureAlphaMod(textures[0], 255);
 				}
 				dmatrix[x][y].changed = fg.flickers | bg.flickers;
 			}
@@ -352,7 +353,7 @@ void clearScreen() {
 	dcell cell;
 	cell.alpha = 255;
 	cell.changed = 1;
-	cell.tile.tile = SOLID_BLACK;
+	cell.tile.tile = BLACK;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {

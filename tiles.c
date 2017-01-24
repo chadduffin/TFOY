@@ -6,20 +6,20 @@
 */
 
 dtile descriptor_tiles[TILE_TYPE_COUNT] = {
-	{"empty", "description", EMPTY_TILE, 0, 0, 0, 0, BLACK, BLACK},
-	{"ground", "the ground", GROUND_TILE, 0, 0, 14, 2, GREY, DARK_BLUE},
-	{"wall", "a wall", SOLID_TILE, 0, 0, 3, 2, BROWN, GREY},
+	{"empty", "description", EMPTY, 0, 0, 0, 0, &black, &black},
+	{"ground", "the ground", GROUND, 0, 0, 14, 2, &grey, &dark_blue},
+	{"wall", "a wall", SOLID, 0, 0, 3, 2, &brown, &grey},
 
-	{"character", "", CHARACTER_TILE, 0, 0, 1, 0, WHITE, BLACK},
+	{"character", "", CHARACTER, 0, 0, 1, 0, &white, &black},
 
-	{"", "", COLOR_TILE, 0, 0, 0, 0, AQUA, AQUA},
-	{"", "", COLOR_TILE, 0, 0, 0, 0, BLACK, BLACK},
-	{"", "", COLOR_TILE, 0, 0, 0, 0, BLUE, BLUE},
-	{"", "", COLOR_TILE, 0, 0, 0, 0, GREEN, GREEN},
-	{"", "", COLOR_TILE, 0, 0, 0, 0, MAGENTA, MAGENTA},
-	{"", "", COLOR_TILE, 0, 0, 0, 0, RED, RED},
-	{"", "", COLOR_TILE, 0, 0, 0, 0, WHITE, WHITE},
-	{"", "", COLOR_TILE, 0, 0, 0, 0, YELLOW, YELLOW},
+	{"", "", COLOR, 0, 0, 0, 0, &aqua, &aqua},
+	{"", "", COLOR, 0, 0, 0, 0, &black, &black},
+	{"", "", COLOR, 0, 0, 0, 0, &blue, &blue},
+	{"", "", COLOR, 0, 0, 0, 0, &green, &green},
+	{"", "", COLOR, 0, 0, 0, 0, &magenta, &magenta},
+	{"", "", COLOR, 0, 0, 0, 0, &red, &red},
+	{"", "", COLOR, 0, 0, 0, 0, &white, &white},
+	{"", "", COLOR, 0, 0, 0, 0, &yellow, &yellow},
 };
 
 /*

@@ -33,13 +33,13 @@ void initializeMenu() {
 	for (y = 0; y < menu.h; y += 1) {
 		for (x = 0; x < menu.w; x += 1) {
 			if (title[y][x] == 'B') {
-				menu.tiles[x][y].tile = SOLID_BLACK;
+				menu.tiles[x][y].tile = BLACK;
 			} else if ((title[y][x] != 'B') && (title[y][x] != ' ')) {
 				menu.tiles[x][y].tile = title[y][x];
 			} else if ((y > 0) && (title[y-1][x] == 'B')) {
-				menu.tiles[x][y].tile = SOLID_WHITE;
+				menu.tiles[x][y].tile = WHITE;
 			} else {
-				menu.tiles[x][y].tile = SOLID_MAGENTA;
+				menu.tiles[x][y].tile = MAGENTA;
 			}
 		}
 	}
@@ -64,16 +64,16 @@ void initializeOverworld() {
 	for (y = 0; y < overworld.h; y += 1) {
 		for (x = 0; x < overworld.w; x += 1) {
 			if ((x == 0) || (y == 0) || (x == overworld.w-1) || (y == overworld.h-1)) {
-				overworld.tiles[x][y].tile = WALL;
+				overworld.tiles[x][y].tile = WOODEN_WALL;
 			} else {
-				overworld.tiles[x][y].tile = GROUND;
+				overworld.tiles[x][y].tile = DIRT;
 			}
 		}
 	}
 
 	entity *player = createEntity(0);
 	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
-	r->tile = CHARACTER;
+	r->tile = HUMAN;
 	r->x = 1;
 	r->y = 1;
 	addEntity(&overworld, player);
