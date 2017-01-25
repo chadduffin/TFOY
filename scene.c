@@ -71,7 +71,7 @@ void initializeOverworld() {
 		}
 	}
 
-	entity *player = createEntity(0);
+	player = createEntity(0);
 	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 1;

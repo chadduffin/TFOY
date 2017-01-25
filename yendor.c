@@ -129,13 +129,11 @@ int pollEvents() {
 			case SDL_QUIT:
 				return -1;
 			case SDL_KEYDOWN:
-				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-					return -1;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-					if (location == &menu) {
-						changeScene(&overworld);
+				{
+					if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+						return -1;
 					} else {
-						changeScene(&menu);
+						handleKeyDown(event.key.keysym.scancode);
 					}
 				}
 				break;
@@ -172,6 +170,34 @@ int pollEvents() {
 	}
 
 	return 0;
+}
+
+void handleKeyDown(SDL_Scancode value) {
+	switch (value) {
+		case SDL_SCANCODE_SPACE:
+			{
+				if (location == &menu) {
+					changeScene(&overworld);
+				} else {
+					changeScene(&menu);
+				}
+			}
+			break;
+		case SDL_SCANCODE_L:
+			{
+				if (player != NULL) {
+					render_component *r = (render_component*)getComponent(player, RENDER_COMPONENT);
+					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].changed = 1;
+					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].tile.tile = overworld.tiles[r->x][r->y].tile;
+					r->x += 1;
+					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].changed = 1;
+					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].tile.tile = r->tile;
+				}
+			}
+			break;
+		default:
+			break;
+	}
 }
 
 void updateRenderingInfo(int initial) {
@@ -431,6 +457,18 @@ void changeScene(scene *dest) {
 		}
 
 	}
+}
+
+void initializeKeybindings() {
+	int x;
+
+	for (x = 0; x < SDL_NUM_SCANCODES; x += 1) {
+		phys_keys[x].state = 0;
+		phys_keys[x].binding = NO_BINDING;
+	}
+
+	phys_keys[SDL_SCANCODE_H].binding = LEFT;
+	phys_keys[SDL_SCANCODE_L].binding = RIGHT;
 }
 
 /*

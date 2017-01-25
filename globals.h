@@ -46,6 +46,8 @@ extern scene menu;
 extern scene overworld;
 extern scene *location;
 
+extern entity *player;
+
 extern const color red;
 extern const color blue;
 extern const color aqua;
@@ -58,6 +60,8 @@ extern const color magenta;
 extern const color brown;
 extern const color grey;
 extern const color dark_blue;
+
+extern keypress phys_keys[SDL_NUM_SCANCODES];
 
 /*
 */

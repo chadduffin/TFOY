@@ -172,6 +172,22 @@ enum TileIndexes {
 	TILE_TYPE_COUNT = (END_TILE-EMPTY)
 };
 
+enum KeybindingTypes {
+	NO_BINDING = 0,
+	ACCEPT,
+	CANCEL,
+	LEFT,
+	LEFT_UP,
+	LEFT_DOWN,
+	RIGHT,
+	RIGHT_UP,
+	RIGHT_DOWN,
+	UP,
+	DOWN,
+
+	KEYBINDING_TYPE_COUNT
+};
+
 /*
 ** typedefs
 */
@@ -222,7 +238,6 @@ typedef struct ctile {
 typedef struct dcell {
 	short
 		alpha,
-		empty,
 		changed;
 	ctile tile;
 } dcell;
@@ -250,6 +265,10 @@ typedef struct render_component {
 		tile;
 } render_component;
 
+typedef struct player_component {
+	entity *myself;
+} player_component;
+
 typedef struct scene {
 	short
 		w,
@@ -261,6 +280,12 @@ typedef struct scene {
 		*tail;
 } scene;
 
+typedef struct keypress {
+	short
+		state,
+		binding;
+} keypress;
+
 /*
 ** functions
 */
@@ -269,6 +294,7 @@ int initializeSDL();
 void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
+void handleKeyDown(SDL_Scancode value);
 void updateRenderingInfo();
 void update();
 void render();
@@ -294,6 +320,8 @@ void cleanupScene(scene *target);
 void addEntity(scene *dest, entity *target);
 void delEntity(scene *dest, entity *target);
 entity* getEntities(scene *source);
+
+void initializeKeybindings();
 
 /*
 */

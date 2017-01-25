@@ -97,7 +97,11 @@ SDL_Texture *render_buffers[2];
 IPaddress ipaddress;
 TCPsocket socket;
 
+entity *player;
+
 dcell dmatrix[COLS][ROWS];
+
+keypress phys_keys[SDL_NUM_SCANCODES];
 
 /*
 */
