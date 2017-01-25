@@ -48,3 +48,6 @@ void removeComponent(entity *target, int component_type) {
 		target->components[component_type] = NULL;
 	}
 }
+
+/*
+*/

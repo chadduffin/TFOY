@@ -21,10 +21,9 @@ extern int tile_height;
 extern int window_width;
 extern int window_height;
 extern int target_buffer;
-extern int mouse_x;
-extern int mouse_y;
 
 // view is the in-world x & y
+// view x, y, w & h are in pixels, not tiles
 extern SDL_Rect view;
 extern SDL_Rect view_previous;
 // dport is the net screen area to be drawn and still maintain aspect ratio
@@ -46,6 +45,7 @@ extern scene menu;
 extern scene overworld;
 extern scene *location;
 
+extern entity *focus;
 extern entity *player;
 
 extern const color red;
@@ -61,7 +61,9 @@ extern const color brown;
 extern const color grey;
 extern const color dark_blue;
 
-extern keypress phys_keys[SDL_NUM_SCANCODES];
+extern mouse_state cursor;
+extern int phys_keys[SDL_NUM_SCANCODES];
+extern int virt_keys[KEYBINDING_TYPE_COUNT];
 
 /*
 */

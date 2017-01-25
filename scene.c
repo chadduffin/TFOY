@@ -74,8 +74,8 @@ void initializeOverworld() {
 	player = createEntity(0);
 	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
 	r->tile = HUMAN;
-	r->x = 1;
-	r->y = 1;
+	r->x = 256;
+	r->y = 128;
 	addEntity(&overworld, player);
 }
 
@@ -106,33 +106,48 @@ void addEntity(scene *dest, entity *target) {
 }
 
 void delEntity(scene *dest, entity *target) {
-	if (target != NULL) {
-		if ((target != dest->head) && (target != dest->tail)) {
-			if (target->next != NULL) {
-				((entity*)(target->next))->prev = target->prev;
-			}
-			if (target->prev != NULL) {
-				((entity*)(target->prev))->next = target->next;
-			}
-			free(target);
-		} else {
-			dest->head = (target == dest->head) ? (entity*)(dest->head->next) : dest->head;
-			dest->tail = (target == dest->tail) ? (entity*)(dest->tail->prev) : dest->tail;
+	if ((dest != NULL) && (target != NULL)) {
+		popEntity(dest, target);
+		free(target);
+	}
+}
 
-			if (target->next != NULL) {
-				((entity*)(target->next))->prev = NULL;
-			}
-			if (target->prev != NULL) {
-				((entity*)(target->prev))->next = NULL;
-			}
+void popEntity(scene *dest, entity *target) {
+	if ((target != dest->head) && (target != dest->tail)) {
+		if (target->next != NULL) {
+			((entity*)(target->next))->prev = target->prev;
+		}
+		if (target->prev != NULL) {
+			((entity*)(target->prev))->next = target->next;
+		}
+	} else {
+		dest->head = (target == dest->head) ? (entity*)(dest->head->next) : dest->head;
+		dest->tail = (target == dest->tail) ? (entity*)(dest->tail->prev) : dest->tail;
 
-			free(target);
+		if (target->next != NULL) {
+			((entity*)(target->next))->prev = NULL;
+		}
+		if (target->prev != NULL) {
+			((entity*)(target->prev))->next = NULL;
 		}
 	}
 }
 
 entity* getEntities(scene *source) {
 	return (source == NULL) ? NULL : source->head;
+}
+
+void moveObject(entity *target, scene *src, scene *dest, int x, int y) {
+	render_component *comp = getComponent(target, RENDER_COMPONENT);
+
+	if (comp != NULL) {
+		if ((src != NULL) && (dest != NULL)) {
+			comp->x = x;
+			comp->y = y;
+			popEntity(src, target);
+			addEntity(dest, target);
+		}
+	}
 }
 
 /*

@@ -42,10 +42,10 @@
 #define DROWS_OFFSET (ROWS - DROWS)
 
 #define MESSAGE_ROWS 5
-#define STAT_BAR_WIDTH 20
+#define STAT_BAR_WIDTH 19
 
-#define WORLD_COLS 86
-#define WORLD_ROWS 57
+#define WORLD_COLS 512
+#define WORLD_ROWS 256
 
 #define MIN_DUNGEON_DEPTH 1
 #define MAX_DUNGEON_DEPTH 64
@@ -280,11 +280,13 @@ typedef struct scene {
 		*tail;
 } scene;
 
-typedef struct keypress {
-	short
-		state,
-		binding;
-} keypress;
+typedef struct mouse_state {
+	int
+		x,
+		y,
+		lb,
+		rb;
+} mouse_state;
 
 /*
 ** functions
@@ -294,9 +296,9 @@ int initializeSDL();
 void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
-void handleKeyDown(SDL_Scancode value);
 void updateRenderingInfo();
 void update();
+void focusView();
 void render();
 void renderSalvage();
 void renderChanges();
@@ -313,15 +315,20 @@ entity* createEntity(unsigned int id);
 void* addComponent(entity *target, int component_type);
 void* getComponent(entity *target, int component_type);
 void removeComponent(entity *target, int component_type);
+void moveEntity(entity *target, scene *src, scene *dest, int x, int y);
 
 void initializeMenu();
 void initializeOverworld();
 void cleanupScene(scene *target);
 void addEntity(scene *dest, entity *target);
 void delEntity(scene *dest, entity *target);
+void popEntity(scene *dest, entity *target);
 entity* getEntities(scene *source);
+void moveObject(entity *target, scene *src, scene *dest, int x, int y);
 
 void initializeKeybindings();
+
+void gameStep();
 
 /*
 */

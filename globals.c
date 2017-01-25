@@ -82,8 +82,6 @@ int tile_height = 24;
 int window_width = 320;
 int window_height = 240;
 int target_buffer = 0;
-int mouse_x = 0;
-int mouse_y = 0;
 
 SDL_Rect view;
 SDL_Rect view_previous;
@@ -97,11 +95,14 @@ SDL_Texture *render_buffers[2];
 IPaddress ipaddress;
 TCPsocket socket;
 
-entity *player;
+entity *focus = NULL;
+entity *player = NULL;
 
 dcell dmatrix[COLS][ROWS];
 
-keypress phys_keys[SDL_NUM_SCANCODES];
+mouse_state cursor;
+int phys_keys[SDL_NUM_SCANCODES];
+int virt_keys[KEYBINDING_TYPE_COUNT];
 
 /*
 */

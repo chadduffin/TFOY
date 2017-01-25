@@ -133,27 +133,40 @@ int pollEvents() {
 					if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
 						return -1;
 					} else {
-						handleKeyDown(event.key.keysym.scancode);
+						if (phys_keys[event.key.keysym.scancode] == 0) {
+							phys_keys[event.key.keysym.scancode] = SDL_GetTicks();
+						}
 					}
 				}
 				break;
 			case SDL_KEYUP:
+				{
+					phys_keys[event.key.keysym.scancode] = 0;
+				}
 				break;
 			case SDL_MOUSEMOTION:
 				{
-					mouse_x = event.motion.x;
-					mouse_y = event.motion.y;
+					cursor.x = event.motion.x;
+					cursor.y = event.motion.y;
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				{
-					switch (event.button.button) {
-						case SDL_BUTTON_LEFT:
-							break;
+					if (event.button.button == SDL_BUTTON_LEFT) {
+						cursor.lb = (cursor.lb == 0) ? SDL_GetTicks() : cursor.lb;
+					} else if (event.button.button == SDL_BUTTON_RIGHT) {
+						cursor.rb = (cursor.rb == 0) ? SDL_GetTicks() : cursor.rb;
 					}
 				}
 				break;
 			case SDL_MOUSEBUTTONUP:
+				{
+					if (event.button.button == SDL_BUTTON_LEFT) {
+						cursor.lb = 0;
+					} else if (event.button.button == SDL_BUTTON_RIGHT) {
+						cursor.rb = 0;
+					}
+				}
 				break;
 			case SDL_WINDOWEVENT:
 				{
@@ -170,34 +183,6 @@ int pollEvents() {
 	}
 
 	return 0;
-}
-
-void handleKeyDown(SDL_Scancode value) {
-	switch (value) {
-		case SDL_SCANCODE_SPACE:
-			{
-				if (location == &menu) {
-					changeScene(&overworld);
-				} else {
-					changeScene(&menu);
-				}
-			}
-			break;
-		case SDL_SCANCODE_L:
-			{
-				if (player != NULL) {
-					render_component *r = (render_component*)getComponent(player, RENDER_COMPONENT);
-					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].changed = 1;
-					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].tile.tile = overworld.tiles[r->x][r->y].tile;
-					r->x += 1;
-					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].changed = 1;
-					dmatrix[(r->x)-(view.x)+DCOLS_OFFSET][(r->y)-(view.y)+DROWS_OFFSET].tile.tile = r->tile;
-				}
-			}
-			break;
-		default:
-			break;
-	}
 }
 
 void updateRenderingInfo(int initial) {
@@ -245,7 +230,40 @@ void updateRenderingInfo(int initial) {
 	}
 }
 
+void focusView() {
+	entity *target = (focus == NULL) ? player : focus;
+	
+	if (target != NULL) {
+		render_component *comp = (render_component*)getComponent(target, RENDER_COMPONENT);
+		
+		view.x = comp->x;
+		view.y = comp->y;
+		view.x -= ((DCOLS/2)+1)*tile_width;
+		view.y -= ((DROWS/2)+1)*tile_height;
+
+		if (view.x < 0) {
+			view.x = 0;
+		} else if (view.x+view.w > (location->w)*tile_width) {
+			view.x = ((location->w)*tile_width)-view.w;
+		}
+		if (view.y < 0) {
+			view.y = 0;
+		} else if (view.y+view.h > (location->h)*tile_height) {
+			view.y = ((location->h)*tile_height)-view.h;
+		}
+	}
+}
+
 void update() {
+	view_previous.x = view.x;
+	view_previous.y = view.y;
+
+	focusView();
+
+	if (phys_keys[SDL_SCANCODE_SPACE]) {
+		(location == &menu) ? changeScene(&overworld) : changeScene(&menu);
+	}
+
 	entity *node = getEntities(location);
 
 	while (node != NULL) {
@@ -254,7 +272,10 @@ void update() {
 		if (comp != NULL) {
 			if ((comp->x >= view.x) && (comp->x < view.x+view.w) &&
 					(comp->y >= view.y) && (comp->y < view.y+view.h)) {
-				dmatrix[(comp->x)-(view.x)+DCOLS_OFFSET][(comp->y)-(view.y)+DROWS_OFFSET].tile.tile = comp->tile;
+				int
+					dcellx = ((comp->x)-(view.x))/tile_width+DCOLS_OFFSET,
+					dcelly = ((comp->y)-(view.y))/tile_height+DROWS_OFFSET;
+				dmatrix[dcellx][dcelly].tile.tile = comp->tile;
 			}
 		}
 
@@ -463,12 +484,18 @@ void initializeKeybindings() {
 	int x;
 
 	for (x = 0; x < SDL_NUM_SCANCODES; x += 1) {
-		phys_keys[x].state = 0;
-		phys_keys[x].binding = NO_BINDING;
+		phys_keys[x] = 0;
+	}
+	for (x = 0; x < KEYBINDING_TYPE_COUNT; x += 1) {
+		virt_keys[x] = -1;
 	}
 
-	phys_keys[SDL_SCANCODE_H].binding = LEFT;
-	phys_keys[SDL_SCANCODE_L].binding = RIGHT;
+	virt_keys[LEFT] = SDL_SCANCODE_H;
+	virt_keys[RIGHT] = SDL_SCANCODE_L;
+}
+
+void gameStep() {
+
 }
 
 /*
