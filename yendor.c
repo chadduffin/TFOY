@@ -24,7 +24,7 @@ int initializeSDL() {
 		}
 
 		if ((status & WINDOW_OK) == WINDOW_OK) {
-			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 			if (SDL_GetRendererOutputSize(renderer, &window_width, &window_height) == 0) {
 				updateRenderingInfo(1);
@@ -213,17 +213,17 @@ void updateRenderingInfo(int initial) {
 	view.y = 0;
 	view.w = tile_width*DCOLS;
 	view.h = tile_height*DROWS;
-	view_previous.x = 0;
-	view_previous.y = 0;
+	view_previous.x = view.w;
+	view_previous.y = view.h;
 
 	if (initial == 1) {
 		printf("Initializing graphics .. PENDING.\n");
 		printf("> window width ......... %d.\n", window_width);
 		printf("> window height ........ %d.\n", window_height);
-		printf("> port x ............... %d.\n", dport.x);
-		printf("> port y ............... %d.\n", dport.y);
-		printf("> port width ........... %d.\n", dport.w);
-		printf("> port height .......... %d.\n", dport.h);
+		printf("> dport x .............. %d.\n", dport.x);
+		printf("> dport y .............. %d.\n", dport.y);
+		printf("> dport width .......... %d.\n", dport.w);
+		printf("> dport height ......... %d.\n", dport.h);
 		printf("> tile width ........... %d.\n", tile_width);
 		printf("> tile height .......... %d.\n", tile_height);
 		printf("Initializing graphics .. SUCCESS.\n");
@@ -235,7 +235,7 @@ void focusView() {
 	
 	if (target != NULL) {
 		render_component *comp = (render_component*)getComponent(target, RENDER_COMPONENT);
-		
+
 		view.x = comp->x;
 		view.y = comp->y;
 		view.x -= ((DCOLS/2)+1)*tile_width;
@@ -255,31 +255,12 @@ void focusView() {
 }
 
 void update() {
-	view_previous.x = view.x;
-	view_previous.y = view.y;
-
+	moveEntity(player, NULL, NULL, tile_width, tile_height, 1);
 	focusView();
 
 	if (phys_keys[SDL_SCANCODE_SPACE]) {
 		(location == &menu) ? changeScene(&overworld) : changeScene(&menu);
-	}
-
-	entity *node = getEntities(location);
-
-	while (node != NULL) {
-		render_component *comp = (render_component*)getComponent(node, RENDER_COMPONENT);
-
-		if (comp != NULL) {
-			if ((comp->x >= view.x) && (comp->x < view.x+view.w) &&
-					(comp->y >= view.y) && (comp->y < view.y+view.h)) {
-				int
-					dcellx = ((comp->x)-(view.x))/tile_width+DCOLS_OFFSET,
-					dcelly = ((comp->y)-(view.y))/tile_height+DROWS_OFFSET;
-				dmatrix[dcellx][dcelly].tile.tile = comp->tile;
-			}
-		}
-
-		node = (entity*)(node->next);
+		phys_keys[SDL_SCANCODE_SPACE] = 0;
 	}
 }
 
@@ -300,14 +281,22 @@ void render() {
 	SDL_SetRenderTarget(renderer, NULL);	
 	SDL_RenderCopy(renderer, render_buffers[target_buffer], NULL, NULL);
 
+	view_previous.x = view.x;
+	view_previous.y = view.y;
+
 	SDL_RenderPresent(renderer);
 	target_buffer = (target_buffer == 0) ? 1 : 0;	
 }
 
 void renderSalvage() {
 	int
+		x,
+		y,
 		xdiff = view.x-view_previous.x,
 		ydiff = view.y-view_previous.y;
+	SDL_Rect
+		src,
+		dst;
 
 	// ensures that the shift amount is not too great
 	if (((xdiff == 0) ||
@@ -316,9 +305,6 @@ void renderSalvage() {
 			((ydiff == 0) ||
 			((ydiff < 0) && (view.h+ydiff > 0)) ||
 			((ydiff > 0) && (view.h-ydiff > 0)))) {
-		SDL_Rect
-			src,
-			dst;
 
 		src.x = (xdiff < 0) ? 0 : xdiff;
 		src.y = (ydiff < 0) ? 0 : ydiff;
@@ -337,6 +323,29 @@ void renderSalvage() {
 		dst.y += dport.y+(DROWS_OFFSET)*tile_height;
 
 		SDL_RenderCopy(renderer, render_buffers[!target_buffer], &src, &dst);
+		
+		dst.x = (dst.x-dport.x)/tile_width;
+		dst.y = (dst.y-dport.y)/tile_height;
+		dst.w /= tile_width;
+		dst.h /= tile_height;
+	} else {
+		dst.x = 0;
+		dst.y = 0;
+		dst.w = 0;
+		dst.h = 0;
+	}
+
+	for (y = 0; y < ROWS; y += 1) {
+		for (x = 0; x < COLS; x += 1) {
+			if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
+					(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
+				if ((x < dst.x) || (x >= dst.x+dst.w) ||
+						(y < dst.y) || (y >= dst.y+dst.h)) {
+					dmatrix[x][y].changed = 1;
+					dmatrix[x][y].tile.tile = location->tiles[x-DCOLS_OFFSET+(view.x/tile_width)][y-DROWS_OFFSET+(view.y/tile_height)].tile;
+				}
+			}
+		}
 	}
 }
 
@@ -384,7 +393,7 @@ void renderChanges() {
 					SDL_SetTextureColorMod(textures[0], 255, 255, 255);
 					SDL_SetTextureAlphaMod(textures[0], 255);
 				}
-				dmatrix[x][y].changed = fg.flickers | bg.flickers;
+				dmatrix[x][y].changed = 0;
 			}
 		}
 	}
@@ -461,7 +470,12 @@ void changeScene(scene *dest) {
 		x,
 		y;
 	location = dest;
-	
+
+	view.x = 0;
+	view.y = 0;
+	view_previous.x = view.w;
+	view_previous.y = view.h;
+
 	if (location == &menu) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
@@ -470,10 +484,16 @@ void changeScene(scene *dest) {
 			}
 		}
 	} else {
-		for (y = 0; y < DROWS; y += 1) {
-			for (x = 0; x < DCOLS; x += 1) {
-				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].changed = 1;
-				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].tile = location->tiles[x][y];
+		for (y = 0; y < ROWS; y += 1) {
+			for (x = 0; x < COLS; x += 1) {
+				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
+						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
+					dmatrix[x][y].changed = 1;
+					dmatrix[x][y].tile = location->tiles[x-DCOLS_OFFSET][y-DROWS_OFFSET];
+				} else {
+					dmatrix[x][y].changed = 1;
+					dmatrix[x][y].tile.tile = BLACK;
+				}
 			}
 		}
 
@@ -492,10 +512,6 @@ void initializeKeybindings() {
 
 	virt_keys[LEFT] = SDL_SCANCODE_H;
 	virt_keys[RIGHT] = SDL_SCANCODE_L;
-}
-
-void gameStep() {
-
 }
 
 /*

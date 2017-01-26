@@ -28,6 +28,12 @@ void* addComponent(entity *target, int component_type) {
 		case RENDER_COMPONENT:
 			{
 				render_component *value = (render_component*)malloc(sizeof(render_component));
+				value->x = 0;
+				value->y = 0;
+				value->z = 0;
+				value->x_previous = 0;
+				value->y_previous = 0;
+				value->tile = NOTHING;
 				target->components[RENDER_COMPONENT] = value;
 				return value;
 			}

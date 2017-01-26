@@ -66,7 +66,7 @@ void initializeOverworld() {
 			if ((x == 0) || (y == 0) || (x == overworld.w-1) || (y == overworld.h-1)) {
 				overworld.tiles[x][y].tile = WOODEN_WALL;
 			} else {
-				overworld.tiles[x][y].tile = DIRT;
+				overworld.tiles[x][y].tile = (rand()%6 == 1) ? WOODEN_WALL : DIRT;
 			}
 		}
 	}
@@ -137,15 +137,22 @@ entity* getEntities(scene *source) {
 	return (source == NULL) ? NULL : source->head;
 }
 
-void moveObject(entity *target, scene *src, scene *dest, int x, int y) {
+void moveEntity(entity *target, scene *src, scene *dest, int x, int y, int relative) {
 	render_component *comp = getComponent(target, RENDER_COMPONENT);
 
 	if (comp != NULL) {
 		if ((src != NULL) && (dest != NULL)) {
-			comp->x = x;
-			comp->y = y;
+			comp->x = (relative) ? comp->x+x : x;
+			comp->y = (relative) ? comp->y+y : y;
+			comp->x_previous = comp->x;
+			comp->y_previous = comp->y;
 			popEntity(src, target);
 			addEntity(dest, target);
+		} else {
+			comp->x_previous = comp->x;
+			comp->y_previous = comp->y;
+			comp->x = (relative) ? comp->x+x : x;
+			comp->y = (relative) ? comp->y+y : y;
 		}
 	}
 }

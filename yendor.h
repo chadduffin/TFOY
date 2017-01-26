@@ -38,8 +38,8 @@
 #define DCOLS (COLS - STAT_BAR_WIDTH - 2)
 #define DROWS (ROWS - MESSAGE_ROWS - 2)
 // the offset of the actual game view
-#define DCOLS_OFFSET (COLS - DCOLS)
-#define DROWS_OFFSET (ROWS - DROWS)
+#define DCOLS_OFFSET (COLS - DCOLS - 1)
+#define DROWS_OFFSET (ROWS - DROWS - 1)
 
 #define MESSAGE_ROWS 5
 #define STAT_BAR_WIDTH 19
@@ -262,6 +262,8 @@ typedef struct render_component {
 		x,
 		y,
 		z,
+		x_previous,
+		y_previous,
 		tile;
 } render_component;
 
@@ -315,7 +317,7 @@ entity* createEntity(unsigned int id);
 void* addComponent(entity *target, int component_type);
 void* getComponent(entity *target, int component_type);
 void removeComponent(entity *target, int component_type);
-void moveEntity(entity *target, scene *src, scene *dest, int x, int y);
+void moveEntity(entity *target, scene *src, scene *dest, int x, int y, int relative);
 
 void initializeMenu();
 void initializeOverworld();
@@ -324,11 +326,8 @@ void addEntity(scene *dest, entity *target);
 void delEntity(scene *dest, entity *target);
 void popEntity(scene *dest, entity *target);
 entity* getEntities(scene *source);
-void moveObject(entity *target, scene *src, scene *dest, int x, int y);
 
 void initializeKeybindings();
-
-void gameStep();
 
 /*
 */
