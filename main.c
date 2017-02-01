@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
 			if (pollEvents() == -1) {
 				break;
 			}
+
 			update();
 			render();
 			last_update = frameCap(last_update);

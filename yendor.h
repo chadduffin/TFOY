@@ -226,15 +226,16 @@ typedef struct ctile {
 
 typedef struct dcell {
 	short
+		tile,
 		//the alpha value of the foreground image
 		alpha,
 		//the entity tile, if an entity is present
 		entity,
-		//whether or not this tile needs to be updated
-		visible,
 		//whether or not this tile needs to be redrawn
 		changed,
-		tile;
+		//whether or not this tile needs to be updated
+		visible,
+		discovered;
 	light light_value;
 	color
 		fg,
@@ -308,11 +309,16 @@ void clearScreen();
 void evaluateRGB(color col, short *r, short *g, short *b);
 void changeScene(scene *dest);
 void initializeKeybindings();
+void generateFOV(short x, short y);
+void castLight(
+	short distance, short x, short y,
+	short invert, short dx, short dy,
+	float start, float end);
 
 // tiles.c
-short getType(short tile);
-short getTime(short tile);
-short getChanged(short tile);
+short getTileTime(short x, short y);
+short getTileValue(short x, short y);
+short getTileChanged(short x, short y);
 void lookupTile(SDL_Rect *source, unsigned int value);
 
 // attributes.c

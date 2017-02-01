@@ -407,11 +407,12 @@ void clearScreen() {
 		y;
 
 	dcell cell;
+	cell.tile = BLACK;
 	cell.alpha = 255;
 	cell.entity = NOTHING;
-	cell.visible = 1;
 	cell.changed = 1;
-	cell.tile = BLACK;
+	cell.visible = 1;
+	cell.discovered = 1;
 	cell.light_value.intensity = 255;
 	cell.light_value.value = white;
 
@@ -507,7 +508,59 @@ void initializeKeybindings() {
 	}
 
 	virt_keys[LEFT] = SDL_SCANCODE_H;
+	virt_keys[LEFT_UP] = SDL_SCANCODE_Y;
+	virt_keys[LEFT_DOWN] = SDL_SCANCODE_B;
 	virt_keys[RIGHT] = SDL_SCANCODE_L;
+	virt_keys[RIGHT_UP] = SDL_SCANCODE_U;
+	virt_keys[RIGHT_DOWN] = SDL_SCANCODE_N;
+	virt_keys[UP] = SDL_SCANCODE_J;
+	virt_keys[DOWN] = SDL_SCANCODE_K;
+}
+
+void generateFOV(short x, short y) {
+	// placeholder function
+}
+
+void castLight(
+	short distance, short x, short y,
+	short invert, short dx, short dy,
+	float start, float end) {
+	short
+		i,
+		j,
+		x_adj,
+		y_adj,
+		was_blocked = 0;
+	
+	for (i = distance; i < DCOLS; i += 1) {
+		for (j = distance; j >= 0; j -= 1) {
+			if (start <= end) {
+				j = -1;
+				continue;
+			}
+			if (invert) {
+				x_adj = j*dx;
+				y_adj = i*dy;
+			} else {
+				x_adj = i*dx;
+				y_adj = j*dy;
+			}
+			if (descriptor_tiles[dmatrix[x_adj][y_adj].tile].base == SOLID) {
+				if (was_blocked == 0) {
+					float end_adj = ((float)(i-x+0.5))/((float)(j-y+0.5));
+					castLight(distance+1, x, y, invert, dx, dy, start, end_adj);
+				}
+				was_blocked = 1;
+			} else {
+				dmatrix[x_adj][y_adj].visible = 1;
+				if (was_blocked) {
+					float start_adj = ((float)(i-x+1.5))/((float)(j-y+1.5));
+					castLight(distance+1, x, y, invert, dx, dy, start_adj, end);
+				}
+				was_blocked = 0;
+			}
+		}
+	}
 }
 
 /*
