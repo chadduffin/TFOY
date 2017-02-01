@@ -255,7 +255,6 @@ void focusView() {
 }
 
 void update() {
-	moveEntity(player, NULL, NULL, tile_width, tile_height, 1);
 	focusView();
 
 	if (phys_keys[SDL_SCANCODE_SPACE]) {
@@ -335,16 +334,17 @@ void renderSalvage() {
 		dst.h = 0;
 	}
 
-	for (y = 0; y < ROWS; y += 1) {
-		for (x = 0; x < COLS; x += 1) {
-			if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
-					(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
+	int
+		x_offset = DCOLS_OFFSET+(view.x/tile_width),
+		y_offset = DROWS_OFFSET+(view.y/tile_height);
+
+	for (y = DROWS_OFFSET; y < (DROWS+DROWS_OFFSET); y += 1) {
+		for (x = DCOLS_OFFSET; x < (DCOLS+DCOLS_OFFSET); x += 1) {
 				if ((x < dst.x) || (x >= dst.x+dst.w) ||
 						(y < dst.y) || (y >= dst.y+dst.h)) {
 					dmatrix[x][y].changed = 1;
-					dmatrix[x][y].tile.tile = location->tiles[x-DCOLS_OFFSET+(view.x/tile_width)][y-DROWS_OFFSET+(view.y/tile_height)].tile;
+					dmatrix[x][y].tile = getTileValue(x-x_offset, y-y_offset);
 				}
-			}
 		}
 	}
 }
@@ -363,7 +363,7 @@ void renderChanges() {
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
-			int to_draw = dmatrix[x][y].tile.tile;
+			int to_draw = dmatrix[x][y].tile;
 			color
 				fg = (to_draw < 256) ? white : *(descriptor_tiles[to_draw-256].fg),
 				bg = (to_draw < 256) ? black : *(descriptor_tiles[to_draw-256].bg);
@@ -408,24 +408,17 @@ void clearScreen() {
 
 	dcell cell;
 	cell.alpha = 255;
+	cell.entity = NOTHING;
+	cell.visible = 1;
 	cell.changed = 1;
-	cell.tile.tile = BLACK;
+	cell.tile = BLACK;
+	cell.light_value.intensity = 255;
+	cell.light_value.value = white;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
 			dmatrix[x][y] = cell;
 		}
-	}
-}
-
-void lookupTile(SDL_Rect *source, unsigned int value) {
-	if (value < 256) {
-		source->x = (value%16)*TILE_SOURCE_WIDTH;
-		source->y = (value/16)*TILE_SOURCE_HEIGHT;
-	} else {
-		value -= 256;
-		source->x = descriptor_tiles[value].x*TILE_SOURCE_WIDTH;
-		source->y = descriptor_tiles[value].y*TILE_SOURCE_HEIGHT;
 	}
 }
 
@@ -480,19 +473,22 @@ void changeScene(scene *dest) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].tile = location->tiles[x][y];
+				dmatrix[x][y].tile = getTileValue(x, y);
 			}
 		}
 	} else {
+		int
+			x_offset = DCOLS_OFFSET+(view.x/tile_width),
+			y_offset = DROWS_OFFSET+(view.y/tile_height);
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
+				dmatrix[x][y].changed = 1;
+
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
-					dmatrix[x][y].changed = 1;
-					dmatrix[x][y].tile = location->tiles[x-DCOLS_OFFSET][y-DROWS_OFFSET];
+					dmatrix[x][y].tile = getTileValue(x-x_offset, y-y_offset);
 				} else {
-					dmatrix[x][y].changed = 1;
-					dmatrix[x][y].tile.tile = BLACK;
+					dmatrix[x][y].tile = BLACK;
 				}
 			}
 		}

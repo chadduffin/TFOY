@@ -125,7 +125,7 @@ enum TileCategories {
 	SOLID,
 	LIQUID,
 	GROUND,
-	CHARACTER,
+	ENTITY,
 	COLOR,
 
 	TILE_CATEGORY_COUNT
@@ -140,22 +140,10 @@ enum TileFlags {
 	BREAKABLE = 4,
 };
 
-enum TileEffects {
-	IS_BURNT = 1,
-	IS_FROZEN = 2,
-	IS_MELTED = 4,
-	IS_CHARRED = 8,
-	IS_FROSTED = 16,
-	IS_STEAMING = 32,
-	IS_EXTINGUISED = 64,
-	IS_EXPLOSIVE_GAS = 128,
-	IS_POISONOUS_GAS = 256,
-};
-
 enum TileIndexes {
 	NOTHING = 256,
 	DIRT,
-	WOODEN_WALL,
+	WALL,
 
 	HUMAN,
 
@@ -204,6 +192,11 @@ typedef struct color {
 		flickers;
 } color;
 
+typedef struct light {
+	short intensity;
+	color value;
+} light;
+
 typedef struct attribute {
 	char
 		*name,
@@ -218,8 +211,6 @@ typedef struct dtile {
 	short
 		base,
 		flags,
-		effect,
-	
 		// x & y of tile display source
 		x,
 		y;
@@ -228,18 +219,26 @@ typedef struct dtile {
 		*bg;
 } dtile;
 
+// compressed tile
 typedef struct ctile {
-	unsigned char
-		effect,
-		duration;
 	short tile;
 } ctile;
 
 typedef struct dcell {
 	short
+		//the alpha value of the foreground image
 		alpha,
-		changed;
-	ctile tile;
+		//the entity tile, if an entity is present
+		entity,
+		//whether or not this tile needs to be updated
+		visible,
+		//whether or not this tile needs to be redrawn
+		changed,
+		tile;
+	light light_value;
+	color
+		fg,
+		bg;
 } dcell;
 
 typedef struct entity {
@@ -280,6 +279,7 @@ typedef struct scene {
 	entity
 		*head,
 		*tail;
+	light ambient_light;
 } scene;
 
 typedef struct mouse_state {
@@ -305,20 +305,30 @@ void render();
 void renderSalvage();
 void renderChanges();
 void clearScreen();
-void lookupTile(SDL_Rect *source, unsigned int value);
 void evaluateRGB(color col, short *r, short *g, short *b);
 void changeScene(scene *dest);
+void initializeKeybindings();
 
+// tiles.c
+short getType(short tile);
+short getTime(short tile);
+short getChanged(short tile);
+void lookupTile(SDL_Rect *source, unsigned int value);
+
+// attributes.c
 const char* getAttributeName(int index);
 const char* getAttributeDescription(int index);
 int getExperienceNeeded(int level);
 
+// entity.c
 entity* createEntity(unsigned int id);
 void* addComponent(entity *target, int component_type);
 void* getComponent(entity *target, int component_type);
 void removeComponent(entity *target, int component_type);
-void moveEntity(entity *target, scene *src, scene *dest, int x, int y, int relative);
+void entityPos(entity *target, int *x, int *y);
+void entityMov(entity *target, scene *src, scene *dest, int x, int y, int relative);
 
+// scene.c
 void initializeMenu();
 void initializeOverworld();
 void cleanupScene(scene *target);
@@ -326,8 +336,6 @@ void addEntity(scene *dest, entity *target);
 void delEntity(scene *dest, entity *target);
 void popEntity(scene *dest, entity *target);
 entity* getEntities(scene *source);
-
-void initializeKeybindings();
 
 /*
 */

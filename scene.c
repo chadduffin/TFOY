@@ -21,6 +21,8 @@ void initializeMenu() {
 	menu.w = COLS;
 	menu.h = ROWS;
 	menu.entity_count = 0;
+	menu.ambient_light.intensity = 255;
+	menu.ambient_light.value = white;
 
 	menu.tiles = (ctile**)malloc(sizeof(ctile*)*menu.w);
 	menu.head = NULL;
@@ -52,6 +54,8 @@ void initializeOverworld() {
 	overworld.w = WORLD_COLS;
 	overworld.h = WORLD_ROWS;
 	overworld.entity_count = 0;
+	menu.ambient_light.intensity = 255;
+	menu.ambient_light.value = white;
 
 	overworld.tiles = (ctile**)malloc(sizeof(ctile*)*overworld.w);
 	overworld.head = NULL;
@@ -64,9 +68,9 @@ void initializeOverworld() {
 	for (y = 0; y < overworld.h; y += 1) {
 		for (x = 0; x < overworld.w; x += 1) {
 			if ((x == 0) || (y == 0) || (x == overworld.w-1) || (y == overworld.h-1)) {
-				overworld.tiles[x][y].tile = WOODEN_WALL;
+				overworld.tiles[x][y].tile = WALL;
 			} else {
-				overworld.tiles[x][y].tile = (rand()%6 == 1) ? WOODEN_WALL : DIRT;
+				overworld.tiles[x][y].tile = (rand()%6 == 1) ? WALL : DIRT;
 			}
 		}
 	}
@@ -137,7 +141,16 @@ entity* getEntities(scene *source) {
 	return (source == NULL) ? NULL : source->head;
 }
 
-void moveEntity(entity *target, scene *src, scene *dest, int x, int y, int relative) {
+void entityPos(entity *target, int *x, int *y) {
+	render_component *comp = getComponent(target, RENDER_COMPONENT);
+
+	if (comp != NULL) {
+		*x = comp->x;
+		*y = comp->y;
+	}
+}
+
+void entityMov(entity *target, scene *src, scene *dest, int x, int y, int relative) {
 	render_component *comp = getComponent(target, RENDER_COMPONENT);
 
 	if (comp != NULL) {
@@ -155,6 +168,18 @@ void moveEntity(entity *target, scene *src, scene *dest, int x, int y, int relat
 			comp->y = (relative) ? comp->y+y : y;
 		}
 	}
+}
+
+short getTileTime(short x, short y) {
+	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x7800);
+}
+
+short getTileValue(short x, short y) {
+	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x7FF);
+}
+
+short getTileChanged(short x, short y) {
+	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x8000);
 }
 
 /*
