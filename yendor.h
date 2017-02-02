@@ -319,7 +319,8 @@ void castLight(
 short getTileTime(short x, short y);
 short getTileValue(short x, short y);
 short getTileChanged(short x, short y);
-void lookupTile(SDL_Rect *source, unsigned int value);
+const dtile* lookupTile(unsigned int value);
+void lookupTileSource(SDL_Rect *source, unsigned int value);
 
 // attributes.c
 const char* getAttributeName(int index);

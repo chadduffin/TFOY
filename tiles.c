@@ -22,7 +22,11 @@ dtile descriptor_tiles[TILE_TYPE_COUNT] = {
 	{"", "", COLOR, 0, 0, 0, &yellow, &yellow},
 };
 
-void lookupTile(SDL_Rect *source, unsigned int value) {
+const dtile* lookupTile(unsigned int value) {
+	return &descriptor_tiles[value-NOTHING];
+}
+
+void lookupTileSource(SDL_Rect *source, unsigned int value) {
 	if (value < 256) {
 		source->x = (value%16)*TILE_SOURCE_WIDTH;
 		source->y = (value/16)*TILE_SOURCE_HEIGHT;

@@ -70,7 +70,7 @@ void initializeOverworld() {
 			if ((x == 0) || (y == 0) || (x == overworld.w-1) || (y == overworld.h-1)) {
 				overworld.tiles[x][y].tile = WALL;
 			} else {
-				overworld.tiles[x][y].tile = (rand()%6 == 1) ? WALL : DIRT;
+				overworld.tiles[x][y].tile = (rand()%32 == 1) ? WALL : DIRT;
 			}
 		}
 	}
