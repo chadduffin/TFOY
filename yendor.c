@@ -374,14 +374,12 @@ void renderChanges() {
 					g,
 					b;
 
-				evaluateRGB(bg, &r, &g, &b);
-
 				if (dmatrix[x][y].visible == 0) {
-					r = 0;
-					g = 0;
-					b = 0;
+					r = g = b = 0;
 					fg = bg = black;
 				}
+
+				evaluateRGB(bg, &r, &g, &b);
 
 				dst.x = dport.x+(x*tile_width);
 				dst.y = dport.y+(y*tile_height);
@@ -481,6 +479,7 @@ void changeScene(scene *dest) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
+				dmatrix[x][y].visible = 1;
 				dmatrix[x][y].tile = getTileValue(x, y);
 			}
 		}
@@ -526,9 +525,11 @@ void initializeKeybindings() {
 }
 
 void generateFOV(short x, short y) {
+	//take rendering port coordinates and adjust them
 	x += DCOLS_OFFSET;
 	y += DROWS_OFFSET;
-	dmatrix[x][y].visible = 1;
+
+	//cast shadows into each octant
 	castLight(1, x, y, 0, 1, 1, 1, 0);
 	castLight(1, x, y, 1, 1, 1, 1, 0);
 	castLight(1, x, y, 0, -1, 1, 1, 0);
@@ -537,6 +538,9 @@ void generateFOV(short x, short y) {
 	castLight(1, x, y, 1, 1, -1, 1, 0);
 	castLight(1, x, y, 0, -1, -1, 1, 0);
 	castLight(1, x, y, 1, -1, -1, 1, 0);
+
+	//make at least the exact spot of the player visible
+	dmatrix[x][y].visible = 1;
 }
 
 void castLight(
@@ -548,45 +552,54 @@ void castLight(
 		j,
 		x_adj,
 		y_adj,
+		bound,
 		was_blocked = 0;
 	float
 		current,
 		next;
 
-	for (i = distance; i < 28; i += 1) {
+	if (invert) {
+		bound = (dy < 0) ? (y-DROWS_OFFSET+1) : (DROWS+DROWS_OFFSET-y);
+	} else {
+		bound = (dx < 0) ? (x-DCOLS_OFFSET+1) : (DCOLS+DCOLS_OFFSET-x);
+	}
+
+	for (i = distance; i < bound; i += 1) {
 		for (j = distance; j >= 0; j -= 1) {
+			// slope of the next block
 			next = ((float)(j-0.5))/((float)(i+0.5));
+			// slope of the current block
 			current = ((float)(j+0.5))/((float)(i+0.5));
-			if (current > start) {
-				continue;
-			}
-			if (current >= end) {
-				if (invert) {
-					x_adj = x+(j*dx);
-					y_adj = y+(i*dy);
-				} else {
-					x_adj = x+(i*dx);
-					y_adj = y+(j*dy);
-				}
-				if (lookupTile(dmatrix[x_adj][y_adj].tile)->base == SOLID) {
-					if ((was_blocked == 0) && (j != distance)) {
-						castLight(distance+1, x, y, invert, dx, dy, start, ((float)(j+1.0))/(float)(i));
-						if ((j == 0) || (next < end)) {
-							end = ((float)(j+1.0))/((float)(i));
+			if (current <= start) {
+				// translate algorithm coordinates to dmatrix coordinates
+				if (current >= end) {
+					if (invert) {
+						x_adj = x+(j*dx);
+						y_adj = y+(i*dy);
+					} else {
+						x_adj = x+(i*dx);
+						y_adj = y+(j*dy);
+					}
+					if (lookupTile(dmatrix[x_adj][y_adj].tile)->base == SOLID) {
+						if ((was_blocked == 0) && (j != distance)) {
+							castLight(distance+1, x, y, invert, dx, dy, start, ((float)(j+1.0))/(float)(i));
+							if ((j == 0) || (next < end)) {
+								end = ((float)(j+1.0))/((float)(i));
+							} else {
+								start = ((float)(j))/((float)(i+1.0));
+							}
 						} else {
 							start = ((float)(j))/((float)(i+1.0));
 						}
+						was_blocked = 1;
 					} else {
-						start = ((float)(j))/((float)(i+1.0));
+						was_blocked = 0;
 					}
-					was_blocked = 1;
+					
+					dmatrix[x_adj][y_adj].visible = 1;
 				} else {
-					was_blocked = 0;
+					j = -1;
 				}
-				
-				dmatrix[x_adj][y_adj].visible = 1;
-			} else {
-				j = -1;
 			}
 		}
 		distance += 1;
