@@ -380,7 +380,7 @@ void renderChanges() {
 					r = 0;
 					g = 0;
 					b = 0;
-					fg = bg;
+					fg = bg = black;
 				}
 
 				dst.x = dport.x+(x*tile_width);
@@ -528,6 +528,7 @@ void initializeKeybindings() {
 void generateFOV(short x, short y) {
 	x += DCOLS_OFFSET;
 	y += DROWS_OFFSET;
+	dmatrix[x][y].visible = 1;
 	castLight(1, x, y, 0, 1, 1, 1, 0);
 	castLight(1, x, y, 1, 1, 1, 1, 0);
 	castLight(1, x, y, 0, -1, 1, 1, 0);
@@ -561,24 +562,25 @@ void castLight(
 			}
 			if (current >= end) {
 				if (invert) {
-					x_adj = x+(j*dy);
-					y_adj = y+(i*dx);
+					x_adj = x+(j*dx);
+					y_adj = y+(i*dy);
 				} else {
 					x_adj = x+(i*dx);
 					y_adj = y+(j*dy);
 				}
 				if (lookupTile(dmatrix[x_adj][y_adj].tile)->base == SOLID) {
 					if ((was_blocked == 0) && (j != distance)) {
-						if ((j == 0) || (next <= end)) {
-							end = ((float)(j+1.0))/(float)(i);
-						}
 						castLight(distance+1, x, y, invert, dx, dy, start, ((float)(j+1.0))/(float)(i));
+						if ((j == 0) || (next < end)) {
+							end = ((float)(j+1.0))/((float)(i));
+						} else {
+							start = ((float)(j))/((float)(i+1.0));
+						}
+					} else {
+						start = ((float)(j))/((float)(i+1.0));
 					}
 					was_blocked = 1;
 				} else {
-					if (was_blocked) {
-						start = (float)(j+1.0)/(float)(i);
-					}
 					was_blocked = 0;
 				}
 				
