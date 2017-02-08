@@ -112,7 +112,9 @@ void renderSalvage() {
 		dst.y += dport.y+(DROWS_OFFSET)*tile_height;
 
 		SDL_RenderCopy(renderer, render_buffers[!target_buffer], &src, &dst);
-		
+
+		src.x = (src.x-dport.x)/tile_width;
+		src.y = (src.y-dport.y)/tile_height;
 		dst.x = (dst.x-dport.x)/tile_width;
 		dst.y = (dst.y-dport.y)/tile_height;
 		dst.w /= tile_width;
@@ -134,6 +136,8 @@ void renderSalvage() {
 					(y < dst.y) || (y >= dst.y+dst.h)) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].tile = getTileValue(x-x_offset, y-y_offset);
+			} else {
+				dmatrix[x][y] = dmatrix[x+(src.x-dst.x)][y+(src.y-dst.y)];
 			}
 			if (dmatrix[x][y].visible == 1) {
 				dmatrix[x][y].visible = 0;
@@ -194,7 +198,8 @@ void renderChanges() {
 					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 					SDL_RenderFillRect(renderer, &dst);	
 				}
-				dmatrix[x][y].changed = 0;
+				dmatrix[x][y].changed = dmatrix[x][y].entity ? 1 : 0;
+				dmatrix[x][y].entity = NOTHING;
 			}
 		}
 	}
