@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
 	if (status > GRPHCS_OK) {
 		initializeMenu();
 		initializeOverworld();
+		initializeKeybindings();
 		changeScene(&menu);
 
 		while (1) {

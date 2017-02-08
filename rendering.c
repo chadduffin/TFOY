@@ -125,8 +125,8 @@ void renderSalvage() {
 	}
 
 	int
-		x_offset = DCOLS_OFFSET+view.x,
-		y_offset = DROWS_OFFSET+view.y;
+		x_offset = DCOLS_OFFSET-view.x,
+		y_offset = DROWS_OFFSET-view.y;
 
 	for (y = DROWS_OFFSET; y < (DROWS+DROWS_OFFSET); y += 1) {
 		for (x = DCOLS_OFFSET; x < (DCOLS+DCOLS_OFFSET); x += 1) {

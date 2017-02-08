@@ -199,12 +199,12 @@ void focusView() {
 
 			if (view.x < 0) {
 				view.x = 0;
-			} else if (view.x+view.w > location->w) {
+			} else if (view.x+view.w >= location->w) {
 				view.x = location->w-view.w;
 			}
 			if (view.y < 0) {
 				view.y = 0;
-			} else if (view.y+view.h > location->h) {
+			} else if (view.y+view.h >= location->h) {
 				view.y = location->h-view.h;
 			}
 		}
@@ -262,6 +262,7 @@ void changeScene(scene *dest) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].visible = 1;
+				dmatrix[x][y].entity = NOTHING;
 				dmatrix[x][y].tile = getTileValue(x, y);
 			}
 		}
@@ -273,6 +274,7 @@ void changeScene(scene *dest) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].visible = 0;
+				dmatrix[x][y].entity = NOTHING;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
@@ -303,6 +305,10 @@ void initializeKeybindings() {
 	virt_keys[RIGHT_DOWN] = SDL_SCANCODE_N;
 	virt_keys[UP] = SDL_SCANCODE_J;
 	virt_keys[DOWN] = SDL_SCANCODE_K;
+}
+
+int checkBoundKey(unsigned int keybinding) {
+	return phys_keys[virt_keys[keybinding]];
 }
 
 /*

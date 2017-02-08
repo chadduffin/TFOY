@@ -64,6 +64,22 @@ void entityUpdate(entity *target) {
 			dmatrix[DCOLS_OFFSET+value->x-view.x][DROWS_OFFSET+value->y-view.y].changed = 1;
 			dmatrix[DCOLS_OFFSET+value->x-view.x][DROWS_OFFSET+value->y-view.y].entity = value->tile;
 		}
+		if (checkBoundKey(RIGHT)) {
+			value->x += 1;
+			phys_keys[virt_keys[RIGHT]] = 0;
+		}
+		if (checkBoundKey(LEFT)) {
+			value->x -= 1;
+			phys_keys[virt_keys[LEFT]] = 0;
+		}
+		if (checkBoundKey(UP)) {
+			value->y -= 1;
+			phys_keys[virt_keys[UP]] = 0;
+		}
+		if (checkBoundKey(DOWN)) {
+			value->y += 1;
+			phys_keys[virt_keys[DOWN]] = 0;
+		}
 	}
 }
 

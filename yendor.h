@@ -305,6 +305,7 @@ void update();
 void gameStep();
 void changeScene(scene *dest);
 void initializeKeybindings();
+int checkBoundKey(unsigned int keybinding);
 
 // rendering.c
 void updateRenderingInfo();
