@@ -8,7 +8,7 @@
 dtile descriptor_tiles[TILE_TYPE_COUNT] = {
 	{"empty", "description", EMPTY, 0, 0, 0, &black, &black},
 	{"ground", "the ground", GROUND, 0, 14, 2, &grey, &dark_blue},
-	{"wall", "a wall", SOLID, 0, 3, 2, &brown, &grey},
+	{"wall", "a wall", SOLID, OBSTRUCTS, 3, 2, &brown, &grey},
 
 	{"character", "", ENTITY, 0, 1, 0, &white, &black},
 

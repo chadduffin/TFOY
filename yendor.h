@@ -132,12 +132,13 @@ enum TileCategories {
 };
 
 enum TileFlags {
+	OBSTRUCTS = 1,
 	// if the tile PROPOGATES fire, it is flammable.
-	FLAMMABLE = 1,
+	FLAMMABLE = 2,
 	// if the tile CHANGES STATE when frozen, it is freezable.
-	FREEZABLE = 2,
+	FREEZABLE = 4,
 	// if the tile IS A WALL and CAN DISAPPEAR, it is breakable.
-	BREAKABLE = 4,
+	BREAKABLE = 8,
 };
 
 enum TileIndexes {
@@ -299,16 +300,19 @@ int initializeSDL();
 void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
-void updateRenderingInfo();
-void update();
 void focusView();
+void update();
+void gameStep();
+void changeScene(scene *dest);
+void initializeKeybindings();
+
+// rendering.c
+void updateRenderingInfo();
 void render();
 void renderSalvage();
 void renderChanges();
 void clearScreen();
 void evaluateRGB(color col, short *r, short *g, short *b);
-void changeScene(scene *dest);
-void initializeKeybindings();
 void generateFOV(short x, short y);
 void castLight(
 	short distance, short x, short y,
@@ -334,6 +338,7 @@ void* getComponent(entity *target, int component_type);
 void removeComponent(entity *target, int component_type);
 void entityPos(entity *target, int *x, int *y);
 void entityMov(entity *target, scene *src, scene *dest, int x, int y, int relative);
+void entityUpdate(entity *target);
 
 // scene.c
 void initializeMenu();

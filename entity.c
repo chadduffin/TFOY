@@ -55,5 +55,17 @@ void removeComponent(entity *target, int component_type) {
 	}
 }
 
+void entityUpdate(entity *target) {
+	render_component *value = (render_component*)(getComponent(target, RENDER_COMPONENT));
+
+	if (value != NULL) {
+		if ((value->x > view.x) && (value->x < view.x+view.w) &&
+				(value->y > view.y) && (value->y < view.y+view.h)) {
+			dmatrix[DCOLS_OFFSET+value->x-view.x][DROWS_OFFSET+value->y-view.y].changed = 1;
+			dmatrix[DCOLS_OFFSET+value->x-view.x][DROWS_OFFSET+value->y-view.y].entity = value->tile;
+		}
+	}
+}
+
 /*
 */

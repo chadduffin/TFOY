@@ -78,8 +78,8 @@ void initializeOverworld() {
 	player = createEntity(0);
 	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
 	r->tile = HUMAN;
-	r->x = 256;
-	r->y = 128;
+	r->x = 3;
+	r->y = 3;
 	addEntity(&overworld, player);
 }
 

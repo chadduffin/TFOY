@@ -23,7 +23,7 @@ extern int window_height;
 extern int target_buffer;
 
 // view is the in-world x & y
-// view x, y, w & h are in pixels, not tiles
+// view x, y, w & h are in tiles
 extern SDL_Rect view;
 extern SDL_Rect view_previous;
 // dport is the net screen area to be drawn and still maintain aspect ratio
