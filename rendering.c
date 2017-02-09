@@ -80,6 +80,8 @@ void renderSalvage() {
 	SDL_Rect
 		src,
 		dst;
+	src.x = 0;
+	src.y = 0;
 
 	// ensures that the shift amount is not too great
 	if (((xdiff == 0) ||
@@ -103,10 +105,10 @@ void renderSalvage() {
 
 		dst.x = (xdiff < 0) ? (-xdiff) : 0;
 		dst.y = (ydiff < 0) ? (-ydiff) : 0;
-		dst.w = src.w;
-		dst.h = src.h;
 		dst.x *= tile_width;
 		dst.y *= tile_height;
+		dst.w = src.w;
+		dst.h = src.h;
 
 		dst.x += dport.x+(DCOLS_OFFSET)*tile_width;
 		dst.y += dport.y+(DROWS_OFFSET)*tile_height;
@@ -119,6 +121,22 @@ void renderSalvage() {
 		dst.y = (dst.y-dport.y)/tile_height;
 		dst.w /= tile_width;
 		dst.h /= tile_height;
+
+		if ((xdiff != 0) || (ydiff != 0)) {
+			int
+				x_start = (xdiff > 0) ? 0 : dst.w-1,
+				y_start = (ydiff > 0) ? 0 : dst.h-1,
+				x_end = (xdiff > 0) ? dst.w : -1,
+				y_end = (ydiff > 0) ? dst.h : -1,
+				x_it = (xdiff > 0) ? 1 : -1,
+				y_it = (ydiff > 0) ? 1 : -1;
+
+			for (y = y_start; y != y_end; y += y_it) {
+				for (x = x_start; x != x_end; x += x_it) {
+					dmatrix[dst.x+x][dst.y+y] = dmatrix[src.x+x][src.y+y];
+				}
+			}
+		}
 	} else {
 		dst.x = 0;
 		dst.y = 0;
@@ -136,8 +154,6 @@ void renderSalvage() {
 					(y < dst.y) || (y >= dst.y+dst.h)) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].tile = getTileValue(x-x_offset, y-y_offset);
-			} else {
-				dmatrix[x][y] = dmatrix[x+(src.x-dst.x)][y+(src.y-dst.y)];
 			}
 			if (dmatrix[x][y].visible == 1) {
 				dmatrix[x][y].visible = 0;

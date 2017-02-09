@@ -14,6 +14,9 @@ int main(int argc, char **argv) {
 		initializeKeybindings();
 		changeScene(&menu);
 
+			update();
+			render();
+
 		while (1) {
 			if (pollEvents() == -1) {
 				break;

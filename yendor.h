@@ -300,6 +300,7 @@ int initializeSDL();
 void exitSDL(int status);
 int frameCap(int last_update);
 int pollEvents();
+int handleEvents();
 void focusView();
 void update();
 void gameStep();

@@ -185,6 +185,10 @@ int pollEvents() {
 	return 0;
 }
 
+int handleEvents() {
+	return rand()%25;
+}
+
 void focusView() {
 	if (location != &menu) {
 		entity *target = (focus == NULL) ? player : focus;
