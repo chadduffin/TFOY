@@ -182,7 +182,7 @@ enum KeybindingTypes {
 */
 
 typedef struct color {
-	short
+	int
 		red,
 		green,
 		blue,
@@ -194,7 +194,7 @@ typedef struct color {
 } color;
 
 typedef struct light {
-	short intensity;
+	int intensity;
 	color value;
 } light;
 
@@ -209,7 +209,7 @@ typedef struct dtile {
 	char
 		*name,
 		*description;
-	short
+	int
 		base,
 		flags,
 		// x & y of tile display source
@@ -226,7 +226,7 @@ typedef struct ctile {
 } ctile;
 
 typedef struct dcell {
-	short
+	int
 		tile,
 		//the alpha value of the foreground image
 		alpha,
@@ -259,7 +259,7 @@ typedef struct creature_component {
 } creature_component;
 
 typedef struct render_component {
-	short
+	int
 		x,
 		y,
 		z,
@@ -273,7 +273,7 @@ typedef struct player_component {
 } player_component;
 
 typedef struct scene {
-	short
+	int
 		w,
 		h,
 		entity_count;
@@ -314,17 +314,17 @@ void render();
 void renderSalvage();
 void renderChanges();
 void clearScreen();
-void evaluateRGB(color col, short *r, short *g, short *b);
-void generateFOV(short x, short y);
+void evaluateRGB(color col, int *r, int *g, int *b);
+void generateFOV(int x, int y);
 void castLight(
-	short distance, short x, short y,
-	short invert, short dx, short dy,
+	int distance, int x, int y,
+	int invert, int dx, int dy,
 	float start, float end);
 
 // tiles.c
-short getTileTime(short x, short y);
-short getTileValue(short x, short y);
-short getTileChanged(short x, short y);
+int getTileTime(int x, int y);
+int getTileValue(int x, int y);
+int getTileChanged(int x, int y);
 const dtile* lookupTile(unsigned int value);
 void lookupTileSource(SDL_Rect *source, unsigned int value);
 

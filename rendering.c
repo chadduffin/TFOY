@@ -189,7 +189,7 @@ void renderChanges() {
 				dst.y = dport.y+(y*tile_height);
 	
 				if (dmatrix[x][y].visible) {
-					short
+					int
 						r,
 						g,
 						b;
@@ -214,12 +214,12 @@ void renderChanges() {
 					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 					SDL_RenderFillRect(renderer, &dst);	
 				}
-				dmatrix[x][y].changed = dmatrix[x][y].entity ? 1 : 0;
-				dmatrix[x][y].entity = NOTHING;
+				dmatrix[x][y].changed = 0;
+				//dmatrix[x][y].changed = dmatrix[x][y].entity ? 1 : 0;
+				//dmatrix[x][y].entity = NOTHING;
 			}
 		}
 	}
-
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 }
 
@@ -245,7 +245,7 @@ void clearScreen() {
 	}
 }
 
-void evaluateRGB(color col, short *r, short *g, short *b) {
+void evaluateRGB(color col, int *r, int *g, int *b) {
 	*r = col.red;
 	*g = col.green;
 	*b = col.blue;
@@ -281,7 +281,7 @@ void evaluateRGB(color col, short *r, short *g, short *b) {
 	}
 }
 
-void generateFOV(short x, short y) {
+void generateFOV(int x, int y) {
 	//take rendering port coordinates and adjust them
 	x += DCOLS_OFFSET;
 	y += DROWS_OFFSET;
@@ -304,10 +304,10 @@ void generateFOV(short x, short y) {
 }
 
 void castLight(
-	short distance, short x, short y,
-	short invert, short dx, short dy,
+	int distance, int x, int y,
+	int invert, int dx, int dy,
 	float start, float end) {
-	short
+	int
 		i,
 		j,
 		x_adj,

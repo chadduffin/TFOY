@@ -186,7 +186,41 @@ int pollEvents() {
 }
 
 int handleEvents() {
-	return rand()%25;
+	short to_return = -1;
+	entity *target = (focus == NULL) ? player : focus;
+	render_component *value = getComponent(target, RENDER_COMPONENT);
+
+	if (phys_keys[SDL_SCANCODE_SPACE]) {
+		(location == &menu) ? changeScene(&overworld) : changeScene(&menu);
+		phys_keys[SDL_SCANCODE_SPACE] = 0;
+		to_return = 0;
+	}
+
+	value->x_previous = value->x;
+	value->y_previous = value->y;
+
+	if (checkBoundKey(RIGHT)) {
+		value->x += 1;
+		phys_keys[virt_keys[RIGHT]] = 0;
+		to_return = 0;
+	}
+	if (checkBoundKey(LEFT)) {
+		value->x -= 1;
+		phys_keys[virt_keys[LEFT]] = 0;
+		to_return = 0;
+	}
+	if (checkBoundKey(UP)) {
+		value->y -= 1;
+		phys_keys[virt_keys[UP]] = 0;
+		to_return = 0;
+	}
+	if (checkBoundKey(DOWN)) {
+		value->y += 1;
+		phys_keys[virt_keys[DOWN]] = 0;
+		to_return = 0;
+	}
+
+	return to_return;
 }
 
 void focusView() {
@@ -216,21 +250,21 @@ void focusView() {
 }
 
 void update() {
-	if (phys_keys[SDL_SCANCODE_SPACE]) {
-		(location == &menu) ? changeScene(&overworld) : changeScene(&menu);
-		phys_keys[SDL_SCANCODE_SPACE] = 0;
+	if (handleEvents() != -1) {
+		gameStep();
+		focusView();
+	} else if (location != &menu) {
+		// refresh lighting instead of recalculating
+		int
+		x,
+		y;
+
+		for (y = 0; y < DROWS; y += 1) {
+			for (x = 0; x < DCOLS; x += 1) {
+				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible = (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible == 1) ? 2 : 0;
+			}
+		}
 	}
-
-	entity *head = getEntities(location);
-
-	while (head != NULL) {
-		//update game object
-		entityUpdate(head);
-		head = (entity*)(head->next);
-	}
-
-	gameStep();
-	focusView();
 }
 
 void gameStep() {
@@ -247,6 +281,13 @@ void gameStep() {
 		if (location != &menu) {
 			generateFOV(x-(DCOLS_OFFSET), y-(DROWS_OFFSET));
 		}
+	}
+
+	entity *head = getEntities(location);
+
+	while (head != NULL) {
+		entityUpdate(head);
+		head = (entity*)(head->next);
 	}
 }
 
@@ -277,7 +318,6 @@ void changeScene(scene *dest) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].visible = 0;
 				dmatrix[x][y].entity = NOTHING;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&

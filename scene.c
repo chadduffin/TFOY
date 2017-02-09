@@ -170,15 +170,15 @@ void entityMov(entity *target, scene *src, scene *dest, int x, int y, int relati
 	}
 }
 
-short getTileTime(short x, short y) {
+int getTileTime(int x, int y) {
 	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x7800);
 }
 
-short getTileValue(short x, short y) {
+int getTileValue(int x, int y) {
 	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x7FF);
 }
 
-short getTileChanged(short x, short y) {
+int getTileChanged(int x, int y) {
 	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x8000);
 }
 
