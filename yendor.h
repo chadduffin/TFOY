@@ -307,6 +307,7 @@ void gameStep();
 void changeScene(scene *dest);
 void initializeKeybindings();
 int checkBoundKey(unsigned int keybinding);
+int isPointWithin(int x, int y, SDL_Rect *dst);
 
 // rendering.c
 void updateRenderingInfo();

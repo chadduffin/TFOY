@@ -187,8 +187,6 @@ int pollEvents() {
 
 int handleEvents() {
 	short to_return = -1;
-	entity *target = (focus == NULL) ? player : focus;
-	render_component *value = getComponent(target, RENDER_COMPONENT);
 
 	if (phys_keys[SDL_SCANCODE_SPACE]) {
 		(location == &menu) ? changeScene(&overworld) : changeScene(&menu);
@@ -196,6 +194,8 @@ int handleEvents() {
 		to_return = 0;
 	}
 
+	entity *target = (focus == NULL) ? player : focus;
+	render_component *value = getComponent(target, RENDER_COMPONENT);
 	value->x_previous = value->x;
 	value->y_previous = value->y;
 
@@ -220,6 +220,7 @@ int handleEvents() {
 		to_return = 0;
 	}
 
+	// return -1 to cancel gameStep() and focusView()
 	return to_return;
 }
 
@@ -246,18 +247,22 @@ void focusView() {
 				view.y = location->h-view.h;
 			}
 		}
+	} else {
+		view.x = 0;
+		view.y = 0;
 	}
 }
 
 void update() {
 	if (handleEvents() != -1) {
+		// perform a full game step and re-focus view
 		gameStep();
 		focusView();
 	} else if (location != &menu) {
 		// refresh lighting instead of recalculating
 		int
-		x,
-		y;
+			x,
+			y;
 
 		for (y = 0; y < DROWS; y += 1) {
 			for (x = 0; x < DCOLS; x += 1) {
@@ -273,14 +278,12 @@ void gameStep() {
 		y;
 	entity *target = (focus == NULL) ? player : focus;
 
-	entityPos(target, &x, &y);
-	x += DCOLS_OFFSET-view.x;
-	y += DROWS_OFFSET-view.y;
+	if ((target != NULL) && (location != &menu)) {
+		entityPos(target, &x, &y);
+		x -= view.x;
+		y -= view.y;
 
-	if ((x > DCOLS_OFFSET) && (x < DCOLS_OFFSET+DCOLS) && (y > DROWS_OFFSET) && (y < DROWS_OFFSET+DROWS)) {
-		if (location != &menu) {
-			generateFOV(x-(DCOLS_OFFSET), y-(DROWS_OFFSET));
-		}
+		generateFOV(x, y);
 	}
 
 	entity *head = getEntities(location);
@@ -299,8 +302,8 @@ void changeScene(scene *dest) {
 
 	view.x = 0;
 	view.y = 0;
-	view_previous.x = view.w;
-	view_previous.y = view.h;
+	view_previous.x = view.x+view.w;
+	view_previous.y = view.y+view.h;
 
 	if (location == &menu) {
 		for (y = 0; y < ROWS; y += 1) {
@@ -312,9 +315,11 @@ void changeScene(scene *dest) {
 			}
 		}
 	} else {
+		focusView();
 		int
-			x_offset = DCOLS_OFFSET+view.x,
-			y_offset = DROWS_OFFSET+view.y;
+			x_offset = view.x-DCOLS_OFFSET,
+			y_offset = view.y-DROWS_OFFSET;
+
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
@@ -322,7 +327,7 @@ void changeScene(scene *dest) {
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
-					dmatrix[x][y].tile = getTileValue(x-x_offset, y-y_offset);
+					dmatrix[x][y].tile = getTileValue(x+x_offset, y+y_offset);
 				} else {
 					dmatrix[x][y].tile = BLACK;
 				}
@@ -353,6 +358,10 @@ void initializeKeybindings() {
 
 int checkBoundKey(unsigned int keybinding) {
 	return phys_keys[virt_keys[keybinding]];
+}
+
+int isPointWithin(int x, int y, SDL_Rect *dst) {
+	return ((x >= dst->x) && (x < dst->x+dst->w) && (y >= dst->y) && (y < dst->y+dst->h));
 }
 
 /*

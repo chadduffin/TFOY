@@ -215,8 +215,6 @@ void renderChanges() {
 					SDL_RenderFillRect(renderer, &dst);	
 				}
 				dmatrix[x][y].changed = 0;
-				//dmatrix[x][y].changed = dmatrix[x][y].entity ? 1 : 0;
-				//dmatrix[x][y].entity = NOTHING;
 			}
 		}
 	}

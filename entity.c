@@ -56,15 +56,15 @@ void removeComponent(entity *target, int component_type) {
 }
 
 void entityUpdate(entity *target) {
-	render_component *value = (render_component*)(getComponent(target, RENDER_COMPONENT));
+	// render component
+	render_component *render_comp = (render_component*)(getComponent(target, RENDER_COMPONENT));
 
-	if (value != NULL) {
-		if ((value->x > view.x) && (value->x < view.x+view.w) &&
-				(value->y > view.y) && (value->y < view.y+view.h)) {
-			dmatrix[DCOLS_OFFSET+value->x_previous-view.x][DROWS_OFFSET+value->y_previous-view.y].changed = 1;
-			dmatrix[DCOLS_OFFSET+value->x_previous-view.x][DROWS_OFFSET+value->y_previous-view.y].entity = NOTHING;
-			dmatrix[DCOLS_OFFSET+value->x-view.x][DROWS_OFFSET+value->y-view.y].changed = 1;
-			dmatrix[DCOLS_OFFSET+value->x-view.x][DROWS_OFFSET+value->y-view.y].entity = value->tile;
+	if (render_comp != NULL) {
+		if (isPointWithin(render_comp->x, render_comp->y, &view)) {
+			dmatrix[DCOLS_OFFSET+render_comp->x_previous-view.x][DROWS_OFFSET+render_comp->y_previous-view.y].changed = 1;
+			dmatrix[DCOLS_OFFSET+render_comp->x_previous-view.x][DROWS_OFFSET+render_comp->y_previous-view.y].entity = NOTHING;
+			dmatrix[DCOLS_OFFSET+render_comp->x-view.x][DROWS_OFFSET+render_comp->y-view.y].changed = 1;
+			dmatrix[DCOLS_OFFSET+render_comp->x-view.x][DROWS_OFFSET+render_comp->y-view.y].entity = render_comp->tile;
 		}
 	}
 }

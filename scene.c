@@ -70,7 +70,7 @@ void initializeOverworld() {
 			if ((x == 0) || (y == 0) || (x == overworld.w-1) || (y == overworld.h-1)) {
 				overworld.tiles[x][y].tile = WALL;
 			} else {
-				overworld.tiles[x][y].tile = (rand()%32 == 1) ? WALL : DIRT;
+				overworld.tiles[x][y].tile = (rand()%128 == 1) ? WALL : DIRT;
 			}
 		}
 	}
@@ -78,8 +78,8 @@ void initializeOverworld() {
 	player = createEntity(0);
 	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
 	r->tile = HUMAN;
-	r->x = 3;
-	r->y = 3;
+	r->x = 480;
+	r->y = 230;
 	addEntity(&overworld, player);
 }
 
