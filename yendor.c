@@ -196,8 +196,6 @@ int handleEvents() {
 
 	entity *target = (focus == NULL) ? player : focus;
 	render_component *value = getComponent(target, RENDER_COMPONENT);
-	value->x_previous = value->x;
-	value->y_previous = value->y;
 
 	if (checkBoundKey(RIGHT)) {
 		value->x += 1;
@@ -273,20 +271,8 @@ void update() {
 }
 
 void gameStep() {
-	int
-		x,
-		y;
 	entity
-		*target = (focus == NULL) ? player : focus,
 		*head = getEntities(location);
-
-	if ((target != NULL) && (location != &menu)) {
-		entityPos(target, &x, &y);
-		x -= view.x;
-		y -= view.y;
-	
-		generateFOV(x, y);
-	}
 
 	while (head != NULL) {
 		entityUpdate(head);

@@ -66,6 +66,9 @@ void entityUpdate(entity *target) {
 			dmatrix[DCOLS_OFFSET+render_comp->x-view.x][DROWS_OFFSET+render_comp->y-view.y].changed = 1;
 			dmatrix[DCOLS_OFFSET+render_comp->x-view.x][DROWS_OFFSET+render_comp->y-view.y].entity = render_comp->tile;
 		}
+
+		render_comp->x_previous = render_comp->x;
+		render_comp->y_previous = render_comp->y;
 	}
 }
 

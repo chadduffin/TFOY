@@ -58,6 +58,19 @@ void render() {
 		SDL_RenderCopy(renderer, render_buffers[!target_buffer], NULL, NULL);
 	}
 
+	int
+		x,
+		y;
+	entity *target = (focus == NULL) ? player : focus;
+
+	if ((target != NULL) && (location != &menu)) {
+		entityPos(target, &x, &y);
+		x -= view.x;
+		y -= view.y;
+	
+		generateFOV(x, y);
+	}
+
 	renderChanges();
 	
 	// render new buffer to screen

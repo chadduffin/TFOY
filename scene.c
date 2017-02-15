@@ -94,6 +94,8 @@ void initializeOverworld() {
 	r->tile = HUMAN;
 	r->x = 480;
 	r->y = 230;
+	r->x_previous = r->x;
+	r->y_previous = r->y;
 	addEntity(&overworld, player);
 }
 
