@@ -276,22 +276,23 @@ void gameStep() {
 	int
 		x,
 		y;
-	entity *target = (focus == NULL) ? player : focus;
+	entity
+		*target = (focus == NULL) ? player : focus,
+		*head = getEntities(location);
 
 	if ((target != NULL) && (location != &menu)) {
 		entityPos(target, &x, &y);
 		x -= view.x;
 		y -= view.y;
-
+	
 		generateFOV(x, y);
 	}
-
-	entity *head = getEntities(location);
 
 	while (head != NULL) {
 		entityUpdate(head);
 		head = (entity*)(head->next);
 	}
+
 }
 
 void changeScene(scene *dest) {

@@ -75,6 +75,20 @@ void initializeOverworld() {
 		}
 	}
 
+	for (y = 0; y < 24; y += 1) {
+		for (x = 0; x < 24; x += 1) {
+			if ((x == 0) || (y == 0) || (x == 23) || (y == 23)) {
+				if (x != 13) {
+					overworld.tiles[WORLD_COLS-36+x][WORLD_ROWS+y-36].tile = WALL;
+				} else {
+					overworld.tiles[WORLD_COLS-36+x][WORLD_ROWS+y-36].tile = DIRT;
+				}
+			} else {
+				overworld.tiles[WORLD_COLS-36+x][WORLD_ROWS+y-36].tile = DIRT;
+			}
+		}
+	}
+
 	player = createEntity(0);
 	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
 	r->tile = HUMAN;

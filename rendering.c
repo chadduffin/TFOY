@@ -310,11 +310,14 @@ void castLight(
 		j,
 		x_adj,
 		y_adj,
+		nx_adj,
+		ny_adj,
 		bound,
+		started,
 		was_blocked = 0;
-	float
-		current,
-		next;
+	float current;
+
+	int last = -1;
 
 	if (invert) {
 		bound = (dy < 0) ? (y-DROWS_OFFSET+1) : (DROWS+DROWS_OFFSET-y);
@@ -323,52 +326,58 @@ void castLight(
 	}
 
 	for (i = distance; i < bound; i += 1) {
+		started = 0;
 		for (j = distance; j >= 0; j -= 1) {
-			// slope of the next block
-			next = ((float)(j-0.5))/((float)(i+0.5));
 			// slope of the current block
-			current = ((float)(j+0.5))/((float)(i+0.5));
-			if (current <= start) {
-				// translate algorithm coordinates to dmatrix coordinates
-				if (current >= end) {
-					if (invert) {
-						x_adj = x+(j*dx);
-						y_adj = y+(i*dy);
+			current = ((float)j)/((float)i);
+			// translate algorithm coordinates to dmatrix coordinates
+			if (invert) {
+				x_adj = x+(j*dx);
+				y_adj = y+(i*dy);
+				nx_adj = x+(j*dx);
+				ny_adj = y+((i+1)*dy);
+			} else {
+				x_adj = x+(i*dx);
+				y_adj = y+(j*dy);
+				nx_adj = x+((i+1)*dx);
+				ny_adj = y+(j*dy);
+			}
+			if ((x_adj < DCOLS_OFFSET) || (x_adj >= DCOLS_OFFSET+DCOLS) ||
+					(y_adj < DROWS_OFFSET) || (y_adj >= DROWS_OFFSET+DROWS)) {
+				continue;
+			} else {
+				started = (started == 0) ? 1 : started;
+			}
+			if ((current <= start) && (current >= end)) {
+				if ((lookupTile(dmatrix[x_adj][y_adj].tile)->flags & OBSTRUCTS) == OBSTRUCTS) {
+					if ((was_blocked == 0) && (started != 1)) {
+						castLight(distance+1, x, y, invert, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5));
+						start = ((float)(j-0.5))/((float)(i+0.5));
+					}
+					if (last == -1) {
+						last = j;
+					}
+					if ((j > 0) && ((lookupTile(dmatrix[nx_adj][ny_adj].tile)->flags & OBSTRUCTS) == OBSTRUCTS)) {
+						start = ((float)(j))/((float)(i+1.0));
 					} else {
-						x_adj = x+(i*dx);
-						y_adj = y+(j*dy);
+						start = ((float)(j-0.5))/((float)(i+0.5));
 					}
-					if ((x_adj < DCOLS_OFFSET) || (x_adj >= DCOLS_OFFSET+DCOLS) ||
-							(y_adj < DROWS_OFFSET) || (y_adj >= DROWS_OFFSET+DROWS)) {
-						continue;
-					}
-					if ((lookupTile(dmatrix[x_adj][y_adj].tile)->flags & OBSTRUCTS) == OBSTRUCTS) {
-						if ((was_blocked == 0) && (j != distance)) {
-							castLight(distance+1, x, y, invert, dx, dy, start, ((float)(j+1.0))/(float)(i));
-							if ((j == 0) || (next < end)) {
-								end = ((float)(j+1.0))/((float)(i));
-							} else {
-								start = ((float)(j))/((float)(i+1.0));
-							}
-						} else {
-							start = ((float)(j))/((float)(i+1.0));
-						}
-						was_blocked = 1;
-					} else {
-						was_blocked = 0;
-					}
-					
-					if (dmatrix[x_adj][y_adj].visible == 0) {
-						dmatrix[x_adj][y_adj].changed = 1;
-					}
-					dmatrix[x_adj][y_adj].visible = 2;
+					was_blocked = 1;
 				} else {
-					j = -1;
+					was_blocked = 0;
 				}
+
+				started = 2;
+				if (dmatrix[x_adj][y_adj].visible == 0) {
+					dmatrix[x_adj][y_adj].changed = 1;
+				}
+				dmatrix[x_adj][y_adj].visible = 2;
+			} else if ((started == 1) && (current < end)) {
+				return;
 			}
 		}
-		distance += 1;
 		was_blocked = 0;
+		distance += 1;
 	}
 }
 
