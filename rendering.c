@@ -25,14 +25,14 @@ void updateRenderingInfo(int initial) {
 	dport.x = (window_width-(tile_width*COLS))/2;
 	dport.y = (window_height-(tile_height*ROWS))/2;
 
-	view.x = 0;
-	view.y = 0;
-	view.w = DCOLS;
-	view.h = DROWS;
-	view_previous.x = view.w;
-	view_previous.y = view.h;
-
 	if (initial == 1) {
+		view.x = 0;
+		view.y = 0;
+		view.w = DCOLS;
+		view.h = DROWS;
+		view_previous.x = view.w;
+		view_previous.y = view.h;
+
 		printf("Initializing graphics .. PENDING.\n");
 		printf("> window width ......... %d.\n", window_width);
 		printf("> window height ........ %d.\n", window_height);
@@ -70,6 +70,7 @@ void render() {
 
 		generateFOV(x, y);
 	}
+
 	renderChanges();
 	
 	// render new buffer to screen
@@ -82,16 +83,7 @@ void render() {
 	SDL_RenderPresent(renderer);
 	target_buffer = (target_buffer == 0) ? 1 : 0;	
 	
-	for (y = DROWS_OFFSET; y < (DROWS+DROWS_OFFSET); y += 1) {
-		for (x = DCOLS_OFFSET; x < (DCOLS+DCOLS_OFFSET); x += 1) {
-			if (dmatrix[x][y].visible == 1) {
-				dmatrix[x][y].visible = 0;
-				dmatrix[x][y].changed = 1;
-			} else if (dmatrix[x][y].visible == 2) {
-				dmatrix[x][y].visible = 1;
-			}
-		}
-	}
+	decrementVis();
 }
 
 void renderSalvage() {
@@ -166,7 +158,6 @@ void renderSalvage() {
 		dst.w = 0;
 		dst.h = 0;
 	}
-
 
 	int
 		x_offset = DCOLS_OFFSET-view.x,
@@ -397,6 +388,25 @@ void castLight(
 		}
 		was_blocked = 0;
 		distance += 1;
+	}
+}
+
+void decrementVis() {
+	if (location != &menu) {
+		int
+			x,
+			y;
+
+		for (y = DROWS_OFFSET; y < (DROWS+DROWS_OFFSET); y += 1) {
+			for (x = DCOLS_OFFSET; x < (DCOLS+DCOLS_OFFSET); x += 1) {
+				if (dmatrix[x][y].visible == 1) {
+					dmatrix[x][y].visible = 0;
+					dmatrix[x][y].changed = 1;
+				} else if (dmatrix[x][y].visible == 2) {
+					dmatrix[x][y].visible = 1;
+				}
+			}
+		}
 	}
 }
 

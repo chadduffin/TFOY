@@ -232,8 +232,9 @@ void focusView() {
 			view.y = comp->y;
 			view.x -= (DCOLS/2)+1;
 			view.y -= (DROWS/2)+1;
-
+	
 			if (view.x < 0) {
+				printf("Point A.\n");
 				view.x = 0;
 			} else if (view.x+view.w >= location->w) {
 				view.x = location->w-view.w;
@@ -245,6 +246,7 @@ void focusView() {
 			}
 		}
 	} else {
+		printf("Point B.\n");
 		view.x = 0;
 		view.y = 0;
 	}
@@ -284,11 +286,6 @@ void changeScene(scene *dest) {
 		y;
 	location = dest;
 
-	view.x = 0;
-	view.y = 0;
-	view_previous.x = view.x+view.w;
-	view_previous.y = view.y+view.h;
-
 	if (location == &menu) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
@@ -300,6 +297,8 @@ void changeScene(scene *dest) {
 		}
 	} else {
 		focusView();
+		view_previous.x = view.x+view.w;
+		view_previous.y = view.y+view.h;
 
 		int
 			x_offset = view.x-DCOLS_OFFSET,
@@ -308,6 +307,7 @@ void changeScene(scene *dest) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
+				dmatrix[x][y].visible = 0;
 				dmatrix[x][y].entity = NOTHING;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&

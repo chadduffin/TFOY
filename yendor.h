@@ -321,6 +321,7 @@ void castLight(
 	int distance, int x, int y,
 	int invert, int dx, int dy,
 	float start, float end);
+void decrementVis();
 
 // tiles.c
 int getTileTime(int x, int y);
