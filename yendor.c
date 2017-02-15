@@ -196,7 +196,6 @@ int handleEvents() {
 
 	entity *target = (focus == NULL) ? player : focus;
 	render_component *value = getComponent(target, RENDER_COMPONENT);
-
 	if (checkBoundKey(RIGHT)) {
 		value->x += 1;
 		phys_keys[virt_keys[RIGHT]] = 0;
@@ -271,14 +270,12 @@ void update() {
 }
 
 void gameStep() {
-	entity
-		*head = getEntities(location);
+	entity *head = getEntities(location);
 
 	while (head != NULL) {
 		entityUpdate(head);
 		head = (entity*)(head->next);
 	}
-
 }
 
 void changeScene(scene *dest) {
@@ -303,6 +300,7 @@ void changeScene(scene *dest) {
 		}
 	} else {
 		focusView();
+
 		int
 			x_offset = view.x-DCOLS_OFFSET,
 			y_offset = view.y-DROWS_OFFSET;

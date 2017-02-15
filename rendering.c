@@ -47,6 +47,11 @@ void updateRenderingInfo(int initial) {
 }
 
 void render() {
+	int
+		x,
+		y;
+	entity *target = (focus == NULL) ? player : focus;
+
 	// clear new buffer to be drawn to
 	SDL_SetRenderTarget(renderer, render_buffers[target_buffer]);
 	SDL_RenderClear(renderer);
@@ -58,19 +63,13 @@ void render() {
 		SDL_RenderCopy(renderer, render_buffers[!target_buffer], NULL, NULL);
 	}
 
-	int
-		x,
-		y;
-	entity *target = (focus == NULL) ? player : focus;
-
 	if ((target != NULL) && (location != &menu)) {
 		entityPos(target, &x, &y);
 		x -= view.x;
 		y -= view.y;
-	
+
 		generateFOV(x, y);
 	}
-
 	renderChanges();
 	
 	// render new buffer to screen
@@ -82,6 +81,17 @@ void render() {
 
 	SDL_RenderPresent(renderer);
 	target_buffer = (target_buffer == 0) ? 1 : 0;	
+	
+	for (y = DROWS_OFFSET; y < (DROWS+DROWS_OFFSET); y += 1) {
+		for (x = DCOLS_OFFSET; x < (DCOLS+DCOLS_OFFSET); x += 1) {
+			if (dmatrix[x][y].visible == 1) {
+				dmatrix[x][y].visible = 0;
+				dmatrix[x][y].changed = 1;
+			} else if (dmatrix[x][y].visible == 2) {
+				dmatrix[x][y].visible = 1;
+			}
+		}
+	}
 }
 
 void renderSalvage() {
@@ -157,6 +167,7 @@ void renderSalvage() {
 		dst.h = 0;
 	}
 
+
 	int
 		x_offset = DCOLS_OFFSET-view.x,
 		y_offset = DROWS_OFFSET-view.y;
@@ -167,12 +178,6 @@ void renderSalvage() {
 					(y < dst.y) || (y >= dst.y+dst.h)) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].tile = getTileValue(x-x_offset, y-y_offset);
-			}
-			if (dmatrix[x][y].visible == 1) {
-				dmatrix[x][y].visible = 0;
-				dmatrix[x][y].changed = 1;
-			} else if (dmatrix[x][y].visible == 2) {
-				dmatrix[x][y].visible = 1;
 			}
 		}
 	}
@@ -231,6 +236,7 @@ void renderChanges() {
 			}
 		}
 	}
+
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 }
 
