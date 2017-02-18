@@ -176,8 +176,15 @@ int pollEvents() {
 						case SDL_WINDOWEVENT_MAXIMIZED:
 							updateRenderingInfo(0);
 							break;
+						case SDL_WINDOWEVENT_FOCUS_LOST:
+						case SDL_WINDOWEVENT_FOCUS_GAINED:
+							break;
+						default:
+							break;
 					}
 				}
+				break;
+			default:
 				break;
 		}
 	}
@@ -234,7 +241,6 @@ void focusView() {
 			view.y -= (DROWS/2)+1;
 	
 			if (view.x < 0) {
-				printf("Point A.\n");
 				view.x = 0;
 			} else if (view.x+view.w >= location->w) {
 				view.x = location->w-view.w;
@@ -246,7 +252,6 @@ void focusView() {
 			}
 		}
 	} else {
-		printf("Point B.\n");
 		view.x = 0;
 		view.y = 0;
 	}
@@ -255,8 +260,9 @@ void focusView() {
 void update() {
 	if (handleEvents() != -1) {
 		// perform a full game step and re-focus view
-		gameStep();
+		clearLightmap();
 		focusView();
+		gameStep();
 	} else if (location != &menu) {
 		// refresh lighting instead of recalculating
 		int
@@ -297,8 +303,8 @@ void changeScene(scene *dest) {
 		}
 	} else {
 		focusView();
-		view_previous.x = view.x+view.w;
-		view_previous.y = view.y+view.h;
+		clearLightmap();
+		gameStep();
 
 		int
 			x_offset = view.x-DCOLS_OFFSET,

@@ -96,7 +96,22 @@ void initializeOverworld() {
 	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
+	light_component *l = (light_component*)addComponent(player, LIGHT_COMPONENT);
+	l->light_value.value = black;
+	l->light_value.intensity = 24;
 	addEntity(&overworld, player);
+
+	entity *test = createEntity(0);
+	r = (render_component*)addComponent(test, RENDER_COMPONENT);
+	r->tile = HUMAN;
+	r->x = 490;
+	r->y = 239;
+	r->x_previous = r->x;
+	r->y_previous = r->y;
+	l = (light_component*)addComponent(test, LIGHT_COMPONENT);
+	l->light_value.value = black;
+	l->light_value.intensity = 6;
+	addEntity(&overworld, test);
 }
 
 void cleanupScene(scene *target) {

@@ -38,6 +38,7 @@ extern IPaddress ipaddress;
 extern TCPsocket socket;
 
 extern dcell dmatrix[COLS][ROWS];
+extern lightmap_node lightmap[DCOLS][DROWS];
 extern dtile descriptor_tiles[TILE_TYPE_COUNT];
 extern attribute attributes[ATTRIBUTE_TYPE_COUNT];
 

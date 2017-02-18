@@ -99,6 +99,7 @@ entity *focus = NULL;
 entity *player = NULL;
 
 dcell dmatrix[COLS][ROWS];
+color lightmap[DCOLS][DROWS];
 
 mouse_state cursor;
 int phys_keys[SDL_NUM_SCANCODES];

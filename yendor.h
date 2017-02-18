@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -95,6 +96,7 @@ enum AttributeTypes {
 enum ComponentTypes {
 	CREATURE_COMPONENT = 1,
 	RENDER_COMPONENT,
+	LIGHT_COMPONENT,
 
 	COMPONENT_TYPE_COUNT
 };
@@ -237,7 +239,6 @@ typedef struct dcell {
 		//whether or not this tile needs to be updated
 		visible,
 		discovered;
-	light light_value;
 	color
 		fg,
 		bg;
@@ -265,12 +266,14 @@ typedef struct render_component {
 		z,
 		x_previous,
 		y_previous,
+		x_drawn,
+		y_drawn,
 		tile;
 } render_component;
 
-typedef struct player_component {
-	entity *myself;
-} player_component;
+typedef struct light_component {
+	light light_value;
+} light_component;
 
 typedef struct scene {
 	int
@@ -291,6 +294,16 @@ typedef struct mouse_state {
 		lb,
 		rb;
 } mouse_state;
+
+typedef struct lightmap_node {
+	int
+		red,
+		green,
+		blue,
+		alpha,
+		light_count;
+	
+} lightmap_node;
 
 /*
 ** functions
@@ -322,6 +335,11 @@ void castLight(
 	int invert, int dx, int dy,
 	float start, float end);
 void decrementVis();
+void addLight(int x, int y, light light_value);
+void clearLightmap();
+color mixColor(color first, color second);
+light normalizeLight(lightmap_node node);
+void renderLightmap();
 
 // tiles.c
 int getTileTime(int x, int y);

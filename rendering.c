@@ -32,6 +32,8 @@ void updateRenderingInfo(int initial) {
 		view.h = DROWS;
 		view_previous.x = view.w;
 		view_previous.y = view.h;
+		view_previous.w = view.w;
+		view_previous.h = view.h;
 
 		printf("Initializing graphics .. PENDING.\n");
 		printf("> window width ......... %d.\n", window_width);
@@ -76,6 +78,10 @@ void render() {
 	// render new buffer to screen
 	SDL_SetRenderTarget(renderer, NULL);	
 	SDL_RenderCopy(renderer, render_buffers[target_buffer], NULL, NULL);
+
+	if (location != &menu) {
+		renderLightmap();
+	}
 
 	view_previous.x = view.x;
 	view_previous.y = view.y;
@@ -243,8 +249,6 @@ void clearScreen() {
 	cell.changed = 1;
 	cell.visible = 1;
 	cell.discovered = 1;
-	cell.light_value.intensity = 255;
-	cell.light_value.value = white;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
@@ -406,6 +410,112 @@ void decrementVis() {
 					dmatrix[x][y].visible = 1;
 				}
 			}
+		}
+	}
+}
+
+void addLight(int x, int y, light light_value) {
+	int
+		i,
+		j,
+		intensity = light_value.intensity;
+	color value = light_value.value;
+
+	// adjust x and y to screen coordinates.
+	x -= view.x;
+	y -= view.y;
+
+	for (j = y-intensity; j < y+intensity; j += 1) {
+		if ((j < 0) || (j >= DROWS)) {
+			continue;
+		}
+		for (i = x-intensity; i < x+intensity; i += 1) {
+			if ((i < 0) || (i >= DCOLS)) {
+				continue;
+			}
+
+			int dist = sqrt(((i-x)*(i-x))+((j-y)*(j-y)));
+
+			if (dist <= intensity) {
+				lightmap[i][j].red += value.red;
+				lightmap[i][j].green += value.green;
+				lightmap[i][j].blue += value.blue;
+				lightmap[i][j].light_count += 1;
+	
+				lightmap[i][j].alpha -= 255*(1-((float)(dist)/intensity));
+			}
+		}
+	}
+}
+
+light normalizeLight(lightmap_node node) {
+	light light_value;
+
+	if (node.light_count <= 1) {
+		light_value.value = black;
+		light_value.intensity = 255;
+	} else {
+		light_value.value.red = (node.red/node.light_count);
+		light_value.value.green = (node.green/node.light_count);
+		light_value.value.blue = (node.blue/node.light_count);
+		if (node.alpha < 0) {
+			light_value.intensity = 0;
+		} else {
+			light_value.intensity = (node.alpha > 255) ? 255 : node.alpha;
+		}
+	}
+
+	return light_value;
+}
+
+void renderLightmap() {
+	int
+		x,
+		y;
+	SDL_Rect dst;
+	lightmap_node node;
+	node.red = 0;
+	node.green = 0;
+	node.blue = 0;
+	node.alpha = 0;
+	node.light_count = 1;
+
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+	for (y = 0; y < DROWS; y += 1) {
+		for (x = 0; x < DCOLS; x += 1) {
+			if (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible) {
+				dst.x = dport.x+(x+DCOLS_OFFSET)*tile_width;
+				dst.y = dport.y+(y+DROWS_OFFSET)*tile_height;
+				dst.w = tile_width;
+				dst.h = tile_height;
+
+				light val = normalizeLight(lightmap[x][y]);
+
+				SDL_SetRenderDrawColor(renderer, val.value.red, val.value.green, val.value.blue, val.intensity);
+				SDL_RenderFillRect(renderer, &dst);
+			}
+		}
+	}
+
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+}
+
+void clearLightmap() {
+	int
+		x,
+		y;
+	lightmap_node node;
+	node.red = 0;
+	node.green = 0;
+	node.blue = 0;
+	node.alpha = 255;
+	node.light_count = 1;
+
+	for (y = 0; y < DROWS; y += 1) {
+		for (x = 0; x < DCOLS; x += 1) {
+			lightmap[x][y] = node;
 		}
 	}
 }
