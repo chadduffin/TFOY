@@ -65,6 +65,7 @@ void render() {
 		SDL_RenderCopy(renderer, render_buffers[!target_buffer], NULL, NULL);
 	}
 
+	// if there is a focus, generate FOV
 	if ((target != NULL) && (location != &menu)) {
 		entityPos(target, &x, &y);
 		x -= view.x;
@@ -73,22 +74,26 @@ void render() {
 		generateFOV(x, y);
 	}
 
+	// render entities to the screen.
+	loopEntities(&entityRender);
+
+	// update any block that has changed
 	renderChanges();
 	
 	// render new buffer to screen
 	SDL_SetRenderTarget(renderer, NULL);	
 	SDL_RenderCopy(renderer, render_buffers[target_buffer], NULL, NULL);
 
+	// render the lightmap to the screen
 	if (location != &menu) {
 		renderLightmap();
 	}
-
-	view_previous.x = view.x;
-	view_previous.y = view.y;
-
+	
+	// display the screen
 	SDL_RenderPresent(renderer);
 	target_buffer = (target_buffer == 0) ? 1 : 0;	
 	
+	// loop through generated FOV and update the visibility count (saves rendering calls)
 	decrementVis();
 }
 

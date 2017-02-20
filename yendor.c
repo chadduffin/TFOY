@@ -201,26 +201,16 @@ int handleEvents() {
 		to_return = 0;
 	}
 
-	entity *target = (focus == NULL) ? player : focus;
-	render_component *value = getComponent(target, RENDER_COMPONENT);
 	if (checkBoundKey(RIGHT)) {
-		value->x += 1;
-		phys_keys[virt_keys[RIGHT]] = 0;
 		to_return = 0;
 	}
 	if (checkBoundKey(LEFT)) {
-		value->x -= 1;
-		phys_keys[virt_keys[LEFT]] = 0;
 		to_return = 0;
 	}
 	if (checkBoundKey(UP)) {
-		value->y -= 1;
-		phys_keys[virt_keys[UP]] = 0;
 		to_return = 0;
 	}
 	if (checkBoundKey(DOWN)) {
-		value->y += 1;
-		phys_keys[virt_keys[DOWN]] = 0;
 		to_return = 0;
 	}
 
@@ -258,11 +248,14 @@ void focusView() {
 }
 
 void update() {
+	view_previous.x = view.x;
+	view_previous.y = view.y;
+	clearLightmap();
+
 	if (handleEvents() != -1) {
 		// perform a full game step and re-focus view
-		clearLightmap();
+		loopEntities(&entityUpdate);
 		focusView();
-		gameStep();
 	} else if (location != &menu) {
 		// refresh lighting instead of recalculating
 		int
@@ -277,11 +270,11 @@ void update() {
 	}
 }
 
-void gameStep() {
+void loopEntities(void (*func)(entity*)) {
 	entity *head = getEntities(location);
 
 	while (head != NULL) {
-		entityUpdate(head);
+		func(head);
 		head = (entity*)(head->next);
 	}
 }
@@ -302,9 +295,12 @@ void changeScene(scene *dest) {
 			}
 		}
 	} else {
-		focusView();
+		view_previous.x = view.x;
+		view_previous.y = view.y;
+
 		clearLightmap();
-		gameStep();
+		loopEntities(&entityUpdate);
+		focusView();
 
 		int
 			x_offset = view.x-DCOLS_OFFSET,
@@ -314,7 +310,6 @@ void changeScene(scene *dest) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].visible = 0;
-				dmatrix[x][y].entity = NOTHING;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {

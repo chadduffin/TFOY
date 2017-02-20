@@ -316,7 +316,7 @@ int pollEvents();
 int handleEvents();
 void focusView();
 void update();
-void gameStep();
+void loopEntities(void (*func)(entity*));
 void changeScene(scene *dest);
 void initializeKeybindings();
 int checkBoundKey(unsigned int keybinding);
@@ -339,6 +339,7 @@ void addLight(int x, int y, light light_value);
 void clearLightmap();
 color mixColor(color first, color second);
 light normalizeLight(lightmap_node node);
+void generateLightmap();
 void renderLightmap();
 
 // tiles.c
@@ -361,6 +362,7 @@ void removeComponent(entity *target, int component_type);
 void entityPos(entity *target, int *x, int *y);
 void entityMov(entity *target, scene *src, scene *dest, int x, int y, int relative);
 void entityUpdate(entity *target);
+void entityRender(entity *target);
 
 // scene.c
 void initializeMenu();

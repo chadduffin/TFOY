@@ -67,31 +67,58 @@ void removeComponent(entity *target, int component_type) {
 }
 
 void entityUpdate(entity *target) {
+	render_component *render_comp = (render_component*)(getComponent(target, RENDER_COMPONENT));
+
+	if (render_comp != NULL) {
+		render_comp->x_previous = render_comp->x;
+		render_comp->y_previous = render_comp->y;
+
+		if (target == player) {
+			if (checkBoundKey(RIGHT)) {
+				render_comp->x += 1;
+				phys_keys[virt_keys[RIGHT]] = 0;
+			}
+			if (checkBoundKey(LEFT)) {
+				render_comp->x -= 1;
+				phys_keys[virt_keys[LEFT]] = 0;
+			}
+			if (checkBoundKey(UP)) {
+				render_comp->y -= 1;
+				phys_keys[virt_keys[UP]] = 0;
+			}
+			if (checkBoundKey(DOWN)) {
+				render_comp->y += 1;
+				phys_keys[virt_keys[DOWN]] = 0;
+			}
+		}
+	}
+}
+
+void entityRender(entity *target) {
 	// render component
 	render_component *render_comp = (render_component*)(getComponent(target, RENDER_COMPONENT));
 
 	if (render_comp != NULL) {
-		if ((render_comp->x_drawn != -1) && (render_comp->y_drawn != -1)) {
-			render_comp->x_drawn += view_previous.x-view.x;
-			render_comp->y_drawn += view_previous.y-view.y;
-			if ((render_comp->x_drawn >= DCOLS_OFFSET) && (render_comp->x_drawn < DCOLS_OFFSET+DCOLS) && (render_comp->y_drawn >= DROWS_OFFSET) && (render_comp->y_drawn < DROWS_OFFSET+DROWS)) {
-				dmatrix[render_comp->x_drawn][render_comp->y_drawn].changed = 1;
-				dmatrix[render_comp->x_drawn][render_comp->y_drawn].entity = NOTHING;
+		if ((render_comp->x == render_comp->x_previous) && (render_comp->y == render_comp->y_previous)) {
+			int
+				rx = render_comp->x_previous+(view.x-view_previous.x),
+				ry = render_comp->y_previous+(view.y-view_previous.y);
+	
+			if (isPointWithin(rx, ry, &view)) {
+				dmatrix[rx-view.x+DCOLS_OFFSET][ry-view.y+DROWS_OFFSET].changed = 1;
+				dmatrix[rx-view.x+DCOLS_OFFSET][ry-view.y+DROWS_OFFSET].entity = NOTHING;
+			}
+		} else {
+			if (isPointWithin(render_comp->x_previous, render_comp->y_previous, &view)) {
+				dmatrix[render_comp->x_previous-view.x+DCOLS_OFFSET][render_comp->y_previous-view.y+DROWS_OFFSET].changed = 1;
+				dmatrix[render_comp->x_previous-view.x+DCOLS_OFFSET][render_comp->y_previous-view.y+DROWS_OFFSET].entity = NOTHING;
 			}
 		}
 
 		if (isPointWithin(render_comp->x, render_comp->y, &view)) {
-			render_comp->x_drawn = DCOLS_OFFSET+render_comp->x-view.x;
-			render_comp->y_drawn = DROWS_OFFSET+render_comp->y-view.y;
-			dmatrix[render_comp->x_drawn][render_comp->y_drawn].changed = 1;
-			dmatrix[render_comp->x_drawn][render_comp->y_drawn].entity = render_comp->tile;
-		} else {
-			render_comp->x_drawn = -1;
-			render_comp->y_drawn = -1;
+			dmatrix[render_comp->x-view.x+DCOLS_OFFSET][render_comp->y-view.y+DROWS_OFFSET].changed = 1;
+			dmatrix[render_comp->x-view.x+DCOLS_OFFSET][render_comp->y-view.y+DROWS_OFFSET].entity = render_comp->tile;
 		}
-
-		render_comp->x_previous = render_comp->x;
-		render_comp->y_previous = render_comp->y;
 
 		light_component *light_comp = (light_component*)(getComponent(target, LIGHT_COMPONENT));
 		if (light_comp != NULL) {
