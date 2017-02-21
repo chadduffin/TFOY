@@ -55,7 +55,7 @@ void initializeOverworld() {
 	overworld.h = WORLD_ROWS;
 	overworld.entity_count = 0;
 	menu.ambient_light.intensity = 255;
-	menu.ambient_light.value = white;
+	menu.ambient_light.value = black;
 
 	overworld.tiles = (ctile**)malloc(sizeof(ctile*)*overworld.w);
 	overworld.head = NULL;
@@ -98,7 +98,7 @@ void initializeOverworld() {
 	r->y_previous = r->y;
 	light_component *l = (light_component*)addComponent(player, LIGHT_COMPONENT);
 	l->light_value.value = black;
-	l->light_value.intensity = 24;
+	l->light_value.intensity = 29;
 	addEntity(&overworld, player);
 
 	entity *test = createEntity(0);
@@ -110,7 +110,7 @@ void initializeOverworld() {
 	r->y_previous = r->y;
 	l = (light_component*)addComponent(test, LIGHT_COMPONENT);
 	l->light_value.value = black;
-	l->light_value.intensity = 6;
+	l->light_value.intensity = 13;
 	addEntity(&overworld, test);
 }
 

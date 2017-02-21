@@ -330,12 +330,17 @@ void renderChanges();
 void clearScreen();
 void evaluateRGB(color col, int *r, int *g, int *b);
 void generateFOV(int x, int y);
-void castLight(
+void castShadow(
 	int distance, int x, int y,
 	int invert, int dx, int dy,
 	float start, float end);
 void decrementVis();
 void addLight(int x, int y, light light_value);
+void castLight(
+	int distance, int intensity, int invert,
+	int x, int y, int dx, int dy,
+	float start, float end,
+	color value);
 void clearLightmap();
 color mixColor(color first, color second);
 light normalizeLight(lightmap_node node);

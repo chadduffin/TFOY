@@ -117,6 +117,7 @@ int frameCap(int last_update) {
 	int delay = (1000.0/FPS)-(SDL_GetTicks()-last_update+0.5);
 
 	if (delay > 0) {
+		printf("%d.\n", delay);
 		SDL_Delay(delay);
 	}
 
@@ -250,7 +251,6 @@ void focusView() {
 void update() {
 	view_previous.x = view.x;
 	view_previous.y = view.y;
-	clearLightmap();
 
 	if (handleEvents() != -1) {
 		// perform a full game step and re-focus view
