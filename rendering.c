@@ -73,9 +73,6 @@ void render() {
 
 		generateFOV(x, y);
 	}
-	
-	// loop through generated FOV and update the visibility count (saves rendering calls)
-	decrementVis();
 
 	// render entities to the screen.
 	loopEntities(&entityRender);
@@ -93,6 +90,9 @@ void render() {
 		clearLightmap();
 	}
 	
+	// loop through generated FOV and update the visibility count (saves rendering calls)
+	decrementVis();
+
 	// display the screen
 	SDL_RenderPresent(renderer);
 	target_buffer = (target_buffer == 0) ? 1 : 0;	
@@ -534,7 +534,11 @@ light normalizeLight(lightmap_node node) {
 		light_value.value.green = node.green/node.light_count;
 		light_value.value.blue = node.blue/node.light_count;
 
-		light_value.intensity = node.alpha > 255 ? 255 : node.alpha;
+		light_value.intensity = 255-((255*node.light_count)-node.alpha);
+		light_value.intensity = (light_value.intensity > 255) ? 255 : light_value.intensity;
+		if (light_value.intensity < 0) {
+			light_value.intensity = 0;
+		}
 	} else {
 		light_value.value = black;
 		light_value.intensity = 255;
@@ -559,6 +563,13 @@ void renderLightmap() {
 				dst.y = dport.y+(y+DROWS_OFFSET)*tile_height;
 					
 				light val = normalizeLight(lightmap[x][y]);
+
+				if ((val.value.red == 0) && (val.value.green == 0) && (val.value.blue == 0) && (val.intensity == 255)) {
+					if (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible == 0) {
+						dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].changed = 1;
+					}
+					dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible = 2;
+				}
 	
 				SDL_SetRenderDrawColor(renderer, val.value.red, val.value.green, val.value.blue, val.intensity);
 				SDL_RenderFillRect(renderer, &dst);

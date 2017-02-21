@@ -98,7 +98,7 @@ void initializeOverworld() {
 	r->y_previous = r->y;
 	light_component *l = (light_component*)addComponent(player, LIGHT_COMPONENT);
 	l->light_value.value = black;
-	l->light_value.intensity = 29;
+	l->light_value.intensity = 11;
 	addEntity(&overworld, player);
 
 	entity *test = createEntity(0);
@@ -110,7 +110,7 @@ void initializeOverworld() {
 	r->y_previous = r->y;
 	l = (light_component*)addComponent(test, LIGHT_COMPONENT);
 	l->light_value.value = black;
-	l->light_value.intensity = 13;
+	l->light_value.intensity = 23;
 	addEntity(&overworld, test);
 }
 
