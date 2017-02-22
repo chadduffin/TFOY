@@ -122,7 +122,7 @@ void entityRender(entity *target) {
 
 		light_component *light_comp = (light_component*)(getComponent(target, LIGHT_COMPONENT));
 		if (light_comp != NULL) {
-			addLight(render_comp->x-view.x, render_comp->y-view.y, light_comp->light_value);
+			addLight(target->id, render_comp->x, render_comp->y, light_comp->light_value);
 		}
 	}
 }

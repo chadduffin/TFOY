@@ -20,7 +20,7 @@
 #define DISABLE_LIGHT 0
 #define DISABLE_COLOR_MOD 1
 
-#define FPS 60
+#define FPS 100000
 #define MAX_BUFFER 1024
 #define TEXTURE_COUNT 1
 
@@ -302,6 +302,7 @@ typedef struct lightmap_node {
 		blue,
 		alpha,
 		light_count;
+	unsigned int last_lit;
 	
 } lightmap_node;
 
@@ -335,8 +336,9 @@ void castShadow(
 	int invert, int dx, int dy,
 	float start, float end);
 void decrementVis();
-void addLight(int x, int y, light light_value);
+void addLight(unsigned int id, int x, int y, light light_value);
 void castLight(
+	unsigned int light_id,
 	int distance, int intensity, int invert,
 	int x, int y, int dx, int dy,
 	float start, float end,

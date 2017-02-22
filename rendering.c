@@ -74,9 +74,12 @@ void render() {
 		generateFOV(x, y);
 	}
 
+	// loop through generated FOV and update the visibility count (saves rendering calls)
+	decrementVis();
+	
 	// render entities to the screen.
 	loopEntities(&entityRender);
-	
+
 	// update any block that has changed
 	renderChanges();
 
@@ -87,12 +90,8 @@ void render() {
 	// render the lightmap to the screen
 	if (location != &menu) {
 		renderLightmap();
-		clearLightmap();
 	}
 	
-	// loop through generated FOV and update the visibility count (saves rendering calls)
-	decrementVis();
-
 	// display the screen
 	SDL_RenderPresent(renderer);
 	target_buffer = (target_buffer == 0) ? 1 : 0;	
@@ -410,33 +409,43 @@ void decrementVis() {
 	}
 }
 
-void addLight(int x, int y, light light_value) {
-	// adjust x and y to screen coordinates.
-	x += DCOLS_OFFSET;
-	y += DROWS_OFFSET;
-	
-	// cast light into each octant
-	castLight(1, light_value.intensity, 0, x, y, 1, 1, 1, 0, light_value.value);
-	castLight(1, light_value.intensity, 1, x, y, 1, 1, 1, 0, light_value.value);
-	castLight(1, light_value.intensity, 0, x, y, -1, 1, 1, 0, light_value.value);
-	castLight(1, light_value.intensity, 1, x, y, -1, 1, 1, 0, light_value.value);
-	castLight(1, light_value.intensity, 0, x, y, -1, -1, 1, 0, light_value.value);
-	castLight(1, light_value.intensity, 1, x, y, 1, -1, 1, 0, light_value.value);
-	castLight(1, light_value.intensity, 0, x, y, 1, -1, 1, 0, light_value.value);
-	castLight(1, light_value.intensity, 1, x, y, -1, -1, 1, 0, light_value.value);
+void addLight(unsigned int id, int x, int y, light light_value) {
+	x -= view.x;
+	y -= view.y;
 
-	if ((x >= DCOLS_OFFSET) && (x < DCOLS_OFFSET+DCOLS) &&
-			(y >= DROWS_OFFSET) && (y < DROWS_OFFSET+DROWS)) {
-		lightmap_node *node = &(lightmap[x-DCOLS_OFFSET][y-DROWS_OFFSET]);
-		node->red += light_value.value.red;
-		node->green += light_value.value.green;
-		node->blue += light_value.value.blue;
-		node->alpha += 0;
-		node->light_count += 1;
+	int
+		valid = 0,
+		x_center = x+view.w/2,
+		y_center = y+view.h/2,
+		hypotenuse = light_value.intensity*light_value.intensity;
+
+	valid = ((x_center*x_center)+(y_center*y_center) < hypotenuse) ? 0 : 1;
+
+	if (valid) {	
+		// cast light into each octant
+		castLight(id, 1, light_value.intensity, 0, x, y, 1, 1, 1, 0, light_value.value);
+		castLight(id, 1, light_value.intensity, 1, x, y, 1, 1, 1, 0, light_value.value);
+		castLight(id, 1, light_value.intensity, 0, x, y, -1, 1, 1, 0, light_value.value);
+		castLight(id, 1, light_value.intensity, 1, x, y, -1, 1, 1, 0, light_value.value);
+		castLight(id, 1, light_value.intensity, 0, x, y, -1, -1, 1, 0, light_value.value);
+		castLight(id, 1, light_value.intensity, 1, x, y, 1, -1, 1, 0, light_value.value);
+		castLight(id, 1, light_value.intensity, 0, x, y, 1, -1, 1, 0, light_value.value);
+		castLight(id, 1, light_value.intensity, 1, x, y, -1, -1, 1, 0, light_value.value);
+
+		if ((x >= 0) && (x < DCOLS) &&
+				(y >= 0) && (y < DROWS)) {
+			lightmap_node *node = &(lightmap[x][y]);
+			node->red += light_value.value.red;
+			node->green += light_value.value.green;
+			node->blue += light_value.value.blue;
+			node->alpha += 0;
+			node->light_count += 1;
+		}
 	}
 }
 
 void castLight(
+	unsigned int light_id,
 	int distance, int intensity, int invert,
 	int x, int y, int dx, int dy,
 	float start, float end,
@@ -448,28 +457,14 @@ void castLight(
 		y_adj,
 		nx_adj,
 		ny_adj,
-		bound,
-		y_bound,
 		started,
 		was_blocked = 0;
 	float current;
 
-	if (invert) {
-		bound = (dy < 0) ? (y-DROWS_OFFSET+1) : (DROWS+DROWS_OFFSET-y);
-		bound = (intensity > bound) ? bound : intensity;
-		y_bound = (dx < 0) ? (x-DCOLS_OFFSET+1) : (DCOLS+DCOLS_OFFSET-x);
-		y_bound = (intensity > y_bound) ? y_bound : intensity;
-	} else {
-		bound = (dx < 0) ? (x-DCOLS_OFFSET+1) : (DCOLS+DCOLS_OFFSET-x);
-		bound = (intensity > bound) ? bound : intensity;
-		y_bound = (dy < 0) ? (y-DROWS_OFFSET+1) : (DROWS+DROWS_OFFSET-y);
-		y_bound = (intensity > y_bound) ? y_bound : intensity;
-	}
-
-	for (i = distance; i < bound; i += 1) {
+	for (i = distance; i < intensity; i += 1) {
 		started = 0;
-		j = ((distance > y_bound) ? y_bound : distance)-invert;
-		for (; j >= ((dx+dy == 0) ? 1 : 0); j -= 1) {
+		j = (distance > intensity) ? intensity : distance;
+		for (; j >= 0; j -= 1) {
 			// slope of the current block
 			current = ((float)j)/((float)i);
 			// translate algorithm coordinates to dmatrix coordinates
@@ -484,39 +479,50 @@ void castLight(
 				nx_adj = x+((i+1)*dx);
 				ny_adj = y+(j*dy);
 			}
-			if ((x_adj < DCOLS_OFFSET) || (x_adj >= DCOLS_OFFSET+DCOLS) ||
-					(y_adj < DROWS_OFFSET) || (y_adj >= DROWS_OFFSET+DROWS)) {
+			if ((x_adj+view.x >= location->w) || (x_adj+view.x < 0) ||
+					(y_adj+view.y >= location->h) || (y_adj+view.y < 0)) {
 				continue;
 			} else {
 				started = (started == 0) ? 1 : started;
 			}
 			if ((current <= start) && (current >= end)) {
-				if ((lookupTile(dmatrix[x_adj][y_adj].tile)->flags & OBSTRUCTS) == OBSTRUCTS) {
+				if ((lookupTile(location->tiles[x_adj+view.x][y_adj+view.y].tile)->flags & OBSTRUCTS) == OBSTRUCTS) {
 					if ((was_blocked == 0) && (started != 1)) {
-						castLight(distance+1, intensity, invert, x, y, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), value);
+						castLight(light_id, distance+1, intensity, invert, x, y, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), value);
 						start = ((float)(j-0.5))/((float)(i+0.5));
 					}
-					if ((j > 0) && ((lookupTile(dmatrix[nx_adj][ny_adj].tile)->flags & OBSTRUCTS) == OBSTRUCTS)) {
-						start = ((float)(j))/((float)(i+1.0));
-					} else {
-						start = ((float)(j-0.5))/((float)(i+0.5));
+
+					if ((nx_adj+view.x < location->w) && (nx_adj+view.x >= 0) &&
+							(ny_adj+view.y < location->h) && (ny_adj+view.y >= 0)) {
+						if ((j > 0) && ((lookupTile(location->tiles[nx_adj+view.x][ny_adj+view.y].tile)->flags & OBSTRUCTS) == OBSTRUCTS)) {
+							start = ((float)(j))/((float)(i+1.0));
+						} else {
+							start = ((float)(j-0.5))/((float)(i+0.5));
+						}
 					}
 					was_blocked = 1;
 				} else {
 					was_blocked = 0;
 				}
 
-				started = 2;
-				int dist = sqrt(j*j+i*i);
-
-				if (dist <= intensity) {
-					lightmap_node *node = &(lightmap[x_adj-DCOLS_OFFSET][y_adj-DROWS_OFFSET]);
-					node->red += value.red;
-					node->green += value.green;
-					node->blue += value.blue;
-					node->alpha += 255*((float)(dist)/intensity);
-					node->light_count += 1;
+				if ((x_adj >= 0) && (x_adj < DCOLS) &&
+						(y_adj >= 0) && (y_adj < DROWS)) {
+					int dist = sqrt(j*j+i*i);
+	
+					if (dist <= intensity) {
+						lightmap_node *node = &(lightmap[x_adj][y_adj]);
+						if (node->last_lit != light_id) {
+							node->red += value.red;
+							node->green += value.green;
+							node->blue += value.blue;
+							node->light_count += 1;
+							node->alpha += (location->ambient_light.intensity)*((float)(dist)/intensity);
+							node->last_lit = light_id;
+						}
+					}
 				}
+
+				started = 2;
 			} else if ((started == 1) && (current < end)) {
 				return;
 			}
@@ -540,9 +546,9 @@ light normalizeLight(lightmap_node node) {
 			light_value.intensity = 0;
 		}
 	} else {
-		light_value.value = black;
-		light_value.intensity = 255;
+		light_value = location->ambient_light;
 	}
+
 	return light_value;
 }
 
@@ -553,27 +559,28 @@ void renderLightmap() {
 	SDL_Rect dst;
 	dst.w = tile_width;
 	dst.h = tile_height;
+	lightmap_node node;
+	node.red = 0;
+	node.green = 0;
+	node.blue = 0;
+	node.alpha = 0;
+	node.light_count = 0;
+	node.last_lit = -1;
 
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
 	for (y = 0; y < DROWS; y += 1) {
 		for (x = 0; x < DCOLS; x += 1) {
-			if (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible != 0) {
+			if (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible == 1) {
 				dst.x = dport.x+(x+DCOLS_OFFSET)*tile_width;
 				dst.y = dport.y+(y+DROWS_OFFSET)*tile_height;
 					
 				light val = normalizeLight(lightmap[x][y]);
 
-				if ((val.value.red == 0) && (val.value.green == 0) && (val.value.blue == 0) && (val.intensity == 255)) {
-					if (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible == 0) {
-						dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].changed = 1;
-					}
-					dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible = 2;
-				}
-	
 				SDL_SetRenderDrawColor(renderer, val.value.red, val.value.green, val.value.blue, val.intensity);
 				SDL_RenderFillRect(renderer, &dst);
 			}
+			lightmap[x][y] = node;
 		}
 	}
 
@@ -591,6 +598,7 @@ void clearLightmap() {
 	node.blue = 0;
 	node.alpha = 0;
 	node.light_count = 0;
+	node.last_lit = -1;
 
 	for (y = 0; y < DROWS; y += 1) {
 		for (x = 0; x < DCOLS; x += 1) {

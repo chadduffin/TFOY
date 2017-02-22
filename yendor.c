@@ -198,6 +198,7 @@ int handleEvents() {
 	if (phys_keys[SDL_SCANCODE_SPACE]) {
 		(location == &menu) ? changeScene(&overworld) : changeScene(&menu);
 		phys_keys[SDL_SCANCODE_SPACE] = 0;
+
 		to_return = 0;
 	}
 
