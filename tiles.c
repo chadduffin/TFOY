@@ -2,38 +2,68 @@
 #include "globals.h"
 
 /*
-** externs
+** EXTERNS
 */
 
-dtile descriptor_tiles[TILE_TYPE_COUNT] = {
-	{"empty", "description", EMPTY, 0, 0, 0, &black, &black},
-	{"ground", "the ground", GROUND, 0, 14, 2, &grey, &dark_blue},
-	{"wall", "a wall", SOLID, OBSTRUCTS, 3, 2, &brown, &grey},
+G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
+	{"empty", "description", 0, 0, &black, &black, 0, EMPTY},
+	{"ground", "the ground", 14, 2, &grey, &dark_blue, 0, GROUND},
+	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS, SOLID},
 
-	{"character", "", ENTITY, 0, 1, 0, &white, &black},
+	{"character", "", 1, 0, &white, &black, 0, ENTITY},
 
-	{"", "", COLOR, 0, 0, 0, &aqua, &aqua},
-	{"", "", COLOR, 0, 0, 0, &black, &black},
-	{"", "", COLOR, 0, 0, 0, &blue, &blue},
-	{"", "", COLOR, 0, 0, 0, &green, &green},
-	{"", "", COLOR, 0, 0, 0, &magenta, &magenta},
-	{"", "", COLOR, 0, 0, 0, &red, &red},
-	{"", "", COLOR, 0, 0, 0, &white, &white},
-	{"", "", COLOR, 0, 0, 0, &yellow, &yellow},
+	{"", "", 0, 0, &aqua, &aqua, 0, COLOR},
+	{"", "", 0, 0, &black, &black, 0, COLOR},
+	{"", "", 0, 0, &blue, &blue, 0, COLOR},
+	{"", "", 0, 0, &green, &green, 0, COLOR},
+	{"", "", 0, 0, &magenta, &magenta, 0, COLOR},
+	{"", "", 0, 0, &red, &red, 0, COLOR},
+	{"", "", 0, 0, &white, &white, 0, COLOR},
+	{"", "", 0, 0, &yellow, &yellow, 0, COLOR},
 };
 
-const dtile* lookupTile(unsigned int value) {
-	return &descriptor_tiles[value-NOTHING];
+const char* G_TileName(Tile tile) {
+	tile -= NOTHING;
+	return (descriptor_tiles[tile].name);
 }
 
-void lookupTileSource(SDL_Rect *source, unsigned int value) {
-	if (value < 256) {
-		source->x = (value%16)*TILE_SOURCE_WIDTH;
-		source->y = (value/16)*TILE_SOURCE_HEIGHT;
+const char* G_TileDescription(Tile tile) {
+	tile -= NOTHING;
+	return (descriptor_tiles[tile].description);
+}
+
+G_Color G_TileForeground(Tile tile) {
+	tile -= NOTHING;
+	return *(descriptor_tiles[tile].fg);
+}
+
+G_Color G_TileBackground(Tile tile) {
+	tile -= NOTHING;
+	return *(descriptor_tiles[tile].bg);
+}
+
+TileFlag G_TileFlags(Tile tile) {
+	tile -= NOTHING;
+	return (descriptor_tiles[tile].flags);
+}	
+
+boolean G_TileSolid(Tile tile) {
+	tile -= NOTHING;
+	return (descriptor_tiles[tile].base == SOLID);
+}
+
+boolean G_TileObstructs(Tile tile) {
+	return ((descriptor_tiles[tile-NOTHING].flags & OBSTRUCTS) == OBSTRUCTS);
+}
+
+void G_TileSource(Tile tile, SDL_Rect *source) {
+	if (tile < 256) {
+		source->x = (tile%16)*TILE_SOURCE_WIDTH;
+		source->y = (tile/16)*TILE_SOURCE_HEIGHT;
 	} else {
-		value -= 256;
-		source->x = descriptor_tiles[value].x*TILE_SOURCE_WIDTH;
-		source->y = descriptor_tiles[value].y*TILE_SOURCE_HEIGHT;
+		tile -= 256;
+		source->x = descriptor_tiles[tile].x*TILE_SOURCE_WIDTH;
+		source->y = descriptor_tiles[tile].y*TILE_SOURCE_HEIGHT;
 	}
 }
 

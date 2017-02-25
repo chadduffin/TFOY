@@ -3,30 +3,35 @@
 
 
 int main(int argc, char **argv) {
-	int status = initializeSDL(),
+	int status = G_Init(),
 		last_update = SDL_GetTicks();
 
-	clearScreen();
-
 	if (status > GRPHCS_OK) {
-		initializeMenu();
-		initializeOverworld();
-		initializeKeybindings();
-		changeScene(&menu);
+		G_InitializeMenu();
+		G_InitializeOverworld();
+		G_InitializeKeybindings();
+		G_ChangeScene(&menu);
 
-		while (1) {
-			if (pollEvents() == -1) {
+		while (game_info.running) {
+			if (G_PollEvents() == -1) {
 				break;
 			}
 
-			update();
-			render();
-			last_update = frameCap(last_update);
+			G_Update();
+
+			if (location != NULL) {
+				if (G_SceneView(&location)->unchanged == 0) {
+					G_Render();
+				} else {
+					G_LightRender();
+				}
+			}
+
+			last_update = G_FrameCap(last_update);
 		}
 	}
 
-	cleanupScene(&menu);
-	cleanupScene(&overworld);
-	exitSDL(status);
-  return 0;
+	G_CleanupScene(&menu);
+	G_CleanupScene(&overworld);
+  return G_Exit(status);
 }

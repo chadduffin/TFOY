@@ -1,8 +1,18 @@
 #include "yendor.h"
 #include "globals.h"
 
-int initializeSDL() {
+int G_Init() {
 	int status = NOT_OK;
+	game_info.tile_w = 16;
+	game_info.tile_h = 16;
+	game_info.window_w = 320;
+	game_info.window_h = 240;
+	game_info.display_x = 0;
+	game_info.display_y = 0;
+	game_info.display_w = 320;
+	game_info.display_h = 240;
+	game_info.target_buffer = 0;
+	game_info.running = 0;
 
 	if ((status & NOT_OK) == NOT_OK) {
 		if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
@@ -13,9 +23,9 @@ int initializeSDL() {
 		}
 		
 		if ((status & SDL_OK) == SDL_OK) {
-			window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
+			game_info.window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
 			
-			if (window != NULL) {
+			if (game_info.window != NULL) {
 				status = status | WINDOW_OK;
 				printf("Opening window ......... SUCCESS.\n");
 			} else {
@@ -24,20 +34,16 @@ int initializeSDL() {
 		}
 
 		if ((status & WINDOW_OK) == WINDOW_OK) {
-			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+			game_info.renderer = SDL_CreateRenderer(game_info.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-			if (SDL_GetRendererOutputSize(renderer, &window_width, &window_height) == 0) {
-				updateRenderingInfo(1);
+			if (SDL_GetRendererOutputSize(game_info.renderer, &(game_info.window_w), &(game_info.window_h)) == 0) {
+				G_UpdateRenderingInfo();
 
-				if (renderer != NULL) {
+				if (game_info.renderer != NULL) {
 					status = status | RENDER_OK;
-					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-					SDL_SetRenderTarget(renderer, render_buffers[target_buffer]);
-					SDL_RenderClear(renderer);
-					SDL_RenderPresent(renderer);
 
-					render_buffers[0] = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, window_width, window_height);
-					render_buffers[1] = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, window_width, window_height);
+					game_info.buffers[0] = SDL_CreateTexture(game_info.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, game_info.window_w, game_info.window_h);
+					game_info.buffers[1] = SDL_CreateTexture(game_info.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, game_info.window_w, game_info.window_h);
 
 					printf("Creating renderer ...... SUCCESS.\n");
 				} else {
@@ -53,7 +59,7 @@ int initializeSDL() {
 
 			for (i = 0; i < TEXTURE_COUNT; i += 1) {
 				holder = IMG_Load(images[0]);
-				textures[i] = SDL_CreateTextureFromSurface(renderer, holder);
+				game_info.textures[i] = SDL_CreateTextureFromSurface(game_info.renderer, holder);
 				SDL_FreeSurface(holder);
 			}	
 
@@ -82,13 +88,23 @@ int initializeSDL() {
 			} else {
 				printf("Initializing SDLNet .... FAILURE.\n");
 			}
+
+			SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+			SDL_SetRenderTarget(game_info.renderer, game_info.buffers[game_info.target_buffer]);
+			SDL_RenderClear(game_info.renderer);
+			SDL_SetRenderTarget(game_info.renderer, NULL);	
+			SDL_RenderCopy(game_info.renderer, game_info.buffers[game_info.target_buffer], NULL, NULL);
+			game_info.target_buffer = !game_info.target_buffer;
+			game_info.running = 1;
 		}
 	}
+
+	SDL_PumpEvents();
 
 	return status;
 }
 
-void exitSDL(int status) {
+int G_Exit(int status) {
 	if ((status & NETWRK_OK) == NETWRK_OK) {
 		SDLNet_TCP_Close(socket);
 		SDLNet_Quit();
@@ -97,23 +113,25 @@ void exitSDL(int status) {
 	if ((status & GRPHCS_OK) == GRPHCS_OK) {
 		int i;
 		for (i = 0; i < TEXTURE_COUNT; i += 1) {
-			SDL_DestroyTexture(textures[i]);
+			SDL_DestroyTexture(game_info.textures[i]);
 		}
 	}
 	if ((status & RENDER_OK) == RENDER_OK) {
-		SDL_DestroyTexture(render_buffers[0]);
-		SDL_DestroyTexture(render_buffers[1]);
-		SDL_DestroyRenderer(renderer);
+		SDL_DestroyTexture(game_info.buffers[0]);
+		SDL_DestroyTexture(game_info.buffers[1]);
+		SDL_DestroyRenderer(game_info.renderer);
 	}
 	if ((status & WINDOW_OK) == WINDOW_OK) {
-		SDL_DestroyWindow(window);
+		SDL_DestroyWindow(game_info.window);
 	}
 	if ((status & SDL_OK) == SDL_OK) {
 		SDL_Quit();
 	}
+
+	return 0;
 }
 
-int frameCap(int last_update) {
+int G_FrameCap(int last_update) {
 	int delay = (1000.0/FPS)-(SDL_GetTicks()-last_update+0.5);
 
 	if (delay > 0) {
@@ -123,58 +141,46 @@ int frameCap(int last_update) {
 	return SDL_GetTicks();
 }
 
-int pollEvents() {
-	while (SDL_PollEvent(&event)) {
-		switch (event.type) {
+int G_PollEvents() {
+	while (SDL_PollEvent(&(game_info.event))) {
+		switch (game_info.event.type) {
 			case SDL_QUIT:
 				return -1;
 			case SDL_KEYDOWN:
 				{
-					if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+					if (game_info.event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
 						return -1;
 					} else {
-						if (phys_keys[event.key.keysym.scancode] == 0) {
-							phys_keys[event.key.keysym.scancode] = SDL_GetTicks();
+						if (phys_keys[game_info.event.key.keysym.scancode] == 0) {
+							phys_keys[game_info.event.key.keysym.scancode] = SDL_GetTicks();
 						}
 					}
 				}
 				break;
 			case SDL_KEYUP:
 				{
-					phys_keys[event.key.keysym.scancode] = 0;
+					phys_keys[game_info.event.key.keysym.scancode] = 0;
 				}
 				break;
 			case SDL_MOUSEMOTION:
 				{
-					cursor.x = event.motion.x-dport.x;
-					cursor.y = event.motion.y-dport.y;
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				{
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						cursor.lb = (cursor.lb == 0) ? SDL_GetTicks() : cursor.lb;
-					} else if (event.button.button == SDL_BUTTON_RIGHT) {
-						cursor.rb = (cursor.rb == 0) ? SDL_GetTicks() : cursor.rb;
-					}
 				}
 				break;
 			case SDL_MOUSEBUTTONUP:
 				{
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						cursor.lb = 0;
-					} else if (event.button.button == SDL_BUTTON_RIGHT) {
-						cursor.rb = 0;
-					}
 				}
 				break;
 			case SDL_WINDOWEVENT:
 				{
-					switch (event.window.event) {
+					switch (game_info.event.window.event) {
 						case SDL_WINDOWEVENT_RESIZED:
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 						case SDL_WINDOWEVENT_MAXIMIZED:
-							updateRenderingInfo(0);
+							G_UpdateRenderingInfo();
 							break;
 						case SDL_WINDOWEVENT_FOCUS_LOST:
 						case SDL_WINDOWEVENT_FOCUS_GAINED:
@@ -192,26 +198,25 @@ int pollEvents() {
 	return 0;
 }
 
-int handleEvents() {
+int G_HandleEvents() {
 	short to_return = -1;
 
 	if (phys_keys[SDL_SCANCODE_SPACE]) {
-		(location == &menu) ? changeScene(&overworld) : changeScene(&menu);
+		(location == menu) ? G_ChangeScene(&overworld) : G_ChangeScene(&menu);
 		phys_keys[SDL_SCANCODE_SPACE] = 0;
-
 		to_return = 0;
 	}
 
-	if (checkBoundKey(RIGHT)) {
+	if (G_CheckBound(RIGHT)) {
 		to_return = 0;
 	}
-	if (checkBoundKey(LEFT)) {
+	if (G_CheckBound(LEFT)) {
 		to_return = 0;
 	}
-	if (checkBoundKey(UP)) {
+	if (G_CheckBound(UP)) {
 		to_return = 0;
 	}
-	if (checkBoundKey(DOWN)) {
+	if (G_CheckBound(DOWN)) {
 		to_return = 0;
 	}
 
@@ -219,101 +224,90 @@ int handleEvents() {
 	return to_return;
 }
 
-void focusView() {
-	if (location != &menu) {
-		entity *target = (focus == NULL) ? player : focus;
+void G_FocusView(void) {
+	G_View *view = G_SceneView(&location);
+	G_Entity *entity = location->focus;
 	
-		if (target != NULL) {
-			render_component *comp = (render_component*)getComponent(target, RENDER_COMPONENT);
+	if (entity != NULL) {
+		G_RenderComponent *render = (G_RenderComponent*)G_GetComponent(&entity, RENDER_COMPONENT);
 	
-			view.x = comp->x;
-			view.y = comp->y;
-			view.x -= (DCOLS/2)+1;
-			view.y -= (DROWS/2)+1;
+		if (render != NULL) {
+			view->x = render->x;
+			view->y = render->y;
+			view->x -= (DCOLS/2)+1;
+			view->y -= (DROWS/2)+1;
+			view->w = DCOLS;
+			view->h = DROWS;
 	
-			if (view.x < 0) {
-				view.x = 0;
-			} else if (view.x+view.w >= location->w) {
-				view.x = location->w-view.w;
+			if (view->x < 0) {
+				view->x = 0;
+			} else if (view->x+view->w >= location->w) {
+				view->x = location->w-view->w;
 			}
-			if (view.y < 0) {
-				view.y = 0;
-			} else if (view.y+view.h >= location->h) {
-				view.y = location->h-view.h;
+			if (view->y < 0) {
+				view->y = 0;
+			} else if (view->y+view->h >= location->h) {
+				view->y = location->h-view->h;
 			}
 		}
-	} else {
-		view.x = 0;
-		view.y = 0;
 	}
 }
 
-void update() {
-	view_previous.x = view.x;
-	view_previous.y = view.y;
+void G_Update(void) {
+	if (location != NULL) {
+		location->view.xp = location->view.x;
+		location->view.yp = location->view.y;
+	}
 
-	if (handleEvents() != -1) {
+	if (G_HandleEvents() != -1) {
 		// perform a full game step and re-focus view
-		loopEntities(&entityUpdate);
-		focusView();
-	} else if (location != &menu) {
-		// refresh lighting instead of recalculating
-		int
-			x,
-			y;
-
-		for (y = 0; y < DROWS; y += 1) {
-			for (x = 0; x < DCOLS; x += 1) {
-				dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible = (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible == 1) ? 2 : 0;
-			}
-		}
+		G_LoopEntities(&G_EntityUpdate);
+		G_FocusView();
 	}
 }
 
-void loopEntities(void (*func)(entity*)) {
-	entity *head = getEntities(location);
+void G_LightUpdate(void) {
+}
 
-	while (head != NULL) {
-		func(head);
-		head = (entity*)(head->next);
+void G_LoopEntities(void (*func)(G_Entity**)) {
+	G_Entity *entity = G_GetEntities(&location);
+
+	while (entity != NULL) {
+		func(&entity);
+		entity = (G_Entity*)(entity->next);
 	}
 }
 
-void changeScene(scene *dest) {
+void G_ChangeScene(G_Scene **scene) {
 	int
 		x,
 		y;
-	location = dest;
+	location = *scene;
+	location->view.unchanged = 0;
 
-	if (location == &menu) {
+	if (location == menu) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].visible = 1;
 				dmatrix[x][y].entity = NOTHING;
-				dmatrix[x][y].tile = getTileValue(x, y);
+				dmatrix[x][y].tile = G_SceneTile(x, y);
 			}
 		}
 	} else {
-		view_previous.x = view.x;
-		view_previous.y = view.y;
-
-		clearLightmap();
-		loopEntities(&entityUpdate);
-		focusView();
-
 		int
-			x_offset = view.x-DCOLS_OFFSET,
-			y_offset = view.y-DROWS_OFFSET;
+			x_offset = location->view.x-DCOLS_OFFSET,
+			y_offset = location->view.y-DROWS_OFFSET;
 
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].visible = 0;
+				dmatrix[x][y].visible = 2;
+				dmatrix[x][y].entity = NOTHING;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
-					dmatrix[x][y].tile = getTileValue(x+x_offset, y+y_offset);
+					dmatrix[x][y].tile = G_SceneTile(x+x_offset, y+y_offset);
 				} else {
 					dmatrix[x][y].tile = BLACK;
 				}
@@ -322,13 +316,13 @@ void changeScene(scene *dest) {
 	}
 }
 
-void initializeKeybindings() {
+void G_InitializeKeybindings() {
 	int x;
 
 	for (x = 0; x < SDL_NUM_SCANCODES; x += 1) {
 		phys_keys[x] = 0;
 	}
-	for (x = 0; x < KEYBINDING_TYPE_COUNT; x += 1) {
+	for (x = 0; x < KEYBINDING_COUNT; x += 1) {
 		virt_keys[x] = -1;
 	}
 
@@ -342,12 +336,21 @@ void initializeKeybindings() {
 	virt_keys[DOWN] = SDL_SCANCODE_K;
 }
 
-int checkBoundKey(unsigned int keybinding) {
+int G_CheckBound(Keybinding keybinding) {
 	return phys_keys[virt_keys[keybinding]];
 }
 
-int isPointWithin(int x, int y, SDL_Rect *dst) {
-	return ((x >= dst->x) && (x < dst->x+dst->w) && (y >= dst->y) && (y < dst->y+dst->h));
+int G_CheckPhysical(SDL_Scancode key) {
+	return phys_keys[key];
+}
+
+int G_IsPointWithin(int x, int y, G_View *view) {
+	return ((x >= view->x) && (x < view->x+view->w) && (y >= view->y) && (y < view->y+view->h));
+}
+
+unsigned int G_GetID(void) {
+	G_ID += 1;
+	return G_ID-1;
 }
 
 /*

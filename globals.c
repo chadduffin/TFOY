@@ -4,6 +4,8 @@
 ** externs
 */
 
+G_Info game_info;
+
 char title[ROWS][COLS] = {
 		"                                                                                                            ",
 		"                                   T H E    F E L L O W S H I P S    O F                                    ",
@@ -74,36 +76,17 @@ char title[ROWS][COLS] = {
 char *name = "The Fellowships Of Yendor";
 char *images[] = {"images.png"};
 char *server_name = "";
-char buffer[MAX_BUFFER];
 int image_count = 1;
 int port = 32768;
-int tile_width = 16;
-int tile_height = 24;
-int window_width = 320;
-int window_height = 240;
-int target_buffer = 0;
-
-SDL_Rect view;
-SDL_Rect view_previous;
-SDL_Rect dport;
-SDL_Event event;
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
-SDL_Texture *textures[TEXTURE_COUNT];
-SDL_Texture *render_buffers[2];
+int G_ID = 0;
 
 IPaddress ipaddress;
 TCPsocket socket;
 
-entity *focus = NULL;
-entity *player = NULL;
+G_Cell dmatrix[COLS][ROWS];
 
-dcell dmatrix[COLS][ROWS];
-color lightmap[DCOLS][DROWS];
-
-mouse_state cursor;
 int phys_keys[SDL_NUM_SCANCODES];
-int virt_keys[KEYBINDING_TYPE_COUNT];
+int virt_keys[KEYBINDING_COUNT];
 
 /*
 */

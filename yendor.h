@@ -1,3 +1,6 @@
+#ifndef __YENDOR__
+#define __YENDOR__
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,21 +10,13 @@
 #include <SDL2/SDL_image.h>
 
 /*
-** defines
+** DEFINES
 */
 
 #define TITLE "The Fellowships Of Yendor"
 #define VERSION "v0.0.1"
 
-#define FULLSCREEN 0
-#define DEBUGGING 0
-#define ONLINE 0
-
-#define DISABLE_LIGHT 0
-#define DISABLE_COLOR_MOD 1
-
-#define FPS 100000
-#define MAX_BUFFER 1024
+#define FPS 60
 #define TEXTURE_COUNT 1
 
 #define NOT_OK 0
@@ -38,7 +33,6 @@
 #define ROWS 64
 #define DCOLS (COLS - STAT_BAR_WIDTH - 2)
 #define DROWS (ROWS - MESSAGE_ROWS - 2)
-// the offset of the actual game view
 #define DCOLS_OFFSET (COLS - DCOLS - 1)
 #define DROWS_OFFSET (ROWS - DROWS - 1)
 
@@ -54,11 +48,13 @@
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
 
+#define boolean unsigned char
+
 /*
-** enums
+** ENUMS
 */
 
-enum AttributeTypes {
+typedef enum Attribute {
 	STRENGTH,
 	AGILITY,
 	INTELLECT,
@@ -90,25 +86,25 @@ enum AttributeTypes {
 	WETNESS,
 	TEMPERATURE,
 
-	ATTRIBUTE_TYPE_COUNT
-};
+	ATTRIBUTE_COUNT
+} Attribute;
 
-enum ComponentTypes {
+typedef enum Component {
 	CREATURE_COMPONENT = 1,
 	RENDER_COMPONENT,
 	LIGHT_COMPONENT,
 
-	COMPONENT_TYPE_COUNT
-};
+	COMPONENT_COUNT
+} Component;
 
-enum CreatureFlags {
+typedef enum CreatureFlag {
 	IS_INVULNERABLE = 1,
 	IS_INVISIBLE = 2,
 
-	FLAG_COUNT
-};
+	CREATURE_FLAG_COUNT
+} CreatureFlag;
 
-enum CreatureCategories {
+typedef enum CreatureCategory {
 	ANIMAL = 0,
 	DRAGON,
 	UNDEAD,
@@ -119,10 +115,10 @@ enum CreatureCategories {
 	WATERBORNE,
 	ABOMINATION,
 
-	CATEGORY_COUNT
-};
+	CREATURE_CATEGORY_COUNT
+} CreatureCategory;
 
-enum TileCategories {
+typedef enum TileCategory {
 	EMPTY = 0,
 	SOLID,
 	LIQUID,
@@ -131,19 +127,18 @@ enum TileCategories {
 	COLOR,
 
 	TILE_CATEGORY_COUNT
-};
+} TileCategory;
 
-enum TileFlags {
+typedef enum TileFlag {
 	OBSTRUCTS = 1,
-	// if the tile PROPOGATES fire, it is flammable.
 	FLAMMABLE = 2,
-	// if the tile CHANGES STATE when frozen, it is freezable.
 	FREEZABLE = 4,
-	// if the tile IS A WALL and CAN DISAPPEAR, it is breakable.
 	BREAKABLE = 8,
-};
 
-enum TileIndexes {
+	FLICKERS = 16,
+} TileFlag;
+
+typedef enum Tile {
 	NOTHING = 256,
 	DIRT,
 	WALL,
@@ -160,10 +155,10 @@ enum TileIndexes {
 	YELLOW,
 
 	END_TILE,
-	TILE_TYPE_COUNT = (END_TILE-EMPTY)
-};
+	TILE_COUNT = (END_TILE-NOTHING)
+} Tile;
 
-enum KeybindingTypes {
+typedef enum Keybinding {
 	NO_BINDING = 0,
 	ACCEPT,
 	CANCEL,
@@ -176,209 +171,225 @@ enum KeybindingTypes {
 	UP,
 	DOWN,
 
-	KEYBINDING_TYPE_COUNT
-};
+	KEYBINDING_COUNT
+} Keybinding;
+
+typedef enum LightDirection {
+	FROM_LEFT = 1,
+	FROM_RIGHT = 2,
+	FROM_ABOVE = 4,
+	FROM_BELOW = 8
+} LightDirection;
 
 /*
-** typedefs
+** TYPEDEFS
 */
 
-typedef struct color {
+typedef struct G_Color {
+	int
+		red,
+		green,
+		blue;
+	boolean flickers;
+} G_Color;
+
+typedef struct G_Light {
 	int
 		red,
 		green,
 		blue,
-		redRand,
-		greenRand,
-		blueRand,
-	
-		flickers;
-} color;
+		intensity;
+	boolean flickers;
+} G_Light;
 
-typedef struct light {
-	int intensity;
-	color value;
-} light;
-
-typedef struct attribute {
+typedef struct G_Attribute {
 	char
 		*name,
 		*description;
-} attribute;
+} G_Attribute;
 
-// descriptor tile
-typedef struct dtile {
+typedef struct G_TileDescriptor {
 	char
 		*name,
 		*description;
 	int
-		base,
-		flags,
-		// x & y of tile display source
 		x,
 		y;
-	const color
+	const G_Color
 		*fg,
 		*bg;
-} dtile;
+	TileFlag flags;
+	TileCategory base;
+} G_TileDescriptor;
 
-// compressed tile
-typedef struct ctile {
-	short tile;
-} ctile;
+typedef struct G_Tile {
+	Tile tile;
+} G_Tile;
 
-typedef struct dcell {
-	int
-		tile,
-		//the alpha value of the foreground image
-		alpha,
-		//the entity tile, if an entity is present
-		entity,
-		//whether or not this tile needs to be redrawn
+typedef struct G_Cell {
+	boolean
 		changed,
-		//whether or not this tile needs to be updated
-		visible,
-		discovered;
-	color
+		visible;
+	Tile
+		tile,
+		entity;
+	G_Color
 		fg,
 		bg;
-} dcell;
+	G_Light light;
+} G_Cell;
 
-typedef struct entity {
+typedef struct G_Entity {
 	unsigned int id;
 	void
-		*components[COMPONENT_TYPE_COUNT],
+		*components[COMPONENT_COUNT],
 		*prev,
 		*next;
-}	entity;
+}	G_Entity;
 
-typedef struct creature_component {
-	unsigned int
-		flags,
-		category;
-	int base_attributes[ATTRIBUTE_TYPE_COUNT];
-} creature_component;
+typedef struct G_CreatureComponent {
+	int base_attributes[ATTRIBUTE_COUNT];
+	CreatureFlag flags;
+	CreatureCategory category;
+} G_CreatureComponent;
 
-typedef struct render_component {
+typedef struct G_RenderComponent {
 	int
 		x,
 		y,
 		z,
 		x_previous,
-		y_previous,
-		x_drawn,
-		y_drawn,
-		tile;
-} render_component;
+		y_previous;
+	Tile tile;
+} G_RenderComponent;
 
-typedef struct light_component {
-	light light_value;
-} light_component;
+typedef struct G_LightComponent {
+	G_Light light;
+} G_LightComponent;
 
-typedef struct scene {
-	int
-		w,
-		h,
-		entity_count;
-	ctile **tiles;
-	entity
-		*head,
-		*tail;
-	light ambient_light;
-} scene;
-
-typedef struct mouse_state {
+typedef struct G_View {
 	int
 		x,
 		y,
-		lb,
-		rb;
-} mouse_state;
+		xp,
+		yp,
+		w,
+		h;
+	boolean unchanged;
+} G_View;
 
-typedef struct lightmap_node {
+typedef struct G_Scene {
 	int
-		red,
-		green,
-		blue,
-		alpha,
-		light_count;
-	unsigned int last_lit;
-	
-} lightmap_node;
+		w,
+		h,
+		l,
+		entity_count;
+	G_Tile *tiles;
+	G_Entity
+		*head,
+		*tail,
+		*focus;
+	G_View view;
+	G_Light ambient;
+} G_Scene;
+
+typedef struct G_Info {
+	int
+		tile_w,
+		tile_h,
+		window_w,
+		window_h,
+		display_x,
+		display_y,
+		display_w,
+		display_h,
+		target_buffer,
+		phys[SDL_NUM_SCANCODES];
+	SDL_Event event;
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+	SDL_Texture
+		*buffers[2],
+		*textures[TEXTURE_COUNT];
+	SDL_Scancode virt[KEYBINDING_COUNT];
+	boolean running;
+} G_Info;
 
 /*
-** functions
+** FUNCTIONS
 */
 
-int initializeSDL();
-void exitSDL(int status);
-int frameCap(int last_update);
-int pollEvents();
-int handleEvents();
-void focusView();
-void update();
-void loopEntities(void (*func)(entity*));
-void changeScene(scene *dest);
-void initializeKeybindings();
-int checkBoundKey(unsigned int keybinding);
-int isPointWithin(int x, int y, SDL_Rect *dst);
+int G_Init(void);
+int G_Exit(int status);
+int G_FrameCap(int last_update);
+int G_PollEvents(void);
+int G_HandleEvents(void);
+void G_FocusView(void);
+void G_Update(void);
+void G_LightUpdate(void);
+void G_LoopEntities(void (*func)(G_Entity**));
+void G_ChangeScene(G_Scene **scene);
+void G_InitializeKeybindings(void);
+int G_CheckBound(Keybinding key);
+int G_CheckPhysical(SDL_Scancode key);
+int G_IsPointWithin(int x, int y, G_View *view);
+unsigned int G_GetID(void);
 
 // rendering.c
-void updateRenderingInfo();
-void render();
-void renderSalvage();
-void renderChanges();
-void clearScreen();
-void evaluateRGB(color col, int *r, int *g, int *b);
-void generateFOV(int x, int y);
-void castShadow(
+void G_UpdateRenderingInfo(void);
+void G_Render(void);
+void G_LightRender(void);
+void G_RenderSalvage(void);
+void G_RenderChanges(void);
+void G_ClearScreen(void);
+void G_EvaluateRGB(G_Color col, int *r, int *g, int *b);
+void G_GenerateFOV(int x, int y, void (*func)(int*, int*, void*));
+void G_CastShadow(
 	int distance, int x, int y,
 	int invert, int dx, int dy,
-	float start, float end);
-void decrementVis();
-void addLight(unsigned int id, int x, int y, light light_value);
-void castLight(
-	unsigned int light_id,
-	int distance, int intensity, int invert,
-	int x, int y, int dx, int dy,
 	float start, float end,
-	color value);
-void clearLightmap();
-color mixColor(color first, color second);
-light normalizeLight(lightmap_node node);
-void generateLightmap();
-void renderLightmap();
+	void (*func)(int*, int*, void*));
+void G_DecrementFOV();
+void G_MarkVisible(int *x, int *y, void *data);
+void G_AddLight(int *x, int *y, void *data);
 
 // tiles.c
-int getTileTime(int x, int y);
-int getTileValue(int x, int y);
-int getTileChanged(int x, int y);
-const dtile* lookupTile(unsigned int value);
-void lookupTileSource(SDL_Rect *source, unsigned int value);
+const char* G_TileName(Tile tile);
+const char* G_TileDescription(Tile tile);
+G_Color G_TileForeground(Tile tile);
+G_Color G_TileBackground(Tile tile);
+TileFlag G_TileFlags(Tile tile);
+boolean G_TileSolid(Tile tile);
+boolean G_TileObstructs(Tile tile);
+void G_TileSource(Tile tile, SDL_Rect *source);
 
 // attributes.c
-const char* getAttributeName(int index);
-const char* getAttributeDescription(int index);
-int getExperienceNeeded(int level);
+const char* G_GetAttributeName(Attribute attribute);
+const char* G_GetAttributeDescription(Attribute attribute);
+int G_GetExperienceNeeded(int level);
 
 // entity.c
-entity* createEntity(unsigned int id);
-void* addComponent(entity *target, int component_type);
-void* getComponent(entity *target, int component_type);
-void removeComponent(entity *target, int component_type);
-void entityPos(entity *target, int *x, int *y);
-void entityMov(entity *target, scene *src, scene *dest, int x, int y, int relative);
-void entityUpdate(entity *target);
-void entityRender(entity *target);
+G_Entity* G_CreateEntity(void);
+void* G_AddComponent(G_Entity **entity, Component component);
+void* G_GetComponent(G_Entity **entity, Component component);
+void G_RemoveComponent(G_Entity **entity, Component component);
+void G_EntityPos(G_Entity **entity, int *x, int *y);
+void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst);
+void G_EntityUpdate(G_Entity **entity);
+void G_EntityRender(G_Entity **entity);
 
 // scene.c
-void initializeMenu();
-void initializeOverworld();
-void cleanupScene(scene *target);
-void addEntity(scene *dest, entity *target);
-void delEntity(scene *dest, entity *target);
-void popEntity(scene *dest, entity *target);
-entity* getEntities(scene *source);
+void G_InitializeMenu(void);
+void G_InitializeOverworld(void);
+void G_CleanupScene(G_Scene **scene);
+void G_AddEntity(G_Scene **scene, G_Entity **entity);
+void G_DelEntity(G_Scene **scene, G_Entity **entity);
+void G_PopEntity(G_Scene **scene, G_Entity **entity);
+G_View* G_SceneView(G_Scene **scene);
+G_Entity* G_GetEntities(G_Scene **scene);
+Tile G_SceneTile(int x, int y);
 
 /*
 */
+
+#endif /* YENDOR */

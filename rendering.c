@@ -1,108 +1,92 @@
 #include "yendor.h"
 #include "globals.h"
 
-void updateRenderingInfo(int initial) {
-	double tile_ratio = ((double)(COLS*TILE_SOURCE_WIDTH))/(ROWS*TILE_SOURCE_HEIGHT),
-		window_ratio = ((double)window_width)/window_height;
+/*
+** FUNCTIONS
+*/
+
+void G_UpdateRenderingInfo() {
+	float
+		tile_ratio = ((float)(COLS*TILE_SOURCE_WIDTH))/(ROWS*TILE_SOURCE_HEIGHT),
+		window_ratio = ((float)game_info.window_w)/game_info.window_h;
 
 	if (tile_ratio > window_ratio) {
-		dport.w = window_width;
-		dport.h = window_width/tile_ratio;
+		game_info.display_w = game_info.window_w;
+		game_info.display_h = game_info.window_w/tile_ratio;
 	} else if (tile_ratio < window_ratio) {
-		dport.w = window_height*tile_ratio;
-		dport.h = window_height;
+		game_info.display_w = game_info.window_h*tile_ratio;
+		game_info.display_h = game_info.window_h;
 	} else {
-		dport.w = window_width;
-		dport.h = window_height;
+		game_info.display_w = game_info.window_w;
+		game_info.display_h = game_info.window_h;
 	}
 
-	tile_width = dport.w/COLS;
-	tile_height = dport.h/ROWS;
+	game_info.tile_w = game_info.display_w/COLS;
+	game_info.tile_h = game_info.display_h/ROWS;
 
-	dport.w = tile_width*COLS;
-	dport.h = tile_height*ROWS;
+	game_info.display_w = game_info.tile_w*COLS;
+	game_info.display_h = game_info.tile_h*ROWS;
 
-	dport.x = (window_width-(tile_width*COLS))/2;
-	dport.y = (window_height-(tile_height*ROWS))/2;
+	game_info.display_x = (game_info.window_w-game_info.display_w)/2;
+	game_info.display_y = (game_info.window_h-game_info.display_h)/2;
 
-	if (initial == 1) {
-		view.x = 0;
-		view.y = 0;
-		view.w = DCOLS;
-		view.h = DROWS;
-		view_previous.x = view.w;
-		view_previous.y = view.h;
-		view_previous.w = view.w;
-		view_previous.h = view.h;
-
+	if (game_info.running == 0) {
 		printf("Initializing graphics .. PENDING.\n");
-		printf("> window width ......... %d.\n", window_width);
-		printf("> window height ........ %d.\n", window_height);
-		printf("> dport x .............. %d.\n", dport.x);
-		printf("> dport y .............. %d.\n", dport.y);
-		printf("> dport width .......... %d.\n", dport.w);
-		printf("> dport height ......... %d.\n", dport.h);
-		printf("> tile width ........... %d.\n", tile_width);
-		printf("> tile height .......... %d.\n", tile_height);
+		printf("> window width ......... %d.\n", game_info.window_w);
+		printf("> window height ........ %d.\n", game_info.window_h);
+		printf("> dport x .............. %d.\n", game_info.display_y);
+		printf("> dport y .............. %d.\n", game_info.display_x);
+		printf("> dport width .......... %d.\n", game_info.display_w);
+		printf("> dport height ......... %d.\n", game_info.display_h);
+		printf("> tile width ........... %d.\n", game_info.tile_w);
+		printf("> tile height .......... %d.\n", game_info.tile_h);
 		printf("Initializing graphics .. SUCCESS.\n");
 	}
 }
 
-void render() {
-	int
-		x,
-		y;
-	entity *target = (focus == NULL) ? player : focus;
+void G_Render(void) {
+	SDL_SetRenderTarget(game_info.renderer, game_info.buffers[game_info.target_buffer]);
+	SDL_RenderClear(game_info.renderer);
 
-	// clear new buffer to be drawn to
-	SDL_SetRenderTarget(renderer, render_buffers[target_buffer]);
-	SDL_RenderClear(renderer);
+	if (location != menu) {
+		G_RenderSalvage();
+		
+		if (location->focus != NULL) {
+			int
+				x,
+				y;
 
-	// attempt to salvage data from previous screen
-	if (location != &menu) {
-		renderSalvage();
+			G_EntityPos(&(location->focus), &x, &y);
+			G_GenerateFOV(x, y, &G_MarkVisible);
+			G_DecrementFOV();
+		}
 	} else {
-		SDL_RenderCopy(renderer, render_buffers[!target_buffer], NULL, NULL);
+		SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
 	}
 
-	// if there is a focus, generate FOV
-	if ((target != NULL) && (location != &menu)) {
-		entityPos(target, &x, &y);
-		x -= view.x;
-		y -= view.y;
+	G_LoopEntities(&G_EntityRender);
 
-		generateFOV(x, y);
-	}
+	G_RenderChanges();
 
-	// loop through generated FOV and update the visibility count (saves rendering calls)
-	decrementVis();
-	
-	// render entities to the screen.
-	loopEntities(&entityRender);
+	SDL_SetRenderTarget(game_info.renderer, NULL);	
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[game_info.target_buffer], NULL, NULL);
 
-	// update any block that has changed
-	renderChanges();
-
-	// render new buffer to screen
-	SDL_SetRenderTarget(renderer, NULL);	
-	SDL_RenderCopy(renderer, render_buffers[target_buffer], NULL, NULL);
-
-	// render the lightmap to the screen
-	if (location != &menu) {
-		renderLightmap();
-	}
-	
-	// display the screen
-	SDL_RenderPresent(renderer);
-	target_buffer = (target_buffer == 0) ? 1 : 0;	
+	SDL_RenderPresent(game_info.renderer);
+	game_info.target_buffer = (game_info.target_buffer == 0) ? 1 : 0;	
 }
 
-void renderSalvage() {
+void G_LightRender(void) {
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
+	SDL_RenderPresent(game_info.renderer);
+}
+
+void G_RenderSalvage(void) {
+	G_View view = *(G_SceneView(&location));
 	int
 		x,
 		y,
-		xdiff = view.x-view_previous.x,
-		ydiff = view.y-view_previous.y;
+		xdiff = location->view.x-location->view.xp,
+		ydiff = location->view.y-location->view.yp;
 	SDL_Rect
 		src,
 		dst;
@@ -121,32 +105,32 @@ void renderSalvage() {
 		src.y = (ydiff < 0) ? 0 : ydiff;
 		src.w = (xdiff < 0) ? (view.w+xdiff) : (view.w-xdiff);
 		src.h = (ydiff < 0) ? (view.h+ydiff) : (view.h-ydiff);
-		src.x *= tile_width;
-		src.y *= tile_height;
-		src.w *= tile_width;
-		src.h *= tile_height;
+		src.x *= game_info.tile_w;
+		src.y *= game_info.tile_h;
+		src.w *= game_info.tile_w;
+		src.h *= game_info.tile_h;
 		
-		src.x += dport.x+(DCOLS_OFFSET)*tile_width;
-		src.y += dport.y+(DROWS_OFFSET)*tile_height;
+		src.x += game_info.display_x+(DCOLS_OFFSET)*game_info.tile_w;
+		src.y += game_info.display_y+(DROWS_OFFSET)*game_info.tile_h;
 
 		dst.x = (xdiff < 0) ? (-xdiff) : 0;
 		dst.y = (ydiff < 0) ? (-ydiff) : 0;
-		dst.x *= tile_width;
-		dst.y *= tile_height;
+		dst.x *= game_info.tile_w;
+		dst.y *= game_info.tile_h;
 		dst.w = src.w;
 		dst.h = src.h;
 
-		dst.x += dport.x+(DCOLS_OFFSET)*tile_width;
-		dst.y += dport.y+(DROWS_OFFSET)*tile_height;
+		dst.x += game_info.display_x+(DCOLS_OFFSET)*game_info.tile_w;
+		dst.y += game_info.display_y+(DROWS_OFFSET)*game_info.tile_h;
 
-		SDL_RenderCopy(renderer, render_buffers[!target_buffer], &src, &dst);
+		SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &src, &dst);
 
-		src.x = (src.x-dport.x)/tile_width;
-		src.y = (src.y-dport.y)/tile_height;
-		dst.x = (dst.x-dport.x)/tile_width;
-		dst.y = (dst.y-dport.y)/tile_height;
-		dst.w /= tile_width;
-		dst.h /= tile_height;
+		src.x = (src.x-game_info.display_x)/game_info.tile_w;
+		src.y = (src.y-game_info.display_y)/game_info.tile_h;
+		dst.x = (dst.x-game_info.display_x)/game_info.tile_w;
+		dst.y = (dst.y-game_info.display_y)/game_info.tile_h;
+		dst.w /= game_info.tile_w;
+		dst.h /= game_info.tile_h;
 
 		if ((xdiff != 0) || (ydiff != 0)) {
 			int
@@ -179,195 +163,174 @@ void renderSalvage() {
 			if ((x < dst.x) || (x >= dst.x+dst.w) ||
 					(y < dst.y) || (y >= dst.y+dst.h)) {
 				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].tile = getTileValue(x-x_offset, y-y_offset);
+				dmatrix[x][y].tile = G_SceneTile(x-x_offset, y-y_offset);
 			}
 		}
 	}
 }
 
-void renderChanges() {
+void G_RenderChanges(void) {
 	int
 		x,
 		y;
 	SDL_Rect
 		src,
 		dst;
-	dst.w = tile_width;
-	dst.h = tile_height;
+	Tile to_draw;
+	dst.w = game_info.tile_w;
+	dst.h = game_info.tile_h;
 	src.w = TILE_SOURCE_WIDTH;
 	src.h = TILE_SOURCE_HEIGHT;
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
-			int to_draw = (dmatrix[x][y].entity == NOTHING) ? dmatrix[x][y].tile : dmatrix[x][y].entity;
-			color
+			to_draw = (dmatrix[x][y].entity == NOTHING) ? dmatrix[x][y].tile : dmatrix[x][y].entity;
+			G_Color
 				fg = (to_draw < 256) ? white : *(descriptor_tiles[to_draw-256].fg),
 				bg = (to_draw < 256) ? black : *(descriptor_tiles[to_draw-256].bg);
 
 			if (dmatrix[x][y].changed == 1) {
-				dst.x = dport.x+(x*tile_width);
-				dst.y = dport.y+(y*tile_height);
+				dst.x = game_info.display_x+(x*game_info.tile_w);
+				dst.y = game_info.display_y+(y*game_info.tile_h);
 	
-				if (dmatrix[x][y].visible) {
+				if ((dmatrix[x][y].visible) || (location == menu)) {
 					int
 						r,
 						g,
 						b;
 	
-					evaluateRGB(bg, &r, &g, &b);
+					G_EvaluateRGB(bg, &r, &g, &b);
 	
-					SDL_SetRenderDrawColor(renderer, r, g, b, 255);
-					SDL_RenderFillRect(renderer, &dst);	
+					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
+					SDL_RenderFillRect(game_info.renderer, &dst);	
 	
 					if (&fg != &bg) {
-						lookupTileSource(&src, to_draw);
-						evaluateRGB(fg, &r, &g, &b);
-						SDL_SetTextureColorMod(textures[0], r, g, b);
-						SDL_SetTextureAlphaMod(textures[0], dmatrix[x][y].alpha);
-	
-						SDL_RenderCopy(renderer, textures[0], &src, &dst);
-	
-						SDL_SetTextureColorMod(textures[0], 255, 255, 255);
-						SDL_SetTextureAlphaMod(textures[0], 255);
+						G_TileSource(to_draw, &src);
+						G_EvaluateRGB(fg, &r, &g, &b);
+						SDL_SetTextureColorMod(game_info.textures[0], r, g, b);
+						SDL_RenderCopy(game_info.renderer, game_info.textures[0], &src, &dst);
+						SDL_SetTextureColorMod(game_info.textures[0], 255, 255, 255);
 					}
 				} else {
-					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-					SDL_RenderFillRect(renderer, &dst);	
+					SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+					SDL_RenderFillRect(game_info.renderer, &dst);	
 				}
 				dmatrix[x][y].changed = 0;
 			}
 		}
 	}
 
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	location->view.unchanged = 1;
+	SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 }
 
-void clearScreen() {
-	int
-		x,
-		y;
-
-	dcell cell;
-	cell.tile = BLACK;
-	cell.alpha = 255;
-	cell.entity = NOTHING;
-	cell.changed = 1;
-	cell.visible = 1;
-	cell.discovered = 1;
-
-	for (y = 0; y < ROWS; y += 1) {
-		for (x = 0; x < COLS; x += 1) {
-			dmatrix[x][y] = cell;
-		}
-	}
-}
-
-void evaluateRGB(color col, int *r, int *g, int *b) {
+void G_EvaluateRGB(G_Color col, int *r, int *g, int *b) {
 	*r = col.red;
 	*g = col.green;
 	*b = col.blue;
-
-	if (!DISABLE_COLOR_MOD) {
-		if (col.redRand != 0) {
-			*r += (rand()%(col.redRand))-(rand()%(col.redRand));
-		}
-		if (col.greenRand != 0) {
-			*g += (rand()%(col.greenRand))-(rand()%(col.greenRand));
-		}
-		if (col.blueRand != 0) {
-			*b += (rand()%(col.blueRand))-(rand()%(col.blueRand));
-		}
-
-		if (*r < 0) {
-			*r = 0;
-		} else if (*r > 255) {
-			*r = 255;
-		}
-	
-		if (*g < 0) {
-			*g = 0;
-		} else if (*g > 255) {
-			*g = 255;
-		}
-	
-		if (*b < 0) {
-			*b = 0;
-		} else if (*b > 255) {
-			*b = 255;
-		}
-	}
 }
 
-void generateFOV(int x, int y) {
-	//take rendering port coordinates and adjust them
-	x += DCOLS_OFFSET;
-	y += DROWS_OFFSET;
-
-	if ((lookupTile(dmatrix[x][y].tile)->flags & OBSTRUCTS) != OBSTRUCTS) {
-		//cast shadows into each octant
-		castShadow(1, x, y, 0, 1, 1, 1, 0);
-		castShadow(1, x, y, 1, 1, 1, 1, 0);
-		castShadow(1, x, y, 0, -1, 1, 1, 0);
-		castShadow(1, x, y, 1, -1, 1, 1, 0);
-		castShadow(1, x, y, 0, 1, -1, 1, 0);
-		castShadow(1, x, y, 1, 1, -1, 1, 0);
-		castShadow(1, x, y, 0, -1, -1, 1, 0);
-		castShadow(1, x, y, 1, -1, -1, 1, 0);
+void G_GenerateFOV(int x, int y, void (*func)(int*, int*, void*)) {
+	if ((x < 0) || (x >= location->w) ||
+			(y < 0) || (y >= location->h)) {
+		return;
 	}
 
-	//make at least the exact spot of the player visible
+	if (!G_TileObstructs(G_SceneTile(x, y))) {
+		G_CastShadow(1, x, y, 0, 1, 1, 1, 0, func);
+		G_CastShadow(1, x, y, 1, 1, 1, 1, 0, func);
+		G_CastShadow(1, x, y, 0, -1, 1, 1, 0, func);
+		G_CastShadow(1, x, y, 1, -1, 1, 1, 0, func);
+		G_CastShadow(1, x, y, 0, 1, -1, 1, 0, func);
+		G_CastShadow(1, x, y, 1, 1, -1, 1, 0, func);
+		G_CastShadow(1, x, y, 0, -1, -1, 1, 0, func);
+		G_CastShadow(1, x, y, 1, -1, -1, 1, 0, func);
+	}
+
+	x -= location->view.x-DCOLS_OFFSET;
+	y -= location->view.y-DROWS_OFFSET;
+
 	dmatrix[x][y].visible = 2;
 	dmatrix[x][y].changed = 1;
 }
 
-void castShadow(
+void G_CastShadow(
 	int distance, int x, int y,
 	int invert, int dx, int dy,
-	float start, float end) {
+	float start, float end,
+	void (*func)(int*, int*, void*)) {
 	int
 		i,
 		j,
-		bound,
+		x_adj,
+		y_adj,
+		nx_adj,	
+		ny_adj,
+		x_bound,
 		y_bound,
 		started,
 		was_blocked = 0;
 	float current;
-	dcell
-		*curr_cell,
-		*next_cell;
 
-	if (invert) {
-		bound = (dy < 0) ? (y-DROWS_OFFSET+1) : (DROWS+DROWS_OFFSET-y);
-		y_bound = (dx < 0) ? (x-DCOLS_OFFSET+1) : (DCOLS+DCOLS_OFFSET-x);
+	if (dx > 0) {
+		if (x+DCOLS >= location->w) {
+			x_bound = location->w-x;
+		} else {
+			x_bound = DCOLS;
+		}
 	} else {
-		bound = (dx < 0) ? (x-DCOLS_OFFSET+1) : (DCOLS+DCOLS_OFFSET-x);
-		y_bound = (dy < 0) ? (y-DROWS_OFFSET+1) : (DROWS+DROWS_OFFSET-y);
+		if (x-DCOLS < 0) {
+			x_bound = x;
+		} else {
+			x_bound = DCOLS;
+		}
+	}
+	if (dy > 0) {
+		if (y+DROWS >= location->h) {
+			y_bound = location->h-y;
+		} else {
+			y_bound = DROWS;
+		}
+	} else {
+		if (y-DROWS < 0) {
+			y_bound = y;
+		} else {
+			y_bound = DROWS;
+		}
 	}
 
-	for (i = distance; i < bound; i += 1) {
+	if (invert) {
+		i = x_bound;
+		x_bound = y_bound;
+		y_bound = i;
+	}
+
+	for (i = distance; i < x_bound; i += 1) {
 		started = 0;
 		for (j = (distance > y_bound) ? y_bound : distance; j >= 0; j -= 1) {
-			// slope of the current block
 			current = ((float)j)/((float)i);
-			// translate algorithm coordinates to dmatrix coordinates
 			if (invert) {
-				curr_cell = &(dmatrix[x+(j*dx)][y+(i*dy)]);
-				next_cell = &(dmatrix[x+(j*dx)][y+((i+1)*dy)]);
+				x_adj = x+(j*dx);
+				y_adj = y+(i*dy);
+				nx_adj = x+(j*dx);
+				ny_adj = (i < x_bound-1) ? y+((i+1)*dy) : y_adj;
 			} else {
-				curr_cell = &(dmatrix[x+(i*dx)][y+(j*dy)]);
-				next_cell = &(dmatrix[x+((i+1)*dx)][y+(j*dy)]);
+				x_adj = x+(i*dx);
+				y_adj = y+(j*dy);
+				nx_adj = (i < x_bound-1) ? x+((i+1)*dx) : x_adj;
+				ny_adj = y+(j*dy);
 			}
 
 			started = (started == 0) ? 1 : started;
 
 			if ((current <= start) && (current >= end)) {
-				if ((lookupTile(curr_cell->tile)->flags & OBSTRUCTS) == OBSTRUCTS) {
+				if (G_TileObstructs(G_SceneTile(x_adj, y_adj))) {
 					if ((was_blocked == 0) && (started != 1)) {
-						castShadow(distance+1, x, y, invert, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5));
+						G_CastShadow(distance+1, x, y, invert, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), func);
 						start = ((float)(j-0.5))/((float)(i+0.5));
 					}
-					if ((j > 0) && ((lookupTile(next_cell->tile)->flags & OBSTRUCTS) == OBSTRUCTS)) {
-						start = ((float)(j))/((float)(i+1.0));
+					if ((j > 0) && (G_TileObstructs(G_SceneTile(nx_adj, ny_adj)))) {
+						start = ((float)(j))/((float)(i+0.5));
 					} else {
 						start = ((float)(j-0.5))/((float)(i+0.5));
 					}
@@ -377,10 +340,14 @@ void castShadow(
 				}
 
 				started = 2;
-				if (curr_cell->visible == 0) {
-					curr_cell->changed = 1;
+			
+				x_adj -= location->view.x;
+				y_adj -= location->view.y;
+	
+				if ((x_adj >= 0) && (x_adj < location->view.w) &&
+						(y_adj >= 0) && (y_adj < location->view.h)) {
+					func(&x_adj, &y_adj, NULL);
 				}
-				curr_cell->visible = 2;
 			} else if ((started == 1) && (current < end)) {
 				return;
 			}
@@ -390,8 +357,8 @@ void castShadow(
 	}
 }
 
-void decrementVis() {
-	if (location != &menu) {
+void G_DecrementFOV() {
+	if (location != menu) {
 		int
 			x,
 			y;
@@ -409,202 +376,18 @@ void decrementVis() {
 	}
 }
 
-void addLight(unsigned int id, int x, int y, light light_value) {
-	x -= view.x;
-	y -= view.y;
+void G_MarkVisible(int *x, int *y, void *data) {
+	*x += DCOLS_OFFSET;
+	*y += DROWS_OFFSET;
 
-	int
-		valid = 0,
-		x_center = x+view.w/2,
-		y_center = y+view.h/2,
-		hypotenuse = light_value.intensity*light_value.intensity;
-
-	valid = ((x_center*x_center)+(y_center*y_center) < hypotenuse) ? 0 : 1;
-
-	if (valid) {	
-		// cast light into each octant
-		castLight(id, 1, light_value.intensity, 0, x, y, 1, 1, 1, 0, light_value.value);
-		castLight(id, 1, light_value.intensity, 1, x, y, 1, 1, 1, 0, light_value.value);
-		castLight(id, 1, light_value.intensity, 0, x, y, -1, 1, 1, 0, light_value.value);
-		castLight(id, 1, light_value.intensity, 1, x, y, -1, 1, 1, 0, light_value.value);
-		castLight(id, 1, light_value.intensity, 0, x, y, -1, -1, 1, 0, light_value.value);
-		castLight(id, 1, light_value.intensity, 1, x, y, 1, -1, 1, 0, light_value.value);
-		castLight(id, 1, light_value.intensity, 0, x, y, 1, -1, 1, 0, light_value.value);
-		castLight(id, 1, light_value.intensity, 1, x, y, -1, -1, 1, 0, light_value.value);
-
-		if ((x >= 0) && (x < DCOLS) &&
-				(y >= 0) && (y < DROWS)) {
-			lightmap_node *node = &(lightmap[x][y]);
-			node->red += light_value.value.red;
-			node->green += light_value.value.green;
-			node->blue += light_value.value.blue;
-			node->alpha += 0;
-			node->light_count += 1;
-		}
+	if (dmatrix[*x][*y].visible == 0) {
+		dmatrix[*x][*y].changed = 1;
 	}
+	dmatrix[*x][*y].visible = 2;
 }
 
-void castLight(
-	unsigned int light_id,
-	int distance, int intensity, int invert,
-	int x, int y, int dx, int dy,
-	float start, float end,
-	color value) {
-	int
-		i,
-		j,
-		x_adj,
-		y_adj,
-		nx_adj,
-		ny_adj,
-		started,
-		was_blocked = 0;
-	float current;
+void G_AddLight(int *x, int *y, void *data) {
 
-	for (i = distance; i < intensity; i += 1) {
-		started = 0;
-		j = (distance > intensity) ? intensity : distance;
-		for (; j >= 0; j -= 1) {
-			// slope of the current block
-			current = ((float)j)/((float)i);
-			// translate algorithm coordinates to dmatrix coordinates
-			if (invert) {
-				x_adj = x+(j*dx);
-				y_adj = y+(i*dy);
-				nx_adj = x+(j*dx);
-				ny_adj = y+((i+1)*dy);
-			} else {
-				x_adj = x+(i*dx);
-				y_adj = y+(j*dy);
-				nx_adj = x+((i+1)*dx);
-				ny_adj = y+(j*dy);
-			}
-			if ((x_adj+view.x >= location->w) || (x_adj+view.x < 0) ||
-					(y_adj+view.y >= location->h) || (y_adj+view.y < 0)) {
-				continue;
-			} else {
-				started = (started == 0) ? 1 : started;
-			}
-			if ((current <= start) && (current >= end)) {
-				if ((lookupTile(location->tiles[x_adj+view.x][y_adj+view.y].tile)->flags & OBSTRUCTS) == OBSTRUCTS) {
-					if ((was_blocked == 0) && (started != 1)) {
-						castLight(light_id, distance+1, intensity, invert, x, y, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), value);
-						start = ((float)(j-0.5))/((float)(i+0.5));
-					}
-
-					if ((nx_adj+view.x < location->w) && (nx_adj+view.x >= 0) &&
-							(ny_adj+view.y < location->h) && (ny_adj+view.y >= 0)) {
-						if ((j > 0) && ((lookupTile(location->tiles[nx_adj+view.x][ny_adj+view.y].tile)->flags & OBSTRUCTS) == OBSTRUCTS)) {
-							start = ((float)(j))/((float)(i+1.0));
-						} else {
-							start = ((float)(j-0.5))/((float)(i+0.5));
-						}
-					}
-					was_blocked = 1;
-				} else {
-					was_blocked = 0;
-				}
-
-				if ((x_adj >= 0) && (x_adj < DCOLS) &&
-						(y_adj >= 0) && (y_adj < DROWS)) {
-					int dist = sqrt(j*j+i*i);
-	
-					if (dist <= intensity) {
-						lightmap_node *node = &(lightmap[x_adj][y_adj]);
-						if (node->last_lit != light_id) {
-							node->red += value.red;
-							node->green += value.green;
-							node->blue += value.blue;
-							node->light_count += 1;
-							node->alpha += (location->ambient_light.intensity)*((float)(dist)/intensity);
-							node->last_lit = light_id;
-						}
-					}
-				}
-
-				started = 2;
-			} else if ((started == 1) && (current < end)) {
-				return;
-			}
-		}
-		was_blocked = 0;
-		distance += 1;
-	}
-}
-
-light normalizeLight(lightmap_node node) {
-	light light_value;
-
-	if (node.light_count != 0) {
-		light_value.value.red = node.red/node.light_count;
-		light_value.value.green = node.green/node.light_count;
-		light_value.value.blue = node.blue/node.light_count;
-
-		light_value.intensity = 255-((255*node.light_count)-node.alpha);
-		light_value.intensity = (light_value.intensity > 255) ? 255 : light_value.intensity;
-		if (light_value.intensity < 0) {
-			light_value.intensity = 0;
-		}
-	} else {
-		light_value = location->ambient_light;
-	}
-
-	return light_value;
-}
-
-void renderLightmap() {
-	int
-		x,
-		y;
-	SDL_Rect dst;
-	dst.w = tile_width;
-	dst.h = tile_height;
-	lightmap_node node;
-	node.red = 0;
-	node.green = 0;
-	node.blue = 0;
-	node.alpha = 0;
-	node.light_count = 0;
-	node.last_lit = -1;
-
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-	for (y = 0; y < DROWS; y += 1) {
-		for (x = 0; x < DCOLS; x += 1) {
-			if (dmatrix[x+DCOLS_OFFSET][y+DROWS_OFFSET].visible == 1) {
-				dst.x = dport.x+(x+DCOLS_OFFSET)*tile_width;
-				dst.y = dport.y+(y+DROWS_OFFSET)*tile_height;
-					
-				light val = normalizeLight(lightmap[x][y]);
-
-				SDL_SetRenderDrawColor(renderer, val.value.red, val.value.green, val.value.blue, val.intensity);
-				SDL_RenderFillRect(renderer, &dst);
-			}
-			lightmap[x][y] = node;
-		}
-	}
-
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-}
-
-void clearLightmap() {
-	int
-		x,
-		y;
-	lightmap_node node;
-	node.red = 0;
-	node.green = 0;
-	node.blue = 0;
-	node.alpha = 0;
-	node.light_count = 0;
-	node.last_lit = -1;
-
-	for (y = 0; y < DROWS; y += 1) {
-		for (x = 0; x < DCOLS; x += 1) {
-			lightmap[x][y] = node;
-		}
-	}
 }
 
 /*

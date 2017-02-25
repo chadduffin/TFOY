@@ -2,215 +2,181 @@
 #include "globals.h"
 
 /*
-** externs
+** EXTERNS
 */
 
-scene menu;
-scene overworld;
-
-scene *location = &menu;
+G_Scene *menu;
+G_Scene *overworld;
+G_Scene *location;
 
 /*
-** functions
+** FUNCTIONS
 */
 
-void initializeMenu() {
-	int
-		x,
-		y;
-	menu.w = COLS;
-	menu.h = ROWS;
-	menu.entity_count = 0;
-	menu.ambient_light.intensity = 255;
-	menu.ambient_light.value = white;
+void G_InitializeMenu(void) {
+	int i;
+	menu = (G_Scene*)malloc(sizeof(G_Scene));
+	menu->w = COLS;
+	menu->h = ROWS;
+	menu->l = COLS*ROWS;
+	menu->entity_count = 0;
+	menu->head = NULL;
+	menu->tail = NULL;
+	menu->focus = NULL;
+	menu->view.x = 0;
+	menu->view.y = 0;
+	menu->view.xp = 0;
+	menu->view.yp = 0;
+	menu->view.w = COLS;
+	menu->view.h = ROWS;
+	menu->view.unchanged = 0;
+	menu->ambient.red = 255;
+	menu->ambient.green = 255;
+	menu->ambient.blue = 255;
+	menu->ambient.intensity = 255;
 
-	menu.tiles = (ctile**)malloc(sizeof(ctile*)*menu.w);
-	menu.head = NULL;
-	menu.tail = NULL;
+	menu->tiles = (G_Tile*)malloc(sizeof(G_Tile)*menu->l);
 
-	for (x = 0; x < menu.w; x += 1) {
-		menu.tiles[x] = (ctile*)malloc(sizeof(ctile)*menu.h);
-	}
-
-	for (y = 0; y < menu.h; y += 1) {
-		for (x = 0; x < menu.w; x += 1) {
-			if (title[y][x] == 'B') {
-				menu.tiles[x][y].tile = BLACK;
-			} else if ((title[y][x] != 'B') && (title[y][x] != ' ')) {
-				menu.tiles[x][y].tile = title[y][x];
-			} else if ((y > 0) && (title[y-1][x] == 'B')) {
-				menu.tiles[x][y].tile = WHITE;
-			} else {
-				menu.tiles[x][y].tile = MAGENTA;
-			}
+	for (i = 0; i < menu->l; i += 1) {
+		if (title[i/COLS][i%COLS] == 'B') {
+			menu->tiles[i].tile = BLACK;
+		} else if ((title[i/COLS][i%COLS] != 'B') && (title[i/COLS][i%COLS] != ' ')) {
+			menu->tiles[i].tile = title[i/COLS][i%COLS];
+		} else if ((i > COLS) && (title[i/COLS][(i-1)%COLS] == 'B')) {
+			menu->tiles[i].tile = WHITE;
+		} else {
+			menu->tiles[i].tile = MAGENTA;
 		}
 	}
 }
 
-void initializeOverworld() {
-	int
-		x,
-		y;
-	overworld.w = WORLD_COLS;
-	overworld.h = WORLD_ROWS;
-	overworld.entity_count = 0;
-	overworld.ambient_light.intensity = 255;
-	overworld.ambient_light.value = black;
+void G_InitializeOverworld(void) {
+	int i;
+	overworld = (G_Scene*)malloc(sizeof(G_Scene));
+	overworld->w = WORLD_COLS;
+	overworld->h = WORLD_ROWS;
+	overworld->l = WORLD_COLS*WORLD_ROWS;
+	overworld->entity_count = 0;
+	overworld->head = NULL;
+	overworld->tail = NULL;
+	overworld->focus = NULL;
+	overworld->view.x = 0;
+	overworld->view.y = 0;
+	overworld->view.xp = 0;
+	overworld->view.yp = 0;
+	overworld->view.w = DCOLS;
+	overworld->view.h = DROWS;
+	overworld->view.unchanged = 0;
+	overworld->ambient.red = 0;
+	overworld->ambient.green = 0;
+	overworld->ambient.blue = 0;
+	overworld->ambient.intensity = 255;
 
-	overworld.tiles = (ctile**)malloc(sizeof(ctile*)*overworld.w);
-	overworld.head = NULL;
-	overworld.tail = NULL;
+	overworld->tiles = (G_Tile*)malloc(sizeof(G_Tile)*overworld->l);
 
-	for (x = 0; x < overworld.w; x += 1) {
-		overworld.tiles[x] = (ctile*)malloc(sizeof(ctile)*overworld.h);
-	}
-
-	for (y = 0; y < overworld.h; y += 1) {
-		for (x = 0; x < overworld.w; x += 1) {
-			if ((x == 0) || (y == 0) || (x == overworld.w-1) || (y == overworld.h-1)) {
-				overworld.tiles[x][y].tile = WALL;
-			} else {
-				overworld.tiles[x][y].tile = (rand()%128 == 1) ? WALL : DIRT;
-			}
+	for (i = 0; i < overworld->l; i += 1) {
+		if ((i%WORLD_COLS == 0) || ((i+1)%WORLD_COLS == 0) ||
+				(i < WORLD_COLS) || (i > overworld->l-WORLD_COLS)) {
+			overworld->tiles[i].tile = WALL;
+		} else {
+			overworld->tiles[i].tile = (rand()%64 < 1) ? WALL : DIRT;
 		}
 	}
 
-	for (y = 0; y < 24; y += 1) {
-		for (x = 0; x < 24; x += 1) {
-			if ((x == 0) || (y == 0) || (x == 23) || (y == 23)) {
-				if (x != 13) {
-					overworld.tiles[WORLD_COLS-36+x][WORLD_ROWS+y-36].tile = WALL;
-				} else {
-					overworld.tiles[WORLD_COLS-36+x][WORLD_ROWS+y-36].tile = DIRT;
-				}
-			} else {
-				overworld.tiles[WORLD_COLS-36+x][WORLD_ROWS+y-36].tile = DIRT;
-			}
-		}
-	}
-
-	player = createEntity(0);
-	render_component *r = (render_component*)addComponent(player, RENDER_COMPONENT);
+	G_Entity *player = G_CreateEntity();
+	G_RenderComponent *r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 460;
 	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
-	light_component *l = (light_component*)addComponent(player, LIGHT_COMPONENT);
-	l->light_value.value = black;
-	l->light_value.intensity = 25;
-	addEntity(&overworld, player);
-
-	entity *test = createEntity(1);
-	r = (render_component*)addComponent(test, RENDER_COMPONENT);
-	r->tile = NOTHING;
-	r->x = 490;
-	r->y = 239;
+	G_AddEntity(&overworld, &player);
+	player = G_CreateEntity();
+	r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
+	r->tile = HUMAN;
+	r->x = 470;
+	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
-	l = (light_component*)addComponent(test, LIGHT_COMPONENT);
-	l->light_value.value = black;
-	l->light_value.intensity = 19;
-	addEntity(&overworld, test);
+	G_AddEntity(&overworld, &player);
 }
 
-void cleanupScene(scene *target) {
-	entity *head = target->head;
+void G_CleanupScene(G_Scene **scene) {
+	G_Entity *entity = (*scene)->head;
 	
-	while (head != NULL) {
-		target->head = (entity*)(head->next);
-		free(head);
-		head = target->head;
+	while (entity != NULL) {
+		(*scene)->head = (G_Entity*)(entity->next);
+		free(entity);
+		entity = (*scene)->head;
 	}
 
-	free(target->tiles);
+	free((*scene)->tiles);
 }
 
-void addEntity(scene *dest, entity *target) {
+void G_AddEntity(G_Scene **scene, G_Entity **entity) {
 
-	if (dest->head == NULL) {
-		dest->head = target;
-		dest->tail = target;
+	if ((*scene)->head == NULL) {
+		(*scene)->head = (*entity);
+		(*scene)->tail = (*entity);
 	} else {
-		target->prev = (void*)(dest->tail);
-		dest->tail->next = (void*)target;
-		dest->tail = target;
+		(*entity)->prev = (void*)((*scene)->tail);
+		(*scene)->tail->next = (void*)(*entity);
+		(*scene)->tail = (*entity);
 	}
-
-	dest->entity_count += 1;
+	
+	if ((*scene)->focus == NULL) {
+		(*scene)->focus = *entity;
+	}
+	
+	(*scene)->entity_count += 1;
 }
 
-void delEntity(scene *dest, entity *target) {
-	if ((dest != NULL) && (target != NULL)) {
-		popEntity(dest, target);
-		free(target);
+void G_DelEntity(G_Scene **scene, G_Entity **entity) {
+	if ((*scene != NULL) && (*entity != NULL)) {
+		G_PopEntity(scene, entity);
+		free(*entity);
 	}
 }
 
-void popEntity(scene *dest, entity *target) {
-	if ((target != dest->head) && (target != dest->tail)) {
-		if (target->next != NULL) {
-			((entity*)(target->next))->prev = target->prev;
+void G_PopEntity(G_Scene **scene, G_Entity **entity) {
+	if ((*entity != (*scene)->head) && (*entity != (*scene)->tail)) {
+		if ((*entity)->next != NULL) {
+			((G_Entity*)((*entity)->next))->prev = (*entity)->prev;
 		}
-		if (target->prev != NULL) {
-			((entity*)(target->prev))->next = target->next;
+		if ((*entity)->prev != NULL) {
+			((G_Entity*)((*entity)->prev))->next = (*entity)->next;
 		}
 	} else {
-		dest->head = (target == dest->head) ? (entity*)(dest->head->next) : dest->head;
-		dest->tail = (target == dest->tail) ? (entity*)(dest->tail->prev) : dest->tail;
+		(*scene)->head = ((*entity) == (*scene)->head) ? (G_Entity*)((*scene)->head->next) : (*scene)->head;
+		(*scene)->tail = ((*entity) == (*scene)->tail) ? (G_Entity*)((*scene)->tail->prev) : (*scene)->tail;
 
-		if (target->next != NULL) {
-			((entity*)(target->next))->prev = NULL;
+		if ((*entity)->next != NULL) {
+			((G_Entity*)((*entity)->next))->prev = NULL;
 		}
-		if (target->prev != NULL) {
-			((entity*)(target->prev))->next = NULL;
-		}
-	}
-}
-
-entity* getEntities(scene *source) {
-	return (source == NULL) ? NULL : source->head;
-}
-
-void entityPos(entity *target, int *x, int *y) {
-	render_component *comp = getComponent(target, RENDER_COMPONENT);
-
-	if (comp != NULL) {
-		*x = comp->x;
-		*y = comp->y;
-	}
-}
-
-void entityMov(entity *target, scene *src, scene *dest, int x, int y, int relative) {
-	render_component *comp = getComponent(target, RENDER_COMPONENT);
-
-	if (comp != NULL) {
-		if ((src != NULL) && (dest != NULL)) {
-			comp->x = (relative) ? comp->x+x : x;
-			comp->y = (relative) ? comp->y+y : y;
-			comp->x_previous = comp->x;
-			comp->y_previous = comp->y;
-			popEntity(src, target);
-			addEntity(dest, target);
-		} else {
-			comp->x_previous = comp->x;
-			comp->y_previous = comp->y;
-			comp->x = (relative) ? comp->x+x : x;
-			comp->y = (relative) ? comp->y+y : y;
+		if ((*entity)->prev != NULL) {
+			((G_Entity*)((*entity)->prev))->next = NULL;
 		}
 	}
 }
 
-int getTileTime(int x, int y) {
-	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x7800);
+G_View* G_SceneView(G_Scene **scene) {
+	if ((scene != NULL) && (*scene != NULL)) {
+		return &((*scene)->view);
+	}
+
+	return NULL;
 }
 
-int getTileValue(int x, int y) {
-	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x7FF);
+G_Entity* G_GetEntities(G_Scene **scene) {
+	if ((scene != NULL) && (*scene != NULL)) {
+		return (*scene)->head;
+	}
+
+	return NULL;
 }
 
-int getTileChanged(int x, int y) {
-	return (location == NULL) ? NOTHING : (location->tiles[x][y].tile & 0x8000);
+Tile G_SceneTile(int x, int y) {
+	return (location == NULL) ? NOTHING : (location->tiles[x+(y*location->w)].tile);
 }
 
 /*

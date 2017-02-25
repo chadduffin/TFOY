@@ -2,10 +2,10 @@
 #include "globals.h"
 
 /*
-** externs
+** EXTERNS
 */
 
-attribute attributes[ATTRIBUTE_TYPE_COUNT] = {
+G_Attribute attributes[ATTRIBUTE_COUNT] = {
 	{"Strength",				"Description of strength."},
 	{"Agility", 				"Description of agility."},
 	{"Intellect", 			"Description of intellect."},
@@ -39,26 +39,18 @@ attribute attributes[ATTRIBUTE_TYPE_COUNT] = {
 };
 
 /*
-** functions
+** FUNCTIONS
 */
 
-const char* getAttributeName(int index) {
-	if ((index >= 0) && (index < ATTRIBUTE_TYPE_COUNT)) {
-		return attributes[index].name;
-	}
-
-	return NULL;
+const char* G_GetAttributeName(Attribute attribute) {
+	return attributes[attribute].name;
 }
 
-const char* getAttributeDescription(int index) {
-	if ((index >= 0) && (index < ATTRIBUTE_TYPE_COUNT)) {
-		return attributes[index].description;
-	}
-
-	return NULL;
+const char* G_GetAttributeDescription(Attribute attribute) {
+	return attributes[attribute].description;
 }
 
-int getExperienceNeeded(int level) {
+int G_GetExperienceNeeded(int level) {
 	return (level == 1) ? EXPERIENCE_OFFSET : 10*((EXPERIENCE_OFFSET+(2 << (level+3)))/10);
 }
 

@@ -1,52 +1,56 @@
 #include "yendor.h"
 #include "globals.h"
 
-entity* createEntity(unsigned int id) {
+/*
+** FUNCTIONS
+*/
+
+G_Entity* G_CreateEntity(void) {
 	int i;
-	entity *instance = (entity*)malloc(sizeof(entity));
+	G_Entity *entity = (G_Entity*)malloc(sizeof(G_Entity));
 
-	instance->id = id;
-	instance->prev = NULL;
-	instance->next = NULL;
+	entity->id = G_GetID();
+	entity->prev = NULL;
+	entity->next = NULL;
 
-	for (i = 0; i < COMPONENT_TYPE_COUNT; i += 1) {
-		instance->components[i] = NULL;
+	for (i = 0; i < COMPONENT_COUNT; i += 1) {
+		entity->components[i] = NULL;
 	}
 
-	return instance;
+	return entity;
 }
 
-void* addComponent(entity *target, int component_type) {
-	switch (component_type) {
+void* G_AddComponent(G_Entity **entity, Component component) {
+	switch (component) {
 		case CREATURE_COMPONENT:
 			{
-				creature_component *value = (creature_component*)malloc(sizeof(creature_component));
-				target->components[CREATURE_COMPONENT] = value;
-				return value;
+				G_CreatureComponent *creature = (G_CreatureComponent*)malloc(sizeof(G_CreatureComponent));
+				(*entity)->components[CREATURE_COMPONENT] = creature;
+				return creature;
 			}
 			break;
 		case RENDER_COMPONENT:
 			{
-				render_component *value = (render_component*)malloc(sizeof(render_component));
-				value->x = 0;
-				value->y = 0;
-				value->z = 0;
-				value->x_previous = -1;
-				value->y_previous = -1;
-				value->x_drawn = -1;
-				value->y_drawn = -1;
-				value->tile = NOTHING;
-				target->components[RENDER_COMPONENT] = value;
-				return value;
+				G_RenderComponent *render = (G_RenderComponent*)malloc(sizeof(G_RenderComponent));
+				render->x = 0;
+				render->y = 0;
+				render->z = 0;
+				render->x_previous = -1;
+				render->y_previous = -1;
+				render->tile = NOTHING;
+				(*entity)->components[RENDER_COMPONENT] = render;
+				return render;
 			}
 			break;
 		case LIGHT_COMPONENT:
 			{
-				light_component *value = (light_component*)malloc(sizeof(light_component));
-				value->light_value.intensity = 0;
-				value->light_value.value = black;
-				target->components[LIGHT_COMPONENT] = value;
-				return value;
+				G_LightComponent *light = (G_LightComponent*)malloc(sizeof(G_LightComponent));
+				light->light.intensity = 0;
+				light->light.red = 0;
+				light->light.green = 0;
+				light->light.blue = 0;
+				(*entity)->components[LIGHT_COMPONENT] = light;
+				return light;
 			}
 			break;
 		default:
@@ -55,77 +59,104 @@ void* addComponent(entity *target, int component_type) {
 	}
 }
 
-void* getComponent(entity *target, int component_type) {
-	return target->components[component_type];
+void* G_GetComponent(G_Entity **entity, Component component) {
+	if ((entity != NULL) && (*entity != NULL)) {
+		return (*entity)->components[component];
+	}
+
+	return NULL;
 }
 
-void removeComponent(entity *target, int component_type) {
-	if (target->components[component_type] != NULL) {
-		free(target->components[component_type]);
-		target->components[component_type] = NULL;
+void G_RemoveComponent(G_Entity **entity, Component component) {
+	if ((*entity)->components[component] != NULL) {
+		free((*entity)->components[component]);
+		(*entity)->components[component] = NULL;
 	}
 }
 
-void entityUpdate(entity *target) {
-	render_component *render_comp = (render_component*)(getComponent(target, RENDER_COMPONENT));
+void G_EntityPos(G_Entity **entity, int *x, int *y) {
+	if ((entity != NULL) && (*entity != NULL)) {
+		G_RenderComponent *render = G_GetComponent(entity, RENDER_COMPONENT);
 
-	if (render_comp != NULL) {
-		render_comp->x_previous = render_comp->x;
-		render_comp->y_previous = render_comp->y;
-
-		if (target == player) {
-			if (checkBoundKey(RIGHT)) {
-				render_comp->x += 1;
-				phys_keys[virt_keys[RIGHT]] = 0;
-			}
-			if (checkBoundKey(LEFT)) {
-				render_comp->x -= 1;
-				phys_keys[virt_keys[LEFT]] = 0;
-			}
-			if (checkBoundKey(UP)) {
-				render_comp->y -= 1;
-				phys_keys[virt_keys[UP]] = 0;
-			}
-			if (checkBoundKey(DOWN)) {
-				render_comp->y += 1;
-				phys_keys[virt_keys[DOWN]] = 0;
-			}
+		if (render != NULL) {
+			*x = render->x;
+			*y = render->y;
 		}
 	}
 }
 
-void entityRender(entity *target) {
-	// render component
-	render_component *render_comp = (render_component*)(getComponent(target, RENDER_COMPONENT));
+void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst) {
+	if ((entity != NULL) && (*entity != NULL) &&
+			(src != NULL) && (*src != NULL) && 
+			(dst != NULL) && (*dst != NULL)) {
+		G_PopEntity(src, entity);
+		G_AddEntity(dst, entity);
+	}
+}
 
-	if (render_comp != NULL) {
-		if ((render_comp->x == render_comp->x_previous) && (render_comp->y == render_comp->y_previous)) {
-			int
-				rx = render_comp->x_previous+(view.x-view_previous.x),
-				ry = render_comp->y_previous+(view.y-view_previous.y);
+void G_EntityUpdate(G_Entity **entity) {
+	if ((entity != NULL) && (*entity != NULL)) {
+		G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
+
+		if (render != NULL) {
+			render->x_previous = render->x;
+			render->y_previous = render->y;
+
+			if ((*entity)->id == 0) {
+				if (G_CheckBound(RIGHT)) {
+					render->x += 1;
+					phys_keys[virt_keys[RIGHT]] = 0;
+					location->view.unchanged = 0;
+				}
+				if (G_CheckBound(LEFT)) {
+					render->x -= 1;
+					phys_keys[virt_keys[LEFT]] = 0;
+					location->view.unchanged = 0;
+				}
+				if (G_CheckBound(UP)) {
+					render->y -= 1;
+					phys_keys[virt_keys[UP]] = 0;
+					location->view.unchanged = 0;
+				}
+				if (G_CheckBound(DOWN)) {
+					render->y += 1;
+					phys_keys[virt_keys[DOWN]] = 0;
+					location->view.unchanged = 0;
+				}
+			}
+		}
+	}
+}
 	
-			if (isPointWithin(rx, ry, &view)) {
-				dmatrix[rx-view.x+DCOLS_OFFSET][ry-view.y+DROWS_OFFSET].changed = 1;
-				dmatrix[rx-view.x+DCOLS_OFFSET][ry-view.y+DROWS_OFFSET].entity = NOTHING;
+void G_EntityRender(G_Entity **entity) {
+	if ((entity != NULL) && (*entity != NULL)) {
+		G_View *view = G_SceneView(&location);
+		G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
+	
+		if (render != NULL) {
+			if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
+				int
+					rx = render->x_previous+(view->x-view->xp),
+					ry = render->y_previous+(view->y-view->yp);
+		
+				if (G_IsPointWithin(rx, ry, view)) {
+					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
+					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
+				}
+			} else {
+				if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
+					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
+					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity = NOTHING;
+				}
 			}
-		} else {
-			if (isPointWithin(render_comp->x_previous, render_comp->y_previous, &view)) {
-				dmatrix[render_comp->x_previous-view.x+DCOLS_OFFSET][render_comp->y_previous-view.y+DROWS_OFFSET].changed = 1;
-				dmatrix[render_comp->x_previous-view.x+DCOLS_OFFSET][render_comp->y_previous-view.y+DROWS_OFFSET].entity = NOTHING;
+	
+			if (G_IsPointWithin(render->x, render->y, view)) {
+				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
+				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity = render->tile;
 			}
-		}
-
-		if (isPointWithin(render_comp->x, render_comp->y, &view)) {
-			dmatrix[render_comp->x-view.x+DCOLS_OFFSET][render_comp->y-view.y+DROWS_OFFSET].changed = 1;
-			dmatrix[render_comp->x-view.x+DCOLS_OFFSET][render_comp->y-view.y+DROWS_OFFSET].entity = render_comp->tile;
-		}
-
-		light_component *light_comp = (light_component*)(getComponent(target, LIGHT_COMPONENT));
-		if (light_comp != NULL) {
-			addLight(target->id, render_comp->x, render_comp->y, light_comp->light_value);
 		}
 	}
 }
-
+	
 /*
 */
