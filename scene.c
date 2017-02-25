@@ -80,6 +80,13 @@ void G_InitializeOverworld(void) {
 			overworld->tiles[i].tile = WALL;
 		} else {
 			overworld->tiles[i].tile = (rand()%64 < 1) ? WALL : DIRT;
+
+			int
+				x = i%WORLD_COLS,	
+				y = i/WORLD_COLS;
+			if ((x+rand()%4 > WORLD_COLS-24) && (y+rand()%4 > WORLD_ROWS-24)) {
+				overworld->tiles[i].tile = WATER;
+			}
 		}
 	}
 
@@ -87,14 +94,6 @@ void G_InitializeOverworld(void) {
 	G_RenderComponent *r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 460;
-	r->y = 230;
-	r->x_previous = r->x;
-	r->y_previous = r->y;
-	G_AddEntity(&overworld, &player);
-	player = G_CreateEntity();
-	r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
-	r->tile = HUMAN;
-	r->x = 470;
 	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
@@ -176,7 +175,13 @@ G_Entity* G_GetEntities(G_Scene **scene) {
 }
 
 Tile G_SceneTile(int x, int y) {
-	return (location == NULL) ? NOTHING : (location->tiles[x+(y*location->w)].tile);
+	if ((x < 0) || (x >= location->view.x+location->view.w) ||
+			(y < 0) || (y >= location->view.y+location->view.h) ||
+			(location == NULL)) {
+		return WALL;
+	}
+
+	return (location->tiles[x+(y*location->w)].tile);
 }
 
 /*

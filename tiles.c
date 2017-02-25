@@ -8,6 +8,7 @@
 G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 	{"empty", "description", 0, 0, &black, &black, 0, EMPTY},
 	{"ground", "the ground", 14, 2, &grey, &dark_blue, 0, GROUND},
+	{"water", "some water", 14, 7, &dark_blue, &blue, FLICKERS, LIQUID},
 	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS, SOLID},
 
 	{"character", "", 1, 0, &white, &black, 0, ENTITY},
@@ -23,33 +24,35 @@ G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 };
 
 const char* G_TileName(Tile tile) {
-	tile -= NOTHING;
-	return (descriptor_tiles[tile].name);
+	return (descriptor_tiles[tile-NOTHING].name);
 }
 
 const char* G_TileDescription(Tile tile) {
-	tile -= NOTHING;
-	return (descriptor_tiles[tile].description);
+	return (descriptor_tiles[tile-NOTHING].description);
 }
 
 G_Color G_TileForeground(Tile tile) {
-	tile -= NOTHING;
-	return *(descriptor_tiles[tile].fg);
+	return *(descriptor_tiles[tile-NOTHING].fg);
 }
 
 G_Color G_TileBackground(Tile tile) {
-	tile -= NOTHING;
-	return *(descriptor_tiles[tile].bg);
+	return *(descriptor_tiles[tile-NOTHING].bg);
 }
 
 TileFlag G_TileFlags(Tile tile) {
-	tile -= NOTHING;
-	return (descriptor_tiles[tile].flags);
+	return (descriptor_tiles[tile-NOTHING].flags);
 }	
 
 boolean G_TileSolid(Tile tile) {
-	tile -= NOTHING;
-	return (descriptor_tiles[tile].base == SOLID);
+	return (descriptor_tiles[tile-NOTHING].base == SOLID);
+}
+
+boolean G_TileFlickers(Tile tile) {
+	if (tile < NOTHING) {
+		return 0;
+	}
+
+	return ((descriptor_tiles[tile-NOTHING].flags & FLICKERS) == FLICKERS);
 }
 
 boolean G_TileObstructs(Tile tile) {
@@ -61,9 +64,8 @@ void G_TileSource(Tile tile, SDL_Rect *source) {
 		source->x = (tile%16)*TILE_SOURCE_WIDTH;
 		source->y = (tile/16)*TILE_SOURCE_HEIGHT;
 	} else {
-		tile -= 256;
-		source->x = descriptor_tiles[tile].x*TILE_SOURCE_WIDTH;
-		source->y = descriptor_tiles[tile].y*TILE_SOURCE_HEIGHT;
+		source->x = descriptor_tiles[tile-NOTHING].x*TILE_SOURCE_WIDTH;
+		source->y = descriptor_tiles[tile-NOTHING].y*TILE_SOURCE_HEIGHT;
 	}
 }
 

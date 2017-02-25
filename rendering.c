@@ -76,6 +76,11 @@ void G_Render(void) {
 }
 
 void G_LightRender(void) {
+	if (SDL_GetTicks()-last_flicker > FLICKER_RATE) {
+		G_RenderFlicker(0.0001);
+		last_flicker += rand()%FLICKER_RATE;
+	}
+
 	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
 	SDL_RenderPresent(game_info.renderer);
 }
@@ -199,14 +204,14 @@ void G_RenderChanges(void) {
 						g,
 						b;
 	
-					G_EvaluateRGB(bg, &r, &g, &b);
+					G_EvaluateRGB(bg, &r, &g, &b, G_TileFlickers(to_draw));
 	
 					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
 					SDL_RenderFillRect(game_info.renderer, &dst);	
 	
 					if (&fg != &bg) {
 						G_TileSource(to_draw, &src);
-						G_EvaluateRGB(fg, &r, &g, &b);
+						G_EvaluateRGB(fg, &r, &g, &b, G_TileFlickers(to_draw));
 						SDL_SetTextureColorMod(game_info.textures[0], r, g, b);
 						SDL_RenderCopy(game_info.renderer, game_info.textures[0], &src, &dst);
 						SDL_SetTextureColorMod(game_info.textures[0], 255, 255, 255);
@@ -224,10 +229,80 @@ void G_RenderChanges(void) {
 	SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 }
 
-void G_EvaluateRGB(G_Color col, int *r, int *g, int *b) {
+void G_RenderFlicker(float frequency) {
+	int
+		x,
+		y,
+		r,
+		g,
+		b;
+	SDL_Rect
+		dst,
+		src;
+	Tile tile;
+	dst.w = src.w = game_info.tile_w;
+	dst.h = src.h = game_info.tile_h;
+
+	SDL_SetRenderTarget(game_info.renderer, game_info.buffers[!game_info.target_buffer]);	
+
+	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
+		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
+			if ((dmatrix[x][y].visible == 0) || (dmatrix[x][y].entity != NOTHING)) {
+				continue;
+			}
+			if (G_TileFlickers(dmatrix[x][y].tile)) {
+				if (frequency > (float)(rand()%100)/100) {
+					tile = dmatrix[x][y].tile;
+
+					dst.x = x*game_info.tile_w+game_info.display_x;
+					dst.y = y*game_info.tile_h+game_info.display_y;
+
+					G_EvaluateRGB(G_TileBackground(tile), &r, &g, &b, 1);
+
+					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
+					SDL_RenderFillRect(game_info.renderer, &dst);	
+
+					G_EvaluateRGB(G_TileForeground(tile), &r, &g, &b, 1);
+
+					G_TileSource(tile, &src);
+					SDL_SetTextureColorMod(game_info.textures[0], r, g, b);
+					SDL_RenderCopy(game_info.renderer, game_info.textures[0], &src, &dst);
+					SDL_SetTextureColorMod(game_info.textures[0], 255, 255, 255);
+				}
+			}
+		}
+	}
+
+	SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+	SDL_SetRenderTarget(game_info.renderer, NULL);	
+}
+
+void G_EvaluateRGB(G_Color col, int *r, int *g, int *b, boolean flickers) {
 	*r = col.red;
 	*g = col.green;
 	*b = col.blue;
+
+	if (flickers) {
+		*r += 2*(rand()%col.red_rand)-(col.red_rand);
+		*g += 2*(rand()%col.green_rand)-(col.green_rand);
+		*b += 2*(rand()%col.blue_rand)-(col.blue_rand);
+	
+		if (*r < 0) {
+			*r = 0;
+		} else if (*r > 255) {
+			*r = 255;
+		}
+		if (*g < 0) {
+			*g = 0;
+		} else if (*g > 255) {
+			*g = 255;
+		}
+		if (*b < 0) {
+			*b = 0;
+		} else if (*b > 255) {
+			*b = 255;
+		}
+	}
 }
 
 void G_GenerateFOV(int x, int y, void (*func)(int*, int*, void*)) {
@@ -352,6 +427,7 @@ void G_CastShadow(
 				return;
 			}
 		}
+
 		was_blocked = 0;
 		distance += 1;
 	}
@@ -380,10 +456,13 @@ void G_MarkVisible(int *x, int *y, void *data) {
 	*x += DCOLS_OFFSET;
 	*y += DROWS_OFFSET;
 
-	if (dmatrix[*x][*y].visible == 0) {
-		dmatrix[*x][*y].changed = 1;
-	}
-	dmatrix[*x][*y].visible = 2;
+	if ((*x < DCOLS_OFFSET+DCOLS) && (*y < DROWS_OFFSET+DROWS)) {
+		if (dmatrix[*x][*y].visible == 0) {
+			dmatrix[*x][*y].changed = 1;
+		}
+	
+		dmatrix[*x][*y].visible = 2;
+	}	
 }
 
 void G_AddLight(int *x, int *y, void *data) {

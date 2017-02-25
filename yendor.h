@@ -2,6 +2,7 @@
 #define __YENDOR__
 
 #include <math.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -47,6 +48,8 @@
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
+
+#define FLICKER_RATE 250
 
 #define boolean unsigned char
 
@@ -141,6 +144,7 @@ typedef enum TileFlag {
 typedef enum Tile {
 	NOTHING = 256,
 	DIRT,
+	WATER,
 	WALL,
 
 	HUMAN,
@@ -189,8 +193,10 @@ typedef struct G_Color {
 	int
 		red,
 		green,
-		blue;
-	boolean flickers;
+		blue,
+		red_rand,
+		green_rand,
+		blue_rand;
 } G_Color;
 
 typedef struct G_Light {
@@ -341,8 +347,9 @@ void G_Render(void);
 void G_LightRender(void);
 void G_RenderSalvage(void);
 void G_RenderChanges(void);
+void G_RenderFlicker(float frequency);
 void G_ClearScreen(void);
-void G_EvaluateRGB(G_Color col, int *r, int *g, int *b);
+void G_EvaluateRGB(G_Color col, int *r, int *g, int *b, boolean flicker);
 void G_GenerateFOV(int x, int y, void (*func)(int*, int*, void*));
 void G_CastShadow(
 	int distance, int x, int y,
@@ -360,6 +367,7 @@ G_Color G_TileForeground(Tile tile);
 G_Color G_TileBackground(Tile tile);
 TileFlag G_TileFlags(Tile tile);
 boolean G_TileSolid(Tile tile);
+boolean G_TileFlickers(Tile tile);
 boolean G_TileObstructs(Tile tile);
 void G_TileSource(Tile tile, SDL_Rect *source);
 

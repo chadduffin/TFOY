@@ -14,6 +14,8 @@ int G_Init() {
 	game_info.target_buffer = 0;
 	game_info.running = 0;
 
+	srand(time(NULL) & 2147483647);
+
 	if ((status & NOT_OK) == NOT_OK) {
 		if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
 			status = status | SDL_OK;
@@ -94,7 +96,6 @@ int G_Init() {
 			SDL_RenderClear(game_info.renderer);
 			SDL_SetRenderTarget(game_info.renderer, NULL);	
 			SDL_RenderCopy(game_info.renderer, game_info.buffers[game_info.target_buffer], NULL, NULL);
-			game_info.target_buffer = !game_info.target_buffer;
 			game_info.running = 1;
 		}
 	}
@@ -302,13 +303,14 @@ void G_ChangeScene(G_Scene **scene) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].visible = 2;
 				dmatrix[x][y].entity = NOTHING;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
+					dmatrix[x][y].visible = 0;
 					dmatrix[x][y].tile = G_SceneTile(x+x_offset, y+y_offset);
 				} else {
+					dmatrix[x][y].visible = 1;
 					dmatrix[x][y].tile = BLACK;
 				}
 			}

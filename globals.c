@@ -78,6 +78,7 @@ char *images[] = {"images.png"};
 char *server_name = "";
 int image_count = 1;
 int port = 32768;
+int last_flicker = 0;
 int G_ID = 0;
 
 IPaddress ipaddress;

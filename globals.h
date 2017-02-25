@@ -17,6 +17,7 @@ extern char *images[];
 extern char *server_name;
 extern int image_count;
 extern int port;
+extern int last_flicker;
 extern int G_ID;
 
 extern IPaddress ipaddress;
