@@ -9,28 +9,33 @@
 ** EXTERNS
 */
 
+// globals.c
 extern G_Info game_info;
-
-extern char title[ROWS][COLS];
+extern G_Cell dmatrix[COLS][ROWS];
+extern int phys_keys[SDL_NUM_SCANCODES];
+extern int virt_keys[KEYBINDING_COUNT];
+extern int last_flicker;
+extern int port;
+extern int G_ID;
+extern IPaddress ipaddress;
+extern TCPsocket socket;
 extern char *name;
 extern char *images[];
 extern char *server_name;
-extern int image_count;
-extern int port;
-extern int last_flicker;
-extern int G_ID;
+extern char title[ROWS][COLS];
 
-extern IPaddress ipaddress;
-extern TCPsocket socket;
-
-extern G_Cell dmatrix[COLS][ROWS];
-extern G_TileDescriptor descriptor_tiles[TILE_COUNT];
+// attributes.c
 extern G_Attribute attributes[ATTRIBUTE_COUNT];
 
+// tiles.c
+extern G_TileDescriptor descriptor_tiles[TILE_COUNT];
+
+// scenes.c
 extern G_Scene *menu;
 extern G_Scene *overworld;
 extern G_Scene *location;
 
+// colors.c
 extern const G_Color red;
 extern const G_Color blue;
 extern const G_Color aqua;
@@ -39,13 +44,10 @@ extern const G_Color white;
 extern const G_Color green;
 extern const G_Color yellow;
 extern const G_Color magenta;
-
 extern const G_Color brown;
 extern const G_Color grey;
 extern const G_Color dark_blue;
 
-extern int phys_keys[SDL_NUM_SCANCODES];
-extern int virt_keys[KEYBINDING_COUNT];
 
 /*
 */

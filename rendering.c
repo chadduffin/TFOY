@@ -57,7 +57,7 @@ void G_Render(void) {
 				y;
 
 			G_EntityPos(&(location->focus), &x, &y);
-			G_GenerateFOV(x, y, &G_MarkVisible);
+			G_GenerateFOV(x, y, NULL, &G_MarkVisible);
 			G_DecrementFOV();
 		}
 	} else {
@@ -305,21 +305,21 @@ void G_EvaluateRGB(G_Color col, int *r, int *g, int *b, boolean flickers) {
 	}
 }
 
-void G_GenerateFOV(int x, int y, void (*func)(int*, int*, void*)) {
+void G_GenerateFOV(int x, int y, void *light, void (*func)(int*, int*, void*)) {
 	if ((x < 0) || (x >= location->w) ||
 			(y < 0) || (y >= location->h)) {
 		return;
 	}
 
 	if (!G_TileObstructs(G_SceneTile(x, y))) {
-		G_CastShadow(1, x, y, 0, 1, 1, 1, 0, func);
-		G_CastShadow(1, x, y, 1, 1, 1, 1, 0, func);
-		G_CastShadow(1, x, y, 0, -1, 1, 1, 0, func);
-		G_CastShadow(1, x, y, 1, -1, 1, 1, 0, func);
-		G_CastShadow(1, x, y, 0, 1, -1, 1, 0, func);
-		G_CastShadow(1, x, y, 1, 1, -1, 1, 0, func);
-		G_CastShadow(1, x, y, 0, -1, -1, 1, 0, func);
-		G_CastShadow(1, x, y, 1, -1, -1, 1, 0, func);
+		G_CastShadow(1, x, y, 0, 1, 1, 1, 0, light, func);
+		G_CastShadow(1, x, y, 1, 1, 1, 1, 0, light, func);
+		G_CastShadow(1, x, y, 0, -1, 1, 1, 0, light, func);
+		G_CastShadow(1, x, y, 1, -1, 1, 1, 0, light, func);
+		G_CastShadow(1, x, y, 0, 1, -1, 1, 0, light, func);
+		G_CastShadow(1, x, y, 1, 1, -1, 1, 0, light, func);
+		G_CastShadow(1, x, y, 0, -1, -1, 1, 0, light, func);
+		G_CastShadow(1, x, y, 1, -1, -1, 1, 0, light, func);
 	}
 
 	x -= location->view.x-DCOLS_OFFSET;
@@ -333,7 +333,7 @@ void G_CastShadow(
 	int distance, int x, int y,
 	int invert, int dx, int dy,
 	float start, float end,
-	void (*func)(int*, int*, void*)) {
+	void *light, void (*func)(int*, int*, void*)) {
 	int
 		i,
 		j,
@@ -401,7 +401,7 @@ void G_CastShadow(
 			if ((current <= start) && (current >= end)) {
 				if (G_TileObstructs(G_SceneTile(x_adj, y_adj))) {
 					if ((was_blocked == 0) && (started != 1)) {
-						G_CastShadow(distance+1, x, y, invert, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), func);
+						G_CastShadow(distance+1, x, y, invert, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), light, func);
 						start = ((float)(j-0.5))/((float)(i+0.5));
 					}
 					if ((j > 0) && (G_TileObstructs(G_SceneTile(nx_adj, ny_adj)))) {
@@ -421,7 +421,7 @@ void G_CastShadow(
 	
 				if ((x_adj >= 0) && (x_adj < location->view.w) &&
 						(y_adj >= 0) && (y_adj < location->view.h)) {
-					func(&x_adj, &y_adj, NULL);
+					func(&x_adj, &y_adj, light);
 				}
 			} else if ((started == 1) && (current < end)) {
 				return;

@@ -350,12 +350,12 @@ void G_RenderChanges(void);
 void G_RenderFlicker(float frequency);
 void G_ClearScreen(void);
 void G_EvaluateRGB(G_Color col, int *r, int *g, int *b, boolean flicker);
-void G_GenerateFOV(int x, int y, void (*func)(int*, int*, void*));
+void G_GenerateFOV(int x, int y, void *light, void (*func)(int*, int*, void*));
 void G_CastShadow(
 	int distance, int x, int y,
 	int invert, int dx, int dy,
 	float start, float end,
-	void (*func)(int*, int*, void*));
+	void *light, void (*func)(int*, int*, void*));
 void G_DecrementFOV();
 void G_MarkVisible(int *x, int *y, void *data);
 void G_AddLight(int *x, int *y, void *data);
