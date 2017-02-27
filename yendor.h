@@ -369,6 +369,7 @@ void G_CastShadow(
 void G_DecrementFOV();
 void G_MarkVisible(int *x, int *y, void *data);
 void G_AddLight(int *x, int *y, void *data);
+void G_ClearLightmap(void);
 
 // tiles.c
 const char* G_TileName(Tile tile);
