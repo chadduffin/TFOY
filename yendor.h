@@ -17,7 +17,7 @@
 #define TITLE "The Fellowships Of Yendor"
 #define VERSION "v0.0.1"
 
-#define FPS 60
+#define FPS 30
 #define TEXTURE_COUNT 1
 
 #define NOT_OK 0
@@ -212,7 +212,8 @@ typedef struct G_LightNode {
 	int
 		x,
 		y,
-		id;
+		id,
+		count;
 	G_Light light;
 } G_LightNode;
 

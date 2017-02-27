@@ -101,7 +101,7 @@ void G_InitializeOverworld(void) {
 	l->light.red = 255;
 	l->light.green = 255;
 	l->light.blue = 255;
-	l->light.intensity = 6;
+	l->light.intensity = 32;
 	G_AddEntity(&overworld, &player);
 	G_Entity *t = G_CreateEntity();
 	r = (G_RenderComponent*)G_AddComponent(&t, RENDER_COMPONENT);
@@ -114,8 +114,21 @@ void G_InitializeOverworld(void) {
 	l->light.red = 255;
 	l->light.green = 0;
 	l->light.blue = 0;
-	l->light.intensity = 4;
+	l->light.intensity = 32;
 	G_AddEntity(&overworld, &t);
+	G_Entity *x = G_CreateEntity();
+	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
+	r->tile = HUMAN;
+	r->x = 480;
+	r->y = 240;
+	r->x_previous = r->x;
+	r->y_previous = r->y;
+	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
+	l->light.red = 0;
+	l->light.green = 255;
+	l->light.blue = 0;
+	l->light.intensity = 32;
+	G_AddEntity(&overworld, &x);
 }
 
 void G_CleanupScene(G_Scene **scene) {

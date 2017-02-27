@@ -12,6 +12,9 @@ int main(int argc, char **argv) {
 		G_InitializeKeybindings();
 		G_ChangeScene(&menu);
 
+		G_Render();
+		location->view.unchanged = 0;
+
 		while (game_info.running) {
 			if (G_PollEvents() == -1) {
 				break;

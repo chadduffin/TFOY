@@ -14,7 +14,8 @@ int G_Init() {
 	game_info.target_buffer = 0;
 	game_info.running = 0;
 
-	srand(time(NULL) & 2147483647);
+	//srand(time(NULL) & 2147483647);
+	srand(4);
 
 	if ((status & NOT_OK) == NOT_OK) {
 		if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
@@ -293,6 +294,13 @@ void G_ChangeScene(G_Scene **scene) {
 				dmatrix[x][y].visible = 1;
 				dmatrix[x][y].entity = NOTHING;
 				dmatrix[x][y].tile = G_SceneTile(x, y);
+
+				dmatrix[x][y].light.id = -1;
+				dmatrix[x][y].light.count = 0;
+				dmatrix[x][y].light.light.red = 0;
+				dmatrix[x][y].light.light.green = 0;
+				dmatrix[x][y].light.light.blue = 0;
+				dmatrix[x][y].light.light.intensity = 0;
 			}
 		}
 	} else {
@@ -313,6 +321,13 @@ void G_ChangeScene(G_Scene **scene) {
 					dmatrix[x][y].visible = 1;
 					dmatrix[x][y].tile = BLACK;
 				}
+
+				dmatrix[x][y].light.id = -1;
+				dmatrix[x][y].light.count = 0;
+				dmatrix[x][y].light.light.red = 0;
+				dmatrix[x][y].light.light.green = 0;
+				dmatrix[x][y].light.light.blue = 0;
+				dmatrix[x][y].light.light.intensity = 0;
 			}
 		}
 	}

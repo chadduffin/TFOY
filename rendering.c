@@ -72,6 +72,11 @@ void G_Render(void) {
 	SDL_RenderCopy(game_info.renderer, game_info.buffers[game_info.target_buffer], NULL, NULL);
 
 	if (location != menu) {
+		if (SDL_GetTicks()-last_flicker > FLICKER_RATE) {
+			G_RenderFlicker(0.0001);
+			last_flicker += rand()%FLICKER_RATE;
+		}
+
 		G_RenderLightmap();
 	}
 
@@ -80,18 +85,17 @@ void G_Render(void) {
 }
 
 void G_LightRender(void) {
-	if (SDL_GetTicks()-last_flicker > FLICKER_RATE) {
-		G_RenderFlicker(0.0001);
-		last_flicker += rand()%FLICKER_RATE;
-	}
-
-	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
-
 	if (location != menu) {
-		G_RenderLightmap();
-	}
+		SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
 
-	SDL_RenderPresent(game_info.renderer);
+		if (SDL_GetTicks()-last_flicker > FLICKER_RATE) {
+			G_RenderFlicker(0.0001);
+			last_flicker += rand()%FLICKER_RATE;
+		}
+
+		G_RenderLightmap();
+		SDL_RenderPresent(game_info.renderer);
+	}
 }
 
 void G_RenderSalvage(void) {
@@ -178,6 +182,13 @@ void G_RenderSalvage(void) {
 					(y < dst.y) || (y >= dst.y+dst.h)) {
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].tile = G_SceneTile(x-x_offset, y-y_offset);
+
+				dmatrix[x][y].light.id = -1;
+				dmatrix[x][y].light.count = 0;
+				dmatrix[x][y].light.light.red = 0;
+				dmatrix[x][y].light.light.green = 0;
+				dmatrix[x][y].light.light.blue = 0;
+				dmatrix[x][y].light.light.intensity = 0;
 			}
 		}
 	}
@@ -282,8 +293,8 @@ void G_RenderFlicker(float frequency) {
 		}
 	}
 
-	SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 	SDL_SetRenderTarget(game_info.renderer, NULL);	
+	SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 }
 
 void G_RenderLightmap(void) {
@@ -293,7 +304,6 @@ void G_RenderLightmap(void) {
 		r,
 		g,
 		b,
-		max,
 		intensity;
 	SDL_Rect dst;
 	dst.w = game_info.tile_w;
@@ -301,6 +311,12 @@ void G_RenderLightmap(void) {
 
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
+			if (dmatrix[x][y].light.count != 0) {
+				dmatrix[x][y].light.light.red /= dmatrix[x][y].light.count;
+				dmatrix[x][y].light.light.green /= dmatrix[x][y].light.count;
+				dmatrix[x][y].light.light.blue /= dmatrix[x][y].light.count;
+			}
+
 			if (dmatrix[x][y].visible) {
 				r = dmatrix[x][y].light.light.red;
 				g = dmatrix[x][y].light.light.green;
@@ -309,16 +325,6 @@ void G_RenderLightmap(void) {
 				dst.x = x*game_info.tile_w+game_info.display_x;
 				dst.y = y*game_info.tile_h+game_info.display_y;
 
-				max = (r > g) ? r : g;
-				max = (max > b) ? max : b;
-				max = (max%255 != 0) ? ((max/255)+1) : (max/255);
-
-				if (max != 0) {
-					r = r/max;
-					g = g/max;
-					b = b/max;
-				}
-	
 				intensity = (intensity < 0) ? 0 : intensity;
 				intensity = (intensity > 255) ? 255 : intensity;
 
@@ -334,6 +340,7 @@ void G_RenderLightmap(void) {
 			}
 
 			dmatrix[x][y].light.id = -1;
+			dmatrix[x][y].light.count = 0;
 		}
 	}
 }
@@ -534,7 +541,7 @@ void G_AddLight(int *x, int *y, void *data) {
 		ly = *y,
 		dx = (lx)-(light->x-location->view.x),
 		dy = (ly)-(light->y-location->view.y);
-	float intensity = (1.0)/(1.0+(sqrt(dx*dx+dy*dy))/16.0);
+	float intensity = (1.0)/(1.0+(sqrt(dx*dx+dy*dy))/8.0);
 	intensity -= (1.0)/(1.0+(sqrt(light->light.intensity*light->light.intensity)));
 
 	lx += DCOLS_OFFSET;
@@ -548,18 +555,20 @@ void G_AddLight(int *x, int *y, void *data) {
 
 	if ((lx >= DCOLS_OFFSET) && (lx < DCOLS_OFFSET+DCOLS) &&
 			(ly >= DROWS_OFFSET) && (ly < DROWS_OFFSET+DROWS)) {
-		if (dmatrix[lx][ly].light.id != light->id) {
-			if (dmatrix[lx][ly].light.id == -1) {
-				dmatrix[lx][ly].light.light.red = 0;
-				dmatrix[lx][ly].light.light.green = 0;
-				dmatrix[lx][ly].light.light.blue = 0;
-				dmatrix[lx][ly].light.light.intensity = 0;
-			}
+		if (dmatrix[lx][ly].light.id == -1) {
+			dmatrix[lx][ly].light.count = 0;
+			dmatrix[lx][ly].light.light.red = 0;
+			dmatrix[lx][ly].light.light.green = 0;
+			dmatrix[lx][ly].light.light.blue = 0;
+			dmatrix[lx][ly].light.light.intensity = 0;
+		}
+		if ((dmatrix[lx][ly].visible) && (dmatrix[lx][ly].light.id != light->id)) {
 			dmatrix[lx][ly].light.light.red += (light->light.red*intensity);
 			dmatrix[lx][ly].light.light.green += light->light.green*intensity;
 			dmatrix[lx][ly].light.light.blue += light->light.blue*intensity;
 			dmatrix[lx][ly].light.light.intensity += intensity*255;
 			dmatrix[lx][ly].light.id = light->id;
+			dmatrix[lx][ly].light.count += 1;
 		}
 	}
 }
