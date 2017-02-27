@@ -47,6 +47,7 @@ extern const G_Color magenta;
 extern const G_Color brown;
 extern const G_Color grey;
 extern const G_Color dark_blue;
+extern const G_Color scott_blue;
 
 
 /*

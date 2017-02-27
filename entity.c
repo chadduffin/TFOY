@@ -45,10 +45,10 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 		case LIGHT_COMPONENT:
 			{
 				G_LightComponent *light = (G_LightComponent*)malloc(sizeof(G_LightComponent));
-				light->light.intensity = 0;
 				light->light.red = 0;
 				light->light.green = 0;
 				light->light.blue = 0;
+				light->light.intensity = 0;
 				(*entity)->components[LIGHT_COMPONENT] = light;
 				return light;
 			}
@@ -131,6 +131,7 @@ void G_EntityUpdate(G_Entity **entity) {
 void G_EntityRender(G_Entity **entity) {
 	if ((entity != NULL) && (*entity != NULL)) {
 		G_View *view = G_SceneView(&location);
+		G_LightComponent *light = (G_LightComponent*)(G_GetComponent(entity, LIGHT_COMPONENT));
 		G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
 	
 		if (render != NULL) {
@@ -153,6 +154,16 @@ void G_EntityRender(G_Entity **entity) {
 			if (G_IsPointWithin(render->x, render->y, view)) {
 				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
 				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity = render->tile;
+			}
+
+			if (light != NULL) {
+				G_LightNode node;
+				node.x = render->x;
+				node.y = render->y;
+				node.id = (*entity)->id;
+				node.light = light->light;
+
+				G_GenerateFOV(render->x, render->y, &node, &G_AddLight);
 			}
 		}
 	}

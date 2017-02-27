@@ -205,8 +205,15 @@ typedef struct G_Light {
 		green,
 		blue,
 		intensity;
-	boolean flickers;
 } G_Light;
+
+typedef struct G_LightNode {
+	int
+		x,
+		y,
+		id;
+	G_Light light;
+} G_LightNode;
 
 typedef struct G_Attribute {
 	char
@@ -242,7 +249,7 @@ typedef struct G_Cell {
 	G_Color
 		fg,
 		bg;
-	G_Light light;
+	G_LightNode light;
 } G_Cell;
 
 typedef struct G_Entity {
@@ -348,6 +355,7 @@ void G_LightRender(void);
 void G_RenderSalvage(void);
 void G_RenderChanges(void);
 void G_RenderFlicker(float frequency);
+void G_RenderLightmap(void);
 void G_ClearScreen(void);
 void G_EvaluateRGB(G_Color col, int *r, int *g, int *b, boolean flicker);
 void G_GenerateFOV(int x, int y, void *light, void (*func)(int*, int*, void*));

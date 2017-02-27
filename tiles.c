@@ -8,7 +8,7 @@
 G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 	{"empty", "description", 0, 0, &black, &black, 0, EMPTY},
 	{"ground", "the ground", 14, 2, &grey, &dark_blue, 0, GROUND},
-	{"water", "some water", 14, 7, &dark_blue, &blue, FLICKERS, LIQUID},
+	{"water", "some water", 14, 7, &blue, &scott_blue, FLICKERS, LIQUID},
 	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS, SOLID},
 
 	{"character", "", 1, 0, &white, &black, 0, ENTITY},

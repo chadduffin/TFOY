@@ -71,6 +71,10 @@ void G_Render(void) {
 	SDL_SetRenderTarget(game_info.renderer, NULL);	
 	SDL_RenderCopy(game_info.renderer, game_info.buffers[game_info.target_buffer], NULL, NULL);
 
+	if (location != menu) {
+		G_RenderLightmap();
+	}
+
 	SDL_RenderPresent(game_info.renderer);
 	game_info.target_buffer = (game_info.target_buffer == 0) ? 1 : 0;	
 }
@@ -82,6 +86,11 @@ void G_LightRender(void) {
 	}
 
 	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
+
+	if (location != menu) {
+		G_RenderLightmap();
+	}
+
 	SDL_RenderPresent(game_info.renderer);
 }
 
@@ -277,6 +286,58 @@ void G_RenderFlicker(float frequency) {
 	SDL_SetRenderTarget(game_info.renderer, NULL);	
 }
 
+void G_RenderLightmap(void) {
+	int
+		x,
+		y,
+		r,
+		g,
+		b,
+		max,
+		intensity;
+	SDL_Rect dst;
+	dst.w = game_info.tile_w;
+	dst.h = game_info.tile_h;
+
+	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
+		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
+			if (dmatrix[x][y].visible) {
+				r = dmatrix[x][y].light.light.red;
+				g = dmatrix[x][y].light.light.green;
+				b = dmatrix[x][y].light.light.blue;
+				intensity = dmatrix[x][y].light.light.intensity;
+				dst.x = x*game_info.tile_w+game_info.display_x;
+				dst.y = y*game_info.tile_h+game_info.display_y;
+
+				max = (r > g) ? r : g;
+				max = (max > b) ? max : b;
+				max = (max%255 != 0) ? ((max/255)+1) : (max/255);
+
+				if (max != 0) {
+					r = r/max;
+					g = g/max;
+					b = b/max;
+				}
+	
+				intensity = (intensity < 0) ? 0 : intensity;
+				intensity = (intensity > 255) ? 255 : intensity;
+
+				SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
+				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
+				SDL_RenderFillRect(game_info.renderer, &dst);
+
+				SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255-intensity);
+				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_BLEND);
+				SDL_RenderFillRect(game_info.renderer, &dst);
+	
+				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
+			}
+
+			dmatrix[x][y].light.id = -1;
+		}
+	}
+}
+
 void G_EvaluateRGB(G_Color col, int *r, int *g, int *b, boolean flickers) {
 	*r = col.red;
 	*g = col.green;
@@ -322,11 +383,13 @@ void G_GenerateFOV(int x, int y, void *light, void (*func)(int*, int*, void*)) {
 		G_CastShadow(1, x, y, 1, -1, -1, 1, 0, light, func);
 	}
 
-	x -= location->view.x-DCOLS_OFFSET;
-	y -= location->view.y-DROWS_OFFSET;
+	x -= location->view.x;
+	y -= location->view.y;
 
-	dmatrix[x][y].visible = 2;
-	dmatrix[x][y].changed = 1;
+	if ((x >= 0) && (x < location->w) &&
+			(y >= 0) && (y < location->h)) {
+		func(&x, &y, light);
+	}
 }
 
 void G_CastShadow(
@@ -355,7 +418,7 @@ void G_CastShadow(
 		}
 	} else {
 		if (x-DCOLS < 0) {
-			x_bound = x;
+			x_bound = x+1;
 		} else {
 			x_bound = DCOLS;
 		}
@@ -368,7 +431,7 @@ void G_CastShadow(
 		}
 	} else {
 		if (y-DROWS < 0) {
-			y_bound = y;
+			y_bound = y+1;
 		} else {
 			y_bound = DROWS;
 		}
@@ -453,20 +516,54 @@ void G_DecrementFOV() {
 }
 
 void G_MarkVisible(int *x, int *y, void *data) {
-	*x += DCOLS_OFFSET;
-	*y += DROWS_OFFSET;
+	int
+		lx = *x+DCOLS_OFFSET,
+		ly = *y+DROWS_OFFSET;
 
-	if ((*x < DCOLS_OFFSET+DCOLS) && (*y < DROWS_OFFSET+DROWS)) {
-		if (dmatrix[*x][*y].visible == 0) {
-			dmatrix[*x][*y].changed = 1;
+	if ((lx < DCOLS_OFFSET+DCOLS) && (ly < DROWS_OFFSET+DROWS)) {
+		if (dmatrix[lx][ly].visible == 0) {
+			dmatrix[lx][ly].changed = 1;
 		}
 	
-		dmatrix[*x][*y].visible = 2;
+		dmatrix[lx][ly].visible = 2;
 	}	
 }
 
 void G_AddLight(int *x, int *y, void *data) {
+	G_LightNode *light = (G_LightNode*)data;
+	int
+		lx = *x,
+		ly = *y,
+		dx = (lx)-(light->x-location->view.x),
+		dy = (ly)-(light->y-location->view.y);
+	float intensity = (1.0)/(1.0+(sqrt(dx*dx+dy*dy))/10.0);
+	intensity -= (1.0)/(1.0+(sqrt(light->light.intensity*light->light.intensity)));
 
+	lx += DCOLS_OFFSET;
+	ly += DROWS_OFFSET;
+
+	if (intensity > 1.0) {
+		intensity  = 1.0;
+	} else if (intensity < 0.01) {
+		return;
+	}
+
+	if ((lx >= DCOLS_OFFSET) && (lx < DCOLS_OFFSET+DCOLS) &&
+			(ly >= DROWS_OFFSET) && (ly < DROWS_OFFSET+DROWS)) {
+		if (dmatrix[lx][ly].light.id != light->id) {
+			if (dmatrix[lx][ly].light.id == -1) {
+				dmatrix[lx][ly].light.light.red = 0;
+				dmatrix[lx][ly].light.light.green = 0;
+				dmatrix[lx][ly].light.light.blue = 0;
+				dmatrix[lx][ly].light.light.intensity = 0;
+			}
+			dmatrix[lx][ly].light.light.red += light->light.red;
+			dmatrix[lx][ly].light.light.green += light->light.green;
+			dmatrix[lx][ly].light.light.blue += light->light.blue;
+			dmatrix[lx][ly].light.light.intensity += intensity*255;
+			dmatrix[lx][ly].light.id = light->id;
+		}
+	}
 }
 
 /*
