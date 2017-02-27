@@ -411,29 +411,29 @@ void G_CastShadow(
 	float current;
 
 	if (dx > 0) {
-		if (x+DCOLS >= location->w) {
+		if (x+LIGHT_DISTANCE >= location->w) {
 			x_bound = location->w-x;
 		} else {
-			x_bound = DCOLS;
+			x_bound = LIGHT_DISTANCE;
 		}
 	} else {
-		if (x-DCOLS < 0) {
+		if (x-LIGHT_DISTANCE < 0) {
 			x_bound = x+1;
 		} else {
-			x_bound = DCOLS;
+			x_bound = LIGHT_DISTANCE;
 		}
 	}
 	if (dy > 0) {
-		if (y+DROWS >= location->h) {
+		if (y+LIGHT_DISTANCE >= location->h) {
 			y_bound = location->h-y;
 		} else {
-			y_bound = DROWS;
+			y_bound = LIGHT_DISTANCE;
 		}
 	} else {
-		if (y-DROWS < 0) {
+		if (y-LIGHT_DISTANCE < 0) {
 			y_bound = y+1;
 		} else {
-			y_bound = DROWS;
+			y_bound = LIGHT_DISTANCE;
 		}
 	}
 
@@ -481,11 +481,8 @@ void G_CastShadow(
 			
 				x_adj -= location->view.x;
 				y_adj -= location->view.y;
-	
-				if ((x_adj >= 0) && (x_adj < location->view.w) &&
-						(y_adj >= 0) && (y_adj < location->view.h)) {
-					func(&x_adj, &y_adj, light);
-				}
+
+				func(&x_adj, &y_adj, light);
 			} else if ((started == 1) && (current < end)) {
 				return;
 			}
@@ -520,7 +517,8 @@ void G_MarkVisible(int *x, int *y, void *data) {
 		lx = *x+DCOLS_OFFSET,
 		ly = *y+DROWS_OFFSET;
 
-	if ((lx < DCOLS_OFFSET+DCOLS) && (ly < DROWS_OFFSET+DROWS)) {
+	if ((lx >= DCOLS_OFFSET) && (lx < DCOLS_OFFSET+DCOLS) &&
+			(ly >= DROWS_OFFSET) && (ly < DROWS_OFFSET+DROWS)) {
 		if (dmatrix[lx][ly].visible == 0) {
 			dmatrix[lx][ly].changed = 1;
 		}
@@ -536,7 +534,7 @@ void G_AddLight(int *x, int *y, void *data) {
 		ly = *y,
 		dx = (lx)-(light->x-location->view.x),
 		dy = (ly)-(light->y-location->view.y);
-	float intensity = (1.0)/(1.0+(sqrt(dx*dx+dy*dy))/10.0);
+	float intensity = (1.0)/(1.0+(sqrt(dx*dx+dy*dy))/16.0);
 	intensity -= (1.0)/(1.0+(sqrt(light->light.intensity*light->light.intensity)));
 
 	lx += DCOLS_OFFSET;
@@ -557,9 +555,9 @@ void G_AddLight(int *x, int *y, void *data) {
 				dmatrix[lx][ly].light.light.blue = 0;
 				dmatrix[lx][ly].light.light.intensity = 0;
 			}
-			dmatrix[lx][ly].light.light.red += light->light.red;
-			dmatrix[lx][ly].light.light.green += light->light.green;
-			dmatrix[lx][ly].light.light.blue += light->light.blue;
+			dmatrix[lx][ly].light.light.red += (light->light.red*intensity);
+			dmatrix[lx][ly].light.light.green += light->light.green*intensity;
+			dmatrix[lx][ly].light.light.blue += light->light.blue*intensity;
 			dmatrix[lx][ly].light.light.intensity += intensity*255;
 			dmatrix[lx][ly].light.id = light->id;
 		}

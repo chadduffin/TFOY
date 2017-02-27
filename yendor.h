@@ -50,6 +50,7 @@
 #define EXPERIENCE_OFFSET 42
 
 #define FLICKER_RATE 250
+#define LIGHT_DISTANCE 128
 
 #define boolean unsigned char
 

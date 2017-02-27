@@ -101,7 +101,7 @@ void G_InitializeOverworld(void) {
 	l->light.red = 255;
 	l->light.green = 255;
 	l->light.blue = 255;
-	l->light.intensity = 4;
+	l->light.intensity = 6;
 	G_AddEntity(&overworld, &player);
 	G_Entity *t = G_CreateEntity();
 	r = (G_RenderComponent*)G_AddComponent(&t, RENDER_COMPONENT);
@@ -192,8 +192,8 @@ G_Entity* G_GetEntities(G_Scene **scene) {
 }
 
 Tile G_SceneTile(int x, int y) {
-	if ((x < 0) || (x >= location->view.x+location->view.w) ||
-			(y < 0) || (y >= location->view.y+location->view.h) ||
+	if ((x < 0) || (x >= location->w) ||
+			(y < 0) || (y >= location->h) ||
 			(location == NULL)) {
 		return WALL;
 	}
