@@ -24,6 +24,13 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 	assert((entity != NULL) && (*entity != NULL));
 
 	switch (component) {
+		case CONTROLLER_COMPONENT:
+			{
+				G_ControllerComponent *controller = (G_ControllerComponent*)malloc(sizeof(G_ControllerComponent));
+				(*entity)->components[CONTROLLER_COMPONENT] = controller;
+				return controller;
+			}
+			break;
 		case CREATURE_COMPONENT:
 			{
 				G_CreatureComponent *creature = (G_CreatureComponent*)malloc(sizeof(G_CreatureComponent));
@@ -96,12 +103,14 @@ void G_EntityUpdate(G_Entity **entity) {
 	assert((entity != NULL) && (*entity != NULL));
 
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
+	G_ControllerComponent *controller = (G_ControllerComponent*)(G_GetComponent(entity, CONTROLLER_COMPONENT));
 
 	if (render != NULL) {
 		render->x_previous = render->x;
 		render->y_previous = render->y;
 
-		if ((*entity)->id == 0) {
+		
+		if (controller != NULL) {
 			if (G_CheckBound(RIGHT)) {
 				render->x += 1;
 				phys_keys[virt_keys[RIGHT]] = 0;

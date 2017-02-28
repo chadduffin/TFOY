@@ -12,6 +12,7 @@
 // globals.c
 extern G_Info game_info;
 extern G_Cell dmatrix[COLS][ROWS];
+
 extern int phys_keys[SDL_NUM_SCANCODES];
 extern int virt_keys[KEYBINDING_COUNT];
 extern int last_flicker;
@@ -48,7 +49,6 @@ extern const G_Color brown;
 extern const G_Color grey;
 extern const G_Color dark_blue;
 extern const G_Color scott_blue;
-
 
 /*
 */

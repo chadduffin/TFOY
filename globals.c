@@ -5,7 +5,6 @@
 */
 
 G_Info game_info;
-
 G_Cell dmatrix[COLS][ROWS];
 
 int phys_keys[SDL_NUM_SCANCODES];

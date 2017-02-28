@@ -107,7 +107,8 @@ typedef enum Attribute {
 } Attribute;
 
 typedef enum Component {
-	CREATURE_COMPONENT = 1,
+	CONTROLLER_COMPONENT = 0,
+	CREATURE_COMPONENT,
 	RENDER_COMPONENT,
 	LIGHT_COMPONENT,
 
@@ -274,6 +275,10 @@ typedef struct G_Entity {
 		*prev,
 		*next;
 }	G_Entity;
+
+typedef struct G_ControllerComponent {
+	char a; // just to appease compiler
+} G_ControllerComponent;
 
 typedef struct G_CreatureComponent {
 	int base_attributes[ATTRIBUTE_COUNT];
