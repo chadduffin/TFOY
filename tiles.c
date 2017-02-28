@@ -24,31 +24,43 @@ G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 };
 
 const char* G_TileName(Tile tile) {
+	assert((tile >= NOTHING) && (tile < END_TILE));
+
 	return (descriptor_tiles[tile-NOTHING].name);
 }
 
 const char* G_TileDescription(Tile tile) {
+	assert((tile >= NOTHING) && (tile < END_TILE));
+
 	return (descriptor_tiles[tile-NOTHING].description);
 }
 
 G_Color G_TileForeground(Tile tile) {
+	assert((tile >= NOTHING) && (tile < END_TILE));
+
 	return *(descriptor_tiles[tile-NOTHING].fg);
 }
 
 G_Color G_TileBackground(Tile tile) {
+	assert((tile >= NOTHING) && (tile < END_TILE));
+
 	return *(descriptor_tiles[tile-NOTHING].bg);
 }
 
 TileFlag G_TileFlags(Tile tile) {
+	assert((tile >= NOTHING) && (tile < END_TILE));
+
 	return (descriptor_tiles[tile-NOTHING].flags);
 }	
 
 boolean G_TileSolid(Tile tile) {
+	assert((tile >= NOTHING) && (tile < END_TILE));
+
 	return (descriptor_tiles[tile-NOTHING].base == SOLID);
 }
 
 boolean G_TileFlickers(Tile tile) {
-	if (tile < NOTHING) {
+	if ((tile < NOTHING) || (tile >= END_TILE)) {
 		return 0;
 	}
 
@@ -56,10 +68,14 @@ boolean G_TileFlickers(Tile tile) {
 }
 
 boolean G_TileObstructs(Tile tile) {
+	assert((tile >= NOTHING) && (tile < END_TILE));
+
 	return ((descriptor_tiles[tile-NOTHING].flags & OBSTRUCTS) == OBSTRUCTS);
 }
 
 void G_TileSource(Tile tile, SDL_Rect *source) {
+	assert((tile >= 0) && (tile < END_TILE) && (source != NULL));
+
 	if (tile < 256) {
 		source->x = (tile%16)*TILE_SOURCE_WIDTH;
 		source->y = (tile/16)*TILE_SOURCE_HEIGHT;

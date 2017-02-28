@@ -4,6 +4,7 @@
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 
 #include <SDL2/SDL.h>

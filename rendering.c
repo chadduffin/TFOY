@@ -5,7 +5,7 @@
 ** FUNCTIONS
 */
 
-void G_UpdateRenderingInfo() {
+void G_UpdateRenderingInfo(void) {
 	float
 		tile_ratio = ((float)(COLS*TILE_SOURCE_WIDTH))/(ROWS*TILE_SOURCE_HEIGHT),
 		window_ratio = ((float)game_info.window_w)/game_info.window_h;
@@ -349,6 +349,8 @@ void G_RenderLightmap(void) {
 }
 
 void G_EvaluateRGB(G_Color col, int *r, int *g, int *b, boolean flickers) {
+	assert((r != NULL) && (g != NULL) && (b != NULL));
+
 	*r = col.red;
 	*g = col.green;
 	*b = col.blue;
@@ -523,6 +525,8 @@ void G_DecrementFOV() {
 }
 
 void G_MarkVisible(int *x, int *y, void *data) {
+	assert((x != NULL) && (y != NULL));
+
 	int
 		lx = *x+DCOLS_OFFSET,
 		ly = *y+DROWS_OFFSET;
@@ -538,6 +542,8 @@ void G_MarkVisible(int *x, int *y, void *data) {
 }
 
 void G_AddLight(int *x, int *y, void *data) {
+	assert((x != NULL) && (y != NULL) && (data != NULL));
+
 	G_LightNode *light = (G_LightNode*)data;
 	int
 		lx = *x,
@@ -583,11 +589,19 @@ void G_ClearLightmap(void) {
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
 			dmatrix[x][y].light.id = -1;
-			dmatrix[x][y].light.count = 0;
-			dmatrix[x][y].light.light.red = 0;
-			dmatrix[x][y].light.light.green = 0;
-			dmatrix[x][y].light.light.blue = 0;
-			dmatrix[x][y].light.light.intensity = 0;
+			if (location != NULL) {
+				dmatrix[x][y].light.count = 1;
+				dmatrix[x][y].light.light.red = location->ambient.red;
+				dmatrix[x][y].light.light.green = location->ambient.green;
+				dmatrix[x][y].light.light.blue = location->ambient.blue;
+				dmatrix[x][y].light.light.intensity = location->ambient.intensity;
+			} else {
+				dmatrix[x][y].light.count = 0;
+				dmatrix[x][y].light.light.red = 0;
+				dmatrix[x][y].light.light.green = 0;
+				dmatrix[x][y].light.light.blue = 0;
+				dmatrix[x][y].light.light.intensity = 0;
+			}
 		}
 	}
 }

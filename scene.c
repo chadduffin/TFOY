@@ -5,9 +5,9 @@
 ** EXTERNS
 */
 
-G_Scene *menu;
-G_Scene *overworld;
-G_Scene *location;
+G_Scene *menu = NULL;
+G_Scene *overworld = NULL;
+G_Scene *location = NULL;
 
 /*
 ** FUNCTIONS
@@ -79,7 +79,7 @@ void G_InitializeOverworld(void) {
 				(i < WORLD_COLS) || (i > overworld->l-WORLD_COLS)) {
 			overworld->tiles[i].tile = WALL;
 		} else {
-			overworld->tiles[i].tile = (rand()%128 < 1) ? WALL : DIRT;
+			overworld->tiles[i].tile = (rand()%256 < 1) ? WALL : DIRT;
 
 			int
 				x = i%WORLD_COLS,	
@@ -98,33 +98,33 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	G_LightComponent *l = (G_LightComponent*)G_AddComponent(&player, LIGHT_COMPONENT);
-	l->light.red = 255;
+	l->light.red = 0;
 	l->light.green = 255;
 	l->light.blue = 255;
 	l->light.intensity = 64;
 	G_AddEntity(&overworld, &player);
 	G_Entity *t = G_CreateEntity();
 	r = (G_RenderComponent*)G_AddComponent(&t, RENDER_COMPONENT);
-	r->tile = HUMAN;
+	r->tile = NOTHING;
 	r->x = 480;
 	r->y = 210;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&t, LIGHT_COMPONENT);
-	l->light.red = 0;
+	l->light.red = 255;
 	l->light.green = 255;
 	l->light.blue = 0;
-	l->light.intensity = 24;
+	l->light.intensity = 32;
 	G_AddEntity(&overworld, &t);
 	G_Entity *x = G_CreateEntity();
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
-	r->tile = HUMAN;
+	r->tile = NOTHING;
 	r->x = 480;
 	r->y = 240;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
-	l->light.red = 0;
+	l->light.red = 255;
 	l->light.green = 0;
 	l->light.blue = 255;
 	l->light.intensity = 32;
@@ -132,6 +132,8 @@ void G_InitializeOverworld(void) {
 }
 
 void G_CleanupScene(G_Scene **scene) {
+	assert((scene != NULL) && (*scene != NULL));
+
 	G_Entity *entity = (*scene)->head;
 	
 	while (entity != NULL) {
@@ -144,6 +146,8 @@ void G_CleanupScene(G_Scene **scene) {
 }
 
 void G_AddEntity(G_Scene **scene, G_Entity **entity) {
+	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
+
 	if ((*scene)->head == NULL) {
 		(*scene)->head = (*entity);
 		(*scene)->tail = (*entity);
@@ -161,6 +165,8 @@ void G_AddEntity(G_Scene **scene, G_Entity **entity) {
 }
 
 void G_DelEntity(G_Scene **scene, G_Entity **entity) {
+	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
+
 	if ((*scene != NULL) && (*entity != NULL)) {
 		G_PopEntity(scene, entity);
 		free(*entity);
@@ -168,6 +174,8 @@ void G_DelEntity(G_Scene **scene, G_Entity **entity) {
 }
 
 void G_PopEntity(G_Scene **scene, G_Entity **entity) {
+	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
+
 	if ((*entity != (*scene)->head) && (*entity != (*scene)->tail)) {
 		if ((*entity)->next != NULL) {
 			((G_Entity*)((*entity)->next))->prev = (*entity)->prev;
@@ -189,19 +197,15 @@ void G_PopEntity(G_Scene **scene, G_Entity **entity) {
 }
 
 G_View* G_SceneView(G_Scene **scene) {
-	if ((scene != NULL) && (*scene != NULL)) {
-		return &((*scene)->view);
-	}
+	assert((scene != NULL) && (*scene != NULL));
 
-	return NULL;
+	return &((*scene)->view);
 }
 
 G_Entity* G_GetEntities(G_Scene **scene) {
-	if ((scene != NULL) && (*scene != NULL)) {
-		return (*scene)->head;
-	}
+	assert((scene != NULL) && (*scene != NULL));
 
-	return NULL;
+	return (*scene)->head;
 }
 
 Tile G_SceneTile(int x, int y) {

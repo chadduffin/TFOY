@@ -43,14 +43,17 @@ G_Attribute attributes[ATTRIBUTE_COUNT] = {
 */
 
 const char* G_GetAttributeName(Attribute attribute) {
+	assert((attribute >= STRENGTH) && (attribute < ATTRIBUTE_COUNT));
 	return attributes[attribute].name;
 }
 
 const char* G_GetAttributeDescription(Attribute attribute) {
+	assert((attribute >= STRENGTH) && (attribute < ATTRIBUTE_COUNT));
 	return attributes[attribute].description;
 }
 
 int G_GetExperienceNeeded(int level) {
+	assert(level >= 1);
 	return (level == 1) ? EXPERIENCE_OFFSET : 10*((EXPERIENCE_OFFSET+(2 << (level+3)))/10);
 }
 
