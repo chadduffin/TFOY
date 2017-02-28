@@ -14,8 +14,7 @@ int G_Init() {
 	game_info.target_buffer = 0;
 	game_info.running = 0;
 
-	//srand(time(NULL) & 2147483647);
-	srand(4);
+	srand(time(NULL) & 2147483647);
 
 	if ((status & NOT_OK) == NOT_OK) {
 		if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {

@@ -79,7 +79,7 @@ void G_InitializeOverworld(void) {
 				(i < WORLD_COLS) || (i > overworld->l-WORLD_COLS)) {
 			overworld->tiles[i].tile = WALL;
 		} else {
-			overworld->tiles[i].tile = (rand()%64 < 1) ? WALL : DIRT;
+			overworld->tiles[i].tile = (rand()%128 < 1) ? WALL : DIRT;
 
 			int
 				x = i%WORLD_COLS,	
@@ -98,23 +98,23 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	G_LightComponent *l = (G_LightComponent*)G_AddComponent(&player, LIGHT_COMPONENT);
-	l->light.red = 500;
-	l->light.green = 500;
-	l->light.blue = 500;
-	l->light.intensity = 8;
+	l->light.red = 255;
+	l->light.green = 255;
+	l->light.blue = 255;
+	l->light.intensity = 64;
 	G_AddEntity(&overworld, &player);
 	G_Entity *t = G_CreateEntity();
 	r = (G_RenderComponent*)G_AddComponent(&t, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 480;
-	r->y = 230;
+	r->y = 210;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&t, LIGHT_COMPONENT);
-	l->light.red = 255;
-	l->light.green = 0;
+	l->light.red = 0;
+	l->light.green = 255;
 	l->light.blue = 0;
-	l->light.intensity = 16;
+	l->light.intensity = 24;
 	G_AddEntity(&overworld, &t);
 	G_Entity *x = G_CreateEntity();
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
@@ -125,9 +125,9 @@ void G_InitializeOverworld(void) {
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
 	l->light.red = 0;
-	l->light.green = 255;
-	l->light.blue = 0;
-	l->light.intensity = 16;
+	l->light.green = 0;
+	l->light.blue = 255;
+	l->light.intensity = 32;
 	G_AddEntity(&overworld, &x);
 }
 

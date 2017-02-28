@@ -309,10 +309,6 @@ void G_RenderLightmap(void) {
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
 			if (dmatrix[x][y].light.count != 0) {
-				dmatrix[x][y].light.light.red /= dmatrix[x][y].light.count;
-				dmatrix[x][y].light.light.green /= dmatrix[x][y].light.count;
-				dmatrix[x][y].light.light.blue /= dmatrix[x][y].light.count;
-
 				max = (dmatrix[x][y].light.light.red > dmatrix[x][y].light.light.green) ? dmatrix[x][y].light.light.red : dmatrix[x][y].light.light.green;
 				max = (max > dmatrix[x][y].light.light.blue) ? max : dmatrix[x][y].light.light.blue;
 				scale = (float)(max)/255;
@@ -548,22 +544,28 @@ void G_AddLight(int *x, int *y, void *data) {
 		ly = *y,
 		dx = (lx)-(light->x-location->view.x),
 		dy = (ly)-(light->y-location->view.y);
-	float intensity = (1.0)/(1.0+(sqrt(dx*dx+dy*dy))/8.0);
-	intensity -= (1.0)/(1.0+(sqrt(light->light.intensity*light->light.intensity)));
+	float
+		a = 0.97969,
+		b = 3.49689,
+		c = 0.34968,
+		d = -0.071786,
+		intensity = (sqrt(dx*dx+dy*dy))/(light->light.intensity);
+	
+	intensity = (d)+(a-d)/(1.0+pow((intensity/c), b));
 
 	lx += DCOLS_OFFSET;
 	ly += DROWS_OFFSET;
 
 	if (intensity > 1.0) {
 		intensity  = 1.0;
-	} else if (intensity < 0.01) {
+	} else if (intensity < 0.001) {
 		intensity = 0.0;
 	}
 
 	if ((lx >= DCOLS_OFFSET) && (lx < DCOLS_OFFSET+DCOLS) &&
 			(ly >= DROWS_OFFSET) && (ly < DROWS_OFFSET+DROWS)) {
 		if ((dmatrix[lx][ly].visible) && (dmatrix[lx][ly].light.id != light->id)) {
-			dmatrix[lx][ly].light.light.red += (light->light.red*intensity);
+			dmatrix[lx][ly].light.light.red += light->light.red*intensity;
 			dmatrix[lx][ly].light.light.green += light->light.green*intensity;
 			dmatrix[lx][ly].light.light.blue += light->light.blue*intensity;
 			dmatrix[lx][ly].light.light.intensity += intensity*255;
