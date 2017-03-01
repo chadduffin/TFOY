@@ -5,6 +5,10 @@ int G_Init() {
 	int status = NOT_OK;
 	game_info.tile_w = 16;
 	game_info.tile_h = 16;
+	game_info.mouse_x = 0;
+	game_info.mouse_y = 0;
+	game_info.mouse_lb = 0;
+	game_info.mouse_rb = 0;
 	game_info.window_w = 320;
 	game_info.window_h = 240;
 	game_info.display_x = 0;
@@ -165,14 +169,26 @@ int G_PollEvents() {
 				break;
 			case SDL_MOUSEMOTION:
 				{
+					game_info.mouse_x = game_info.event.motion.x;
+					game_info.mouse_y = game_info.event.motion.y;
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				{
+					if (game_info.event.button.button == SDL_BUTTON_LEFT) {
+						game_info.mouse_lb = (game_info.mouse_lb == 0) ? SDL_GetTicks() : game_info.mouse_lb;
+					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
+						game_info.mouse_rb = (game_info.mouse_rb == 0) ? SDL_GetTicks() : game_info.mouse_rb;
+					}
 				}
 				break;
 			case SDL_MOUSEBUTTONUP:
 				{
+					if (game_info.event.button.button == SDL_BUTTON_LEFT) {
+						game_info.mouse_lb = 0;
+					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
+						game_info.mouse_rb = 0;
+					}
 				}
 				break;
 			case SDL_WINDOWEVENT:
@@ -276,59 +292,6 @@ void G_LoopEntities(void (*func)(G_Entity**)) {
 	while (entity != NULL) {
 		func(&entity);
 		entity = (G_Entity*)(entity->next);
-	}
-}
-
-void G_ChangeScene(G_Scene **scene) {
-	int
-		x,
-		y;
-	location = *scene;
-	location->view.unchanged = 0;
-
-	if (location == menu) {
-		for (y = 0; y < ROWS; y += 1) {
-			for (x = 0; x < COLS; x += 1) {
-				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].visible = 1;
-				dmatrix[x][y].entity = NOTHING;
-				dmatrix[x][y].tile = G_SceneTile(x, y);
-
-				dmatrix[x][y].light.id = -1;
-				dmatrix[x][y].light.count = 0;
-				dmatrix[x][y].light.light.red = 0;
-				dmatrix[x][y].light.light.green = 0;
-				dmatrix[x][y].light.light.blue = 0;
-				dmatrix[x][y].light.light.intensity = 0;
-			}
-		}
-	} else {
-		int
-			x_offset = location->view.x-DCOLS_OFFSET,
-			y_offset = location->view.y-DROWS_OFFSET;
-
-		for (y = 0; y < ROWS; y += 1) {
-			for (x = 0; x < COLS; x += 1) {
-				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].entity = NOTHING;
-
-				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
-						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
-					dmatrix[x][y].visible = 0;
-					dmatrix[x][y].tile = G_SceneTile(x+x_offset, y+y_offset);
-				} else {
-					dmatrix[x][y].visible = 1;
-					dmatrix[x][y].tile = BLACK;
-				}
-
-				dmatrix[x][y].light.id = -1;
-				dmatrix[x][y].light.count = 0;
-				dmatrix[x][y].light.light.red = 0;
-				dmatrix[x][y].light.light.green = 0;
-				dmatrix[x][y].light.light.blue = 0;
-				dmatrix[x][y].light.light.intensity = 0;
-			}
-		}
 	}
 }
 

@@ -112,6 +112,8 @@ typedef enum Component {
 	RENDER_COMPONENT,
 	LIGHT_COMPONENT,
 
+	BUTTON_COMPONENT,
+
 	COMPONENT_COUNT
 } Component;
 
@@ -129,8 +131,10 @@ typedef enum CreatureCategory {
 	MAGICAL,
 	HUMANOID,
 	INFERNAL,
+	AIRBORNE,
 	FIREBORNE,
 	WATERBORNE,
+	EARTHBORNE,
 	ABOMINATION,
 
 	CREATURE_CATEGORY_COUNT
@@ -193,12 +197,14 @@ typedef enum Keybinding {
 	KEYBINDING_COUNT
 } Keybinding;
 
-typedef enum LightDirection {
-	FROM_LEFT = 1,
-	FROM_RIGHT = 2,
-	FROM_ABOVE = 4,
-	FROM_BELOW = 8
-} LightDirection;
+typedef enum ButtonState {
+	INACTIVE = 0,
+	ACTIVE = 1,
+	HOVER = 2,
+	PRESSED = 4,
+	CHANGED = 8,
+
+} ButtonState;
 
 /*
 ** TYPEDEFS
@@ -300,6 +306,21 @@ typedef struct G_LightComponent {
 	G_Light light;
 } G_LightComponent;
 
+typedef struct G_ButtonComponent {
+	char
+		hotkey,
+		*name;
+	int
+		x,
+		y,
+		w,
+		h;
+	void
+		*data,
+		(*func)(void*);
+	ButtonState state;
+} G_ButtonComponent;
+
 typedef struct G_View {
 	int
 		x,
@@ -330,6 +351,10 @@ typedef struct G_Info {
 	int
 		tile_w,
 		tile_h,
+		mouse_x,
+		mouse_y,
+		mouse_lb,
+		mouse_rb,
 		window_w,
 		window_h,
 		display_x,
@@ -361,7 +386,6 @@ void G_FocusView(void);
 void G_Update(void);
 void G_LightUpdate(void);
 void G_LoopEntities(void (*func)(G_Entity**));
-void G_ChangeScene(G_Scene **scene);
 void G_InitializeKeybindings(void);
 int G_CheckBound(Keybinding key);
 int G_CheckPhysical(SDL_Scancode key);
@@ -388,6 +412,7 @@ void G_DecrementFOV();
 void G_MarkVisible(int *x, int *y, void *data);
 void G_AddLight(int *x, int *y, void *data);
 void G_ClearLightmap(void);
+boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 
 // tiles.c
 const char* G_TileName(Tile tile);
@@ -418,6 +443,7 @@ void G_EntityRender(G_Entity **entity);
 // scene.c
 void G_InitializeMenu(void);
 void G_InitializeOverworld(void);
+void G_ChangeScene(G_Scene **scene);
 void G_CleanupScene(G_Scene **scene);
 void G_AddEntity(G_Scene **scene, G_Entity **entity);
 void G_DelEntity(G_Scene **scene, G_Entity **entity);

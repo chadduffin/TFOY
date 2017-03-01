@@ -58,7 +58,6 @@ void G_Render(void) {
 
 			G_EntityPos(&(location->focus), &x, &y);
 			G_GenerateFOV(x, y, NULL, &G_MarkVisible);
-			G_DecrementFOV();
 		}
 	} else {
 		SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
@@ -67,6 +66,8 @@ void G_Render(void) {
 	G_ClearLightmap();
 
 	G_LoopEntities(&G_EntityRender);
+
+	G_DecrementFOV();
 
 	G_RenderChanges();
 
@@ -213,7 +214,7 @@ void G_RenderChanges(void) {
 				dst.x = game_info.display_x+(x*game_info.tile_w);
 				dst.y = game_info.display_y+(y*game_info.tile_h);
 	
-				if ((dmatrix[x][y].visible) || (location == menu)) {
+				if (dmatrix[x][y].visible) {
 					int
 						r,
 						g,
@@ -542,12 +543,16 @@ void G_MarkVisible(int *x, int *y, void *data) {
 }
 
 void G_AddLight(int *x, int *y, void *data) {
-	assert((x != NULL) && (y != NULL) && (data != NULL));
+	assert((x != NULL) && (y != NULL) && (data != NULL) && (location != NULL) && (location->focus != NULL));
 
 	G_LightNode *light = (G_LightNode*)data;
 	int
+		fx,
+		fy,
 		lx = *x,
 		ly = *y,
+		lx_adj,
+		ly_adj,
 		dx = (lx)-(light->x-location->view.x),
 		dy = (ly)-(light->y-location->view.y);
 	float
@@ -556,11 +561,12 @@ void G_AddLight(int *x, int *y, void *data) {
 		c = 0.34968,
 		d = -0.071786,
 		intensity = (sqrt(dx*dx+dy*dy))/(light->light.intensity);
-	
 	intensity = (d)+(a-d)/(1.0+pow((intensity/c), b));
 
 	lx += DCOLS_OFFSET;
 	ly += DROWS_OFFSET;
+	lx_adj = lx+location->view.x-DCOLS_OFFSET;
+	ly_adj = ly+location->view.y-DROWS_OFFSET;
 
 	if (intensity > 1.0) {
 		intensity  = 1.0;
@@ -568,15 +574,20 @@ void G_AddLight(int *x, int *y, void *data) {
 		intensity = 0.0;
 	}
 
+	G_EntityPos(&(location->focus), &fx, &fy);
+
 	if ((lx >= DCOLS_OFFSET) && (lx < DCOLS_OFFSET+DCOLS) &&
 			(ly >= DROWS_OFFSET) && (ly < DROWS_OFFSET+DROWS)) {
 		if ((dmatrix[lx][ly].visible) && (dmatrix[lx][ly].light.id != light->id)) {
-			dmatrix[lx][ly].light.light.red += light->light.red*intensity;
-			dmatrix[lx][ly].light.light.green += light->light.green*intensity;
-			dmatrix[lx][ly].light.light.blue += light->light.blue*intensity;
-			dmatrix[lx][ly].light.light.intensity += intensity*255;
-			dmatrix[lx][ly].light.id = light->id;
-			dmatrix[lx][ly].light.count += 1;
+			if ((!G_TileObstructs(dmatrix[lx][ly].tile)) ||
+					(G_LightCanShine(fx, fy, light->x, light->y, lx_adj, ly_adj))) {
+				dmatrix[lx][ly].light.light.red += light->light.red*intensity;
+				dmatrix[lx][ly].light.light.green += light->light.green*intensity;
+				dmatrix[lx][ly].light.light.blue += light->light.blue*intensity;
+				dmatrix[lx][ly].light.light.intensity += intensity*255;
+				dmatrix[lx][ly].light.id = light->id;
+				dmatrix[lx][ly].light.count += 1;
+			}
 		}
 	}
 }
@@ -604,6 +615,19 @@ void G_ClearLightmap(void) {
 			}
 		}
 	}
+}
+
+boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy) {
+	fx = (fx-dx < 0) ? -1 : ((fx-dx > 0) ? 1 : 0);
+	fy = (fy-dy < 0) ? -1 : ((fy-dy > 0) ? 1 : 0);
+	lx = (lx-dx < 0) ? -1 : ((lx-dx > 0) ? 1 : 0);
+	ly = (ly-dy < 0) ? -1 : ((ly-dy > 0) ? 1 : 0);
+	fx = (fx == 0) ? lx : fx;
+	fy = (fy == 0) ? ly : fy;
+
+	return (!(((fx != lx) && (fy != ly)) ||
+					((fx == lx) && (fy != ly) && (G_TileObstructs(G_SceneTile(dx+fx, dy)))) ||
+					((fx != lx) && (fy == ly) && (G_TileObstructs(G_SceneTile(dx, dy+fx))))));
 }
 
 /*

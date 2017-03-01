@@ -62,6 +62,22 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 				return light;
 			}
 			break;
+		case BUTTON_COMPONENT:
+			{
+				G_ButtonComponent *button = (G_ButtonComponent*)malloc(sizeof(G_ButtonComponent));
+				button->hotkey = '\0';
+				button->name = NULL;
+				button->x = 0;
+				button->y = 0;
+				button->w = 0;
+				button->h = 0;
+				button->data = NULL;
+				button->func = NULL;
+				button->state = ACTIVE | CHANGED;
+				(*entity)->components[BUTTON_COMPONENT] = button;
+				return button;
+			}
+			break;
 		default:
 			printf("Invalid component type.\n");
 			return NULL;
@@ -101,14 +117,13 @@ void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst) {
 
 void G_EntityUpdate(G_Entity **entity) {
 	assert((entity != NULL) && (*entity != NULL));
-
+	
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
 	G_ControllerComponent *controller = (G_ControllerComponent*)(G_GetComponent(entity, CONTROLLER_COMPONENT));
 
 	if (render != NULL) {
 		render->x_previous = render->x;
 		render->y_previous = render->y;
-
 		
 		if (controller != NULL) {
 			if (G_CheckBound(RIGHT)) {
@@ -143,25 +158,27 @@ void G_EntityRender(G_Entity **entity) {
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
 
 	if (render != NULL) {
-		if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
-			int
-				rx = render->x_previous+(view->x-view->xp),
-				ry = render->y_previous+(view->y-view->yp);
-	
-			if (G_IsPointWithin(rx, ry, view)) {
-				dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
-				dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
+		if (render->tile != NOTHING) {
+			if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
+				int
+					rx = render->x_previous+(view->x-view->xp),
+					ry = render->y_previous+(view->y-view->yp);
+		
+				if (G_IsPointWithin(rx, ry, view)) {
+					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
+					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
+				}
+			} else {
+				if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
+					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
+					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity = NOTHING;
+				}
 			}
-		} else {
-			if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
-				dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
-				dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity = NOTHING;
+		
+			if (G_IsPointWithin(render->x, render->y, view)) {
+				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
+				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity = render->tile;
 			}
-		}
-
-		if (G_IsPointWithin(render->x, render->y, view)) {
-			dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
-			dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity = render->tile;
 		}
 
 		if (light != NULL) {
