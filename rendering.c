@@ -111,8 +111,26 @@ void G_RenderSalvage(void) {
 	SDL_Rect
 		src,
 		dst;
-	src.x = 0;
-	src.y = 0;
+	dst.x = src.x = game_info.display_x;
+	dst.y = src.y = game_info.display_y;
+	dst.w = src.w = DCOLS_OFFSET*game_info.tile_w;
+	dst.h = src.h = ROWS*game_info.tile_h;
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &src, &dst);
+	dst.x = src.x = game_info.display_x+DCOLS_OFFSET*game_info.tile_w;
+	dst.y = src.y = game_info.display_y;
+	dst.w = src.w = (COLS-DCOLS_OFFSET)*game_info.tile_w;
+	dst.h = src.h = DCOLS_OFFSET*game_info.tile_h;
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &src, &dst);
+	dst.x = src.x = game_info.display_x+DCOLS_OFFSET*game_info.tile_w;
+	dst.y = src.y = game_info.display_y+(DROWS_OFFSET+DROWS)*game_info.tile_h;
+	dst.w = src.w = (COLS-DCOLS_OFFSET)*game_info.tile_w;
+	dst.h = src.h = (ROWS-DROWS-DROWS_OFFSET)*game_info.tile_h;
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &src, &dst);
+	dst.x = src.x = game_info.display_x+(DCOLS+DCOLS_OFFSET)*game_info.tile_w;
+	dst.y = src.y = game_info.display_y+(DROWS_OFFSET)*game_info.tile_h;
+	dst.w = src.w = (COLS-DCOLS-DCOLS_OFFSET)*game_info.tile_w;
+	dst.h = src.h = (DROWS)*game_info.tile_h;
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &src, &dst);
 
 	// ensures that the shift amount is not too great
 	if (((xdiff == 0) ||

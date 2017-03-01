@@ -118,7 +118,7 @@ void G_InitializeOverworld(void) {
 	l->light.red = 255;
 	l->light.green = 0;
 	l->light.blue = 0;
-	l->light.intensity = 64;
+	l->light.intensity = 32;
 	G_AddEntity(&overworld, &t);
 	G_Entity *x = G_CreateEntity();
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);

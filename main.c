@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 			}
 
 			G_Update();
-
+	
 			if (location != NULL) {
 				if (G_SceneView(&location)->unchanged == 0) {
 					G_Render();

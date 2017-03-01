@@ -147,6 +147,28 @@ void G_EntityUpdate(G_Entity **entity) {
 				location->view.unchanged = 0;
 			}
 		}
+
+		if (render->tile != NOTHING) {
+			G_View *view = G_SceneView(&location);
+
+			if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
+				if ((view->x != view->xp) && (view->y != view->yp)) {
+					int
+						rx = render->x_previous+(view->x-view->xp),
+						ry = render->y_previous+(view->y-view->yp);
+		
+					if (G_IsPointWithin(rx, ry, view)) {
+						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
+						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
+					}
+				}
+			} else {
+				if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
+					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
+					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity = NOTHING;
+				}
+			}
+		}
 	}
 }
 	
@@ -158,27 +180,9 @@ void G_EntityRender(G_Entity **entity) {
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
 
 	if (render != NULL) {
-		if (render->tile != NOTHING) {
-			if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
-				int
-					rx = render->x_previous+(view->x-view->xp),
-					ry = render->y_previous+(view->y-view->yp);
-		
-				if (G_IsPointWithin(rx, ry, view)) {
-					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
-					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
-				}
-			} else {
-				if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
-					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
-					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity = NOTHING;
-				}
-			}
-		
-			if (G_IsPointWithin(render->x, render->y, view)) {
+		if ((render->tile != NOTHING) && (G_IsPointWithin(render->x, render->y, view))) {
 				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
 				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity = render->tile;
-			}
 		}
 
 		if (light != NULL) {

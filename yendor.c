@@ -21,7 +21,7 @@ int G_Init() {
 	srand(time(NULL) & 2147483647);
 
 	if ((status & NOT_OK) == NOT_OK) {
-		if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == 0) {
 			status = status | SDL_OK;
 			printf("Initializing SDL2 ...... SUCCESS.\n");
 		} else {
@@ -75,25 +75,25 @@ int G_Init() {
 		}
 
 		if ((status & GRPHCS_OK) == GRPHCS_OK) {
-			if (SDLNet_Init() == 0) {
-				printf("Initializing SDLNet .... SUCCESS.\n");
-
-				if (SDLNet_ResolveHost(&ipaddress, server_name, port) == 0) {
-					socket = SDLNet_TCP_Open(&ipaddress);
-					printf("Connecting to server ... SUCCESS.\n");
-					
-					if (socket) {
-						status = status | NETWRK_OK;
-						printf("Opening socket ......... SUCCESS.\n");
-					} else {
-						printf("Opening socket ......... FAILURE.\n");
-					}
-				} else {
-					printf("Connecting to server ... FAILURE.\n");
-				} 
-			} else {
-				printf("Initializing SDLNet .... FAILURE.\n");
-			}
+//			if (SDLNet_Init() == 0) {
+//				printf("Initializing SDLNet .... SUCCESS.\n");
+//
+//				if (SDLNet_ResolveHost(&ipaddress, server_name, port) == 0) {
+//					socket = SDLNet_TCP_Open(&ipaddress);
+//					printf("Connecting to server ... SUCCESS.\n");
+//					
+//					if (socket) {
+//						status = status | NETWRK_OK;
+//						printf("Opening socket ......... SUCCESS.\n");
+//					} else {
+//						printf("Opening socket ......... FAILURE.\n");
+//					}
+//				} else {
+//					printf("Connecting to server ... FAILURE.\n");
+//				} 
+//			} else {
+//				printf("Initializing SDLNet .... FAILURE.\n");
+//			}
 
 			SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 			SDL_SetRenderTarget(game_info.renderer, game_info.buffers[game_info.target_buffer]);

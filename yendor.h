@@ -21,7 +21,6 @@
 #define FPS 30
 #define TEXTURE_COUNT 1
 // #define NDEBUG
-// #define MINIFY
 
 #define NOT_OK 0
 #define SDL_OK 1
@@ -33,25 +32,20 @@
 #define TILE_SOURCE_WIDTH 16
 #define TILE_SOURCE_HEIGHT 16
 
-#ifndef MINIFY
-	#define MESSAGE_ROWS 5
-	#define STAT_BAR_WIDTH 19
-	#define COLS 108
-	#define ROWS 64
-	#define DCOLS (COLS - STAT_BAR_WIDTH - 2)
-	#define DROWS (ROWS - MESSAGE_ROWS - 2)
-	#define DCOLS_OFFSET (COLS - DCOLS - 1)
-	#define DROWS_OFFSET (ROWS - DROWS - 1)
-#else
-	#define MESSAGE_ROWS 3
-	#define STAT_BAR_WIDTH 11
-	#define COLS 54
-	#define ROWS 32
-	#define DCOLS (COLS - STAT_BAR_WIDTH - 2)
-	#define DROWS (ROWS - MESSAGE_ROWS - 2)
-	#define DCOLS_OFFSET (COLS - DCOLS - 1)
-	#define DROWS_OFFSET (ROWS - DROWS - 1)
-#endif
+#define MESSAGE_ROWS 5
+#define STAT_BAR_WIDTH 19
+#define COLS 108
+#define ROWS 64
+/*
+#define DCOLS (COLS - STAT_BAR_WIDTH - 2)
+#define DROWS (ROWS - MESSAGE_ROWS - 2)
+#define DCOLS_OFFSET (COLS - DCOLS - 1)
+#define DROWS_OFFSET (ROWS - DROWS - 1)
+*/
+#define DCOLS 80
+#define DROWS 62
+#define DCOLS_OFFSET 1
+#define DROWS_OFFSET 1
 
 #define WORLD_COLS 512
 #define WORLD_ROWS 256
