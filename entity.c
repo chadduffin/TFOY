@@ -190,6 +190,7 @@ void G_EntityUpdate(G_Entity **entity) {
 			if (game_info.mouse_lb > 0) {
 				button->state = button->state | PRESSED;
 			} else if ((button->state & PRESSED) == PRESSED) {
+				button->state = button->state ^ PRESSED;
 				button->func(button->data);
 			}
 
@@ -228,7 +229,7 @@ void G_EntityRender(G_Entity **entity) {
 	}
 
 	if (button != NULL) {
-		if ((button->state & CHANGED) == CHANGED) {
+		if ((location->view.unchanged == 0) || ((button->state & CHANGED) == CHANGED)) {
 			int
 				x,
 				y;

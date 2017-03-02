@@ -60,6 +60,17 @@ void G_InitializeMenu(void) {
 	comp->data = (void**)(&overworld);
 	comp->func = &G_ChangeScene;
 	G_AddEntity(&menu, &button);
+	button = G_CreateEntity(UI_ENTITY);
+	comp = (G_ButtonComponent*)G_AddComponent(&button, BUTTON_COMPONENT);
+	comp->x = 16;
+	comp->y = 40;
+	comp->l = 4;
+	comp->name = (char*)malloc(5);
+	comp->name = "QUIT\0";
+	comp->border = 1;
+	comp->data = NULL;
+	comp->func = &G_Quit;
+	G_AddEntity(&menu, &button);
 }
 
 void G_InitializeOverworld(void) {
@@ -151,7 +162,7 @@ void G_ChangeScene(void **scene) {
 	int
 		x,
 		y;
-	location = *scene;
+	location = (G_Scene*)(*scene);
 	location->view.unchanged = 0;
 
 	if (location == menu) {

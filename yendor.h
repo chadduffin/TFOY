@@ -377,6 +377,7 @@ typedef struct G_Info {
 
 int G_Init(void);
 int G_Exit(int status);
+void G_Quit(void **data);
 int G_FrameCap(int last_update);
 int G_PollEvents(void);
 int G_HandleEvents(void);

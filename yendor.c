@@ -136,6 +136,10 @@ int G_Exit(int status) {
 	return 0;
 }
 
+void G_Quit(void **data) {
+	game_info.running = 0;
+}
+
 int G_FrameCap(int last_update) {
 	int delay = (1000.0/FPS)-(SDL_GetTicks()-last_update+0.5);
 
@@ -154,7 +158,10 @@ int G_PollEvents() {
 			case SDL_KEYDOWN:
 				{
 					if (game_info.event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-						return -1;
+						if (location != menu) {
+							G_ChangeScene((void**)(&menu));
+							phys_keys[SDL_SCANCODE_ESCAPE] = 0;
+						}
 					} else {
 						if (phys_keys[game_info.event.key.keysym.scancode] == 0) {
 							phys_keys[game_info.event.key.keysym.scancode] = SDL_GetTicks();
