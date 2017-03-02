@@ -218,12 +218,6 @@ int G_PollEvents() {
 int G_HandleEvents() {
 	short to_return = -1;
 
-	if (phys_keys[SDL_SCANCODE_SPACE]) {
-		(location == menu) ? G_ChangeScene(&overworld) : G_ChangeScene(&menu);
-		phys_keys[SDL_SCANCODE_SPACE] = 0;
-		to_return = 0;
-	}
-
 	if (G_CheckBound(RIGHT)) {
 		to_return = 0;
 	}
@@ -278,19 +272,23 @@ void G_Update(void) {
 
 	if (G_HandleEvents() != -1) {
 		// perform a full game step and re-focus view
-		G_LoopEntities(&G_EntityUpdate);
+		G_LoopEntities(ANY_ENTITY, &G_EntityUpdate);
 		G_FocusView();
+	} else {
+		G_LoopEntities(UI_ENTITY, &G_EntityUpdate);
 	}
 }
 
 void G_LightUpdate(void) {
 }
 
-void G_LoopEntities(void (*func)(G_Entity**)) {
+void G_LoopEntities(EntityType type, void (*func)(G_Entity**)) {
 	G_Entity *entity = G_GetEntities(&location);
 
 	while (entity != NULL) {
-		func(&entity);
+		if (G_GetEntityType(&entity) & type) {
+			func(&entity);
+		}
 		entity = (G_Entity*)(entity->next);
 	}
 }

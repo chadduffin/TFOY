@@ -65,7 +65,7 @@ void G_Render(void) {
 	
 	G_ClearLightmap();
 
-	G_LoopEntities(&G_EntityRender);
+	G_LoopEntities(ANY_ENTITY, &G_EntityRender);
 
 	G_DecrementFOV();
 
@@ -83,7 +83,7 @@ void G_Render(void) {
 		G_RenderLightmap();
 	}
 
-	SDL_RenderPresent(game_info.renderer);
+	SDL_RenderPresent(game_info	.renderer);
 	game_info.target_buffer = (game_info.target_buffer == 0) ? 1 : 0;	
 }
 

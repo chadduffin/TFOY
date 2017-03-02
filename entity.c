@@ -5,13 +5,14 @@
 ** FUNCTIONS
 */
 
-G_Entity* G_CreateEntity(void) {
+G_Entity* G_CreateEntity(EntityType type) {
 	int i;
 	G_Entity *entity = (G_Entity*)malloc(sizeof(G_Entity));
 
 	entity->id = G_GetID();
 	entity->prev = NULL;
 	entity->next = NULL;
+	entity->type = type;
 
 	for (i = 0; i < COMPONENT_COUNT; i += 1) {
 		entity->components[i] = NULL;
@@ -69,11 +70,11 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 				button->name = NULL;
 				button->x = 0;
 				button->y = 0;
-				button->w = 0;
-				button->h = 0;
+				button->l = 0;
 				button->data = NULL;
 				button->func = NULL;
 				button->state = ACTIVE | CHANGED;
+				button->border = 1;
 				(*entity)->components[BUTTON_COMPONENT] = button;
 				return button;
 			}
@@ -119,6 +120,7 @@ void G_EntityUpdate(G_Entity **entity) {
 	assert((entity != NULL) && (*entity != NULL));
 	
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
+	G_ButtonComponent *button = (G_ButtonComponent*)(G_GetComponent(entity, BUTTON_COMPONENT));
 	G_ControllerComponent *controller = (G_ControllerComponent*)(G_GetComponent(entity, CONTROLLER_COMPONENT));
 
 	if (render != NULL) {
@@ -152,15 +154,13 @@ void G_EntityUpdate(G_Entity **entity) {
 			G_View *view = G_SceneView(&location);
 
 			if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
-				if ((view->x != view->xp) && (view->y != view->yp)) {
-					int
-						rx = render->x_previous+(view->x-view->xp),
-						ry = render->y_previous+(view->y-view->yp);
+				int
+					rx = render->x_previous+(view->x-view->xp),
+					ry = render->y_previous+(view->y-view->yp);
 		
-					if (G_IsPointWithin(rx, ry, view)) {
-						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
-						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
-					}
+				if (G_IsPointWithin(rx, ry, view)) {
+					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
+					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
 				}
 			} else {
 				if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
@@ -168,6 +168,36 @@ void G_EntityUpdate(G_Entity **entity) {
 					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity = NOTHING;
 				}
 			}
+		}
+	}
+
+	if (button != NULL) {
+		int
+			mouse_x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
+			mouse_y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
+
+		ButtonState state = button->state;
+
+		if ((mouse_x < button->x-button->border) || (mouse_x >= button->x+button->l+button->border) ||
+				(mouse_y < button->y-button->border) || (mouse_y >= button->y+button->border)) {
+			if ((button->state & PRESSED) == PRESSED) {
+				button->state = button->state ^ PRESSED;
+			}
+			if ((button->state & HOVER) == HOVER) {
+				button->state = button->state ^ HOVER;
+			}
+		} else {
+			if (game_info.mouse_lb > 0) {
+				button->state = button->state | PRESSED;
+			} else if ((button->state & PRESSED) == PRESSED) {
+				button->func(button->data);
+			}
+
+			button->state = button->state | HOVER;
+		}
+
+		if (button->state != state) {
+			button->state = button->state | CHANGED;
 		}
 	}
 }
@@ -178,6 +208,7 @@ void G_EntityRender(G_Entity **entity) {
 	G_View *view = G_SceneView(&location);
 	G_LightComponent *light = (G_LightComponent*)(G_GetComponent(entity, LIGHT_COMPONENT));
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
+	G_ButtonComponent *button = (G_ButtonComponent*)(G_GetComponent(entity, BUTTON_COMPONENT));
 
 	if (render != NULL) {
 		if ((render->tile != NOTHING) && (G_IsPointWithin(render->x, render->y, view))) {
@@ -195,6 +226,34 @@ void G_EntityRender(G_Entity **entity) {
 			G_GenerateFOV(render->x, render->y, &node, &G_AddLight);
 		}
 	}
+
+	if (button != NULL) {
+		if ((button->state & CHANGED) == CHANGED) {
+			int
+				x,
+				y;
+			button->state = button->state ^ CHANGED;
+
+			for (y = -(button->border); y <= (button->border); y += 1) {
+				for (x = -(button->border); x < (button->l+button->border); x += 1) {
+					if ((x == -1) || (x == button->l) ||
+							(y == -1) || (y == button->border)) {
+						dmatrix[x+button->x][y+button->y].changed = 1;
+						dmatrix[x+button->x][y+button->y].tile = BLACK;
+					} else {
+						dmatrix[x+button->x][y+button->y].changed = 1;
+						dmatrix[x+button->x][y+button->y].tile = button->name[x];
+					}
+				}
+			}
+		}
+	}
+}
+
+EntityType G_GetEntityType(G_Entity **entity) {
+	assert((entity != NULL) && (*entity != NULL));
+	
+	return (*entity)->type;
 }
 	
 /*

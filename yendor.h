@@ -36,16 +36,11 @@
 #define STAT_BAR_WIDTH 19
 #define COLS 108
 #define ROWS 64
-/*
+
 #define DCOLS (COLS - STAT_BAR_WIDTH - 2)
 #define DROWS (ROWS - MESSAGE_ROWS - 2)
 #define DCOLS_OFFSET (COLS - DCOLS - 1)
 #define DROWS_OFFSET (ROWS - DROWS - 1)
-*/
-#define DCOLS 80
-#define DROWS 62
-#define DCOLS_OFFSET 1
-#define DROWS_OFFSET 1
 
 #define WORLD_COLS 512
 #define WORLD_ROWS 256
@@ -99,6 +94,14 @@ typedef enum Attribute {
 
 	ATTRIBUTE_COUNT
 } Attribute;
+
+typedef enum EntityType {
+	NULL_ENTITY = 0,
+	GAME_ENTITY = 1,
+	UI_ENTITY = 2,
+
+	ANY_ENTITY = GAME_ENTITY | UI_ENTITY,
+} EntityType;
 
 typedef enum Component {
 	CONTROLLER_COMPONENT = 0,
@@ -274,6 +277,7 @@ typedef struct G_Entity {
 		*components[COMPONENT_COUNT],
 		*prev,
 		*next;
+	EntityType type;
 }	G_Entity;
 
 typedef struct G_ControllerComponent {
@@ -307,11 +311,11 @@ typedef struct G_ButtonComponent {
 	int
 		x,
 		y,
-		w,
-		h;
+		l;
 	void
-		*data,
-		(*func)(void*);
+		**data,
+		(*func)(void**);
+	boolean border;
 	ButtonState state;
 } G_ButtonComponent;
 
@@ -379,7 +383,7 @@ int G_HandleEvents(void);
 void G_FocusView(void);
 void G_Update(void);
 void G_LightUpdate(void);
-void G_LoopEntities(void (*func)(G_Entity**));
+void G_LoopEntities(EntityType type, void (*func)(G_Entity**));
 void G_InitializeKeybindings(void);
 int G_CheckBound(Keybinding key);
 int G_CheckPhysical(SDL_Scancode key);
@@ -425,7 +429,7 @@ const char* G_GetAttributeDescription(Attribute attribute);
 int G_GetExperienceNeeded(int level);
 
 // entity.c
-G_Entity* G_CreateEntity(void);
+G_Entity* G_CreateEntity(EntityType type);
 void* G_AddComponent(G_Entity **entity, Component component);
 void* G_GetComponent(G_Entity **entity, Component component);
 void G_RemoveComponent(G_Entity **entity, Component component);
@@ -433,11 +437,12 @@ void G_EntityPos(G_Entity **entity, int *x, int *y);
 void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst);
 void G_EntityUpdate(G_Entity **entity);
 void G_EntityRender(G_Entity **entity);
+EntityType G_GetEntityType(G_Entity **entity);
 
 // scene.c
 void G_InitializeMenu(void);
 void G_InitializeOverworld(void);
-void G_ChangeScene(G_Scene **scene);
+void G_ChangeScene(void **scene);
 void G_CleanupScene(G_Scene **scene);
 void G_AddEntity(G_Scene **scene, G_Entity **entity);
 void G_DelEntity(G_Scene **scene, G_Entity **entity);

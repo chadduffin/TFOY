@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 		G_InitializeMenu();
 		G_InitializeOverworld();
 		G_InitializeKeybindings();
-		G_ChangeScene(&menu);
+		G_ChangeScene((void**)(&menu));
 
 		G_Render();
 		location->view.unchanged = 0;

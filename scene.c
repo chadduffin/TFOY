@@ -48,6 +48,18 @@ void G_InitializeMenu(void) {
 			menu->tiles[i].tile = MAGENTA;
 		}
 	}
+
+	G_Entity *button = G_CreateEntity(UI_ENTITY);
+	G_ButtonComponent *comp = (G_ButtonComponent*)G_AddComponent(&button, BUTTON_COMPONENT);
+	comp->x = 16;
+	comp->y = 30;
+	comp->l = 4;
+	comp->name = (char*)malloc(5);
+	comp->name = "PLAY\0";
+	comp->border = 1;
+	comp->data = (void**)(&overworld);
+	comp->func = &G_ChangeScene;
+	G_AddEntity(&menu, &button);
 }
 
 void G_InitializeOverworld(void) {
@@ -93,7 +105,7 @@ void G_InitializeOverworld(void) {
 		}
 	}
 
-	G_Entity *player = G_CreateEntity();
+	G_Entity *player = G_CreateEntity(GAME_ENTITY);
 	G_RenderComponent *r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 460;
@@ -104,10 +116,10 @@ void G_InitializeOverworld(void) {
 	l->light.red = 0;
 	l->light.green = 255;
 	l->light.blue = 0;
-	l->light.intensity = 16;
+	l->light.intensity = 24;
 	G_AddComponent(&player, CONTROLLER_COMPONENT);
 	G_AddEntity(&overworld, &player);
-	G_Entity *t = G_CreateEntity();
+	G_Entity *t = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&t, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 480;
@@ -120,7 +132,7 @@ void G_InitializeOverworld(void) {
 	l->light.blue = 0;
 	l->light.intensity = 32;
 	G_AddEntity(&overworld, &t);
-	G_Entity *x = G_CreateEntity();
+	G_Entity *x = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 480;
@@ -131,11 +143,11 @@ void G_InitializeOverworld(void) {
 	l->light.red = 0;
 	l->light.green = 0;
 	l->light.blue = 255;
-	l->light.intensity = 32;
+	l->light.intensity = 48;
 	G_AddEntity(&overworld, &x);
 }
 
-void G_ChangeScene(G_Scene **scene) {
+void G_ChangeScene(void **scene) {
 	int
 		x,
 		y;
@@ -162,6 +174,8 @@ void G_ChangeScene(G_Scene **scene) {
 		int
 			x_offset = location->view.x-DCOLS_OFFSET,
 			y_offset = location->view.y-DROWS_OFFSET;
+
+		G_FocusView();
 
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
