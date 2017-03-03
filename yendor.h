@@ -407,10 +407,9 @@ void G_CastShadow(
 	int invert, int dx, int dy,
 	float start, float end,
 	void *light, void (*func)(int*, int*, void*));
-void G_DecrementFOV();
 void G_MarkVisible(int *x, int *y, void *data);
 void G_AddLight(int *x, int *y, void *data);
-void G_ClearLightmap(void);
+void G_ClearAndDecrement(void);
 boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 
 // tiles.c

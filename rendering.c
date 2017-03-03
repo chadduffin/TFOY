@@ -59,15 +59,13 @@ void G_Render(void) {
 			G_EntityPos(&(location->focus), &x, &y);
 			G_GenerateFOV(x, y, NULL, &G_MarkVisible);
 		}
+
+		G_ClearAndDecrement();
 	} else {
 		SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
-	}
-	
-	G_ClearLightmap();
+	}	
 
 	G_LoopEntities(ANY_ENTITY, &G_EntityRender);
-
-	G_DecrementFOV();
 
 	G_RenderChanges();
 
@@ -524,25 +522,6 @@ void G_CastShadow(
 	}
 }
 
-void G_DecrementFOV() {
-	if (location != menu) {
-		int
-			x,
-			y;
-
-		for (y = DROWS_OFFSET; y < (DROWS+DROWS_OFFSET); y += 1) {
-			for (x = DCOLS_OFFSET; x < (DCOLS+DCOLS_OFFSET); x += 1) {
-				if (dmatrix[x][y].visible == 1) {
-					dmatrix[x][y].visible = 0;
-					dmatrix[x][y].changed = 1;
-				} else if (dmatrix[x][y].visible == 2) {
-					dmatrix[x][y].visible = 1;
-				}
-			}
-		}
-	}
-}
-
 void G_MarkVisible(int *x, int *y, void *data) {
 	assert((x != NULL) && (y != NULL));
 
@@ -610,7 +589,7 @@ void G_AddLight(int *x, int *y, void *data) {
 	}
 }
 
-void G_ClearLightmap(void) {
+void G_ClearAndDecrement(void) {
 	int
 		x,
 		y;
@@ -630,6 +609,12 @@ void G_ClearLightmap(void) {
 				dmatrix[x][y].light.light.green = 0;
 				dmatrix[x][y].light.light.blue = 0;
 				dmatrix[x][y].light.light.intensity = 0;
+			}
+			if (dmatrix[x][y].visible == 1) {
+				dmatrix[x][y].visible = 0;
+				dmatrix[x][y].changed = 1;
+			} else if (dmatrix[x][y].visible == 2) {
+				dmatrix[x][y].visible = 1;
 			}
 		}
 	}

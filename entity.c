@@ -179,7 +179,7 @@ void G_EntityUpdate(G_Entity **entity) {
 		ButtonState state = button->state;
 
 		if ((mouse_x < button->x-button->border) || (mouse_x >= button->x+button->l+button->border) ||
-				(mouse_y < button->y-button->border) || (mouse_y >= button->y+button->border)) {
+				(mouse_y < button->y-button->border) || (mouse_y > button->y+button->border)) {
 			if ((button->state & PRESSED) == PRESSED) {
 				button->state = button->state ^ PRESSED;
 			}

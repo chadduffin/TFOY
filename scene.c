@@ -51,8 +51,8 @@ void G_InitializeMenu(void) {
 
 	G_Entity *button = G_CreateEntity(UI_ENTITY);
 	G_ButtonComponent *comp = (G_ButtonComponent*)G_AddComponent(&button, BUTTON_COMPONENT);
-	comp->x = 16;
-	comp->y = 30;
+	comp->x = (COLS/2)-2;
+	comp->y = 38;
 	comp->l = 4;
 	comp->name = (char*)malloc(5);
 	comp->name = "PLAY\0";
@@ -62,8 +62,8 @@ void G_InitializeMenu(void) {
 	G_AddEntity(&menu, &button);
 	button = G_CreateEntity(UI_ENTITY);
 	comp = (G_ButtonComponent*)G_AddComponent(&button, BUTTON_COMPONENT);
-	comp->x = 16;
-	comp->y = 40;
+	comp->x = (COLS/2)-2;
+	comp->y = 48;
 	comp->l = 4;
 	comp->name = (char*)malloc(5);
 	comp->name = "QUIT\0";
