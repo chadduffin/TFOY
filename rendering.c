@@ -86,17 +86,18 @@ void G_Render(void) {
 }
 
 void G_LightRender(void) {
-	if (location != menu) {
-		SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
 
+	if (location != menu) {
 		if (SDL_GetTicks()-last_flicker > FLICKER_RATE) {
 			G_RenderFlicker(0.0001);
 			last_flicker += rand()%FLICKER_RATE;
 		}
 
 		G_RenderLightmap();
-		SDL_RenderPresent(game_info.renderer);
 	}
+
+	SDL_RenderPresent(game_info.renderer);
 }
 
 void G_RenderSalvage(void) {
@@ -223,7 +224,7 @@ void G_RenderChanges(void) {
 		for (x = 0; x < COLS; x += 1) {
 			to_draw = (dmatrix[x][y].entity == NOTHING) ? dmatrix[x][y].tile : dmatrix[x][y].entity;
 			G_Color
-				fg = (to_draw < 256) ? white : *(descriptor_tiles[to_draw-256].fg),
+				fg = (to_draw < 256) ? dmatrix[x][y].fg : *(descriptor_tiles[to_draw-256].fg),
 				bg = (to_draw < 256) ? black : *(descriptor_tiles[to_draw-256].bg);
 
 			if (dmatrix[x][y].changed == 1) {
@@ -344,18 +345,18 @@ void G_RenderLightmap(void) {
 				intensity = dmatrix[x][y].light.light.intensity;
 				dst.x = x*game_info.tile_w+game_info.display_x;
 				dst.y = y*game_info.tile_h+game_info.display_y;
-
+	
 				intensity = (intensity < 0) ? 0 : intensity;
 				intensity = (intensity > 255) ? 255 : intensity;
-
+	
 				SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
 				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
 				SDL_RenderFillRect(game_info.renderer, &dst);
-
+	
 				SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255-intensity);
 				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_BLEND);
 				SDL_RenderFillRect(game_info.renderer, &dst);
-	
+		
 				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
 			}
 
@@ -568,7 +569,7 @@ void G_AddLight(int *x, int *y, void *data) {
 	if (intensity > 1.0) {
 		intensity  = 1.0;
 	} else if (intensity < 0.001) {
-		intensity = 0.0;
+		return;
 	}
 
 	G_EntityPos(&(location->focus), &fx, &fy);
@@ -596,7 +597,6 @@ void G_ClearAndDecrement(void) {
 
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
-			dmatrix[x][y].light.id = -1;
 			if (location != NULL) {
 				dmatrix[x][y].light.count = 1;
 				dmatrix[x][y].light.light.red = location->ambient.red;

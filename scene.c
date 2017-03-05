@@ -124,9 +124,9 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	G_LightComponent *l = (G_LightComponent*)G_AddComponent(&player, LIGHT_COMPONENT);
-	l->light.red = 0;
+	l->light.red = 255;
 	l->light.green = 255;
-	l->light.blue = 0;
+	l->light.blue = 128;
 	l->light.intensity = 24;
 	G_AddComponent(&player, CONTROLLER_COMPONENT);
 	G_AddEntity(&overworld, &player);
@@ -168,6 +168,8 @@ void G_ChangeScene(void **scene) {
 	if (location == menu) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
+				dmatrix[x][y].fg = white;
+				dmatrix[x][y].bg = white;
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].visible = 1;
 				dmatrix[x][y].entity = NOTHING;

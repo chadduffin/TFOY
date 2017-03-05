@@ -71,6 +71,7 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 				button->x = 0;
 				button->y = 0;
 				button->l = 0;
+				button->focus = 0;
 				button->data = NULL;
 				button->func = NULL;
 				button->state = ACTIVE | CHANGED;
@@ -131,22 +132,22 @@ void G_EntityUpdate(G_Entity **entity) {
 			if (G_CheckBound(RIGHT)) {
 				render->x += 1;
 				phys_keys[virt_keys[RIGHT]] = 0;
-				location->view.unchanged = 0;
+				G_InvalidateView();
 			}
 			if (G_CheckBound(LEFT)) {
 				render->x -= 1;
 				phys_keys[virt_keys[LEFT]] = 0;
-				location->view.unchanged = 0;
+				G_InvalidateView();
 			}
 			if (G_CheckBound(UP)) {
 				render->y -= 1;
 				phys_keys[virt_keys[UP]] = 0;
-				location->view.unchanged = 0;
+				G_InvalidateView();
 			}
 			if (G_CheckBound(DOWN)) {
 				render->y += 1;
 				phys_keys[virt_keys[DOWN]] = 0;
-				location->view.unchanged = 0;
+				G_InvalidateView();
 			}
 		}
 
@@ -186,6 +187,12 @@ void G_EntityUpdate(G_Entity **entity) {
 			if ((button->state & HOVER) == HOVER) {
 				button->state = button->state ^ HOVER;
 			}
+
+			if (button->focus > 0) {
+				button->focus -= 17;
+				button->state = button->state | CHANGED;
+				G_InvalidateView();
+			}
 		} else {
 			if (game_info.mouse_lb > 0) {
 				button->state = button->state | PRESSED;
@@ -194,12 +201,18 @@ void G_EntityUpdate(G_Entity **entity) {
 				button->func(button->data);
 			}
 
+			if (button->focus < 255) {
+				button->focus += 17;
+				button->state = button->state | CHANGED;
+				G_InvalidateView();
+			}
+
 			button->state = button->state | HOVER;
 		}
 
 		if (button->state != state) {
 			button->state = button->state | CHANGED;
-		}
+		}		
 	}
 }
 	
@@ -229,7 +242,7 @@ void G_EntityRender(G_Entity **entity) {
 	}
 
 	if (button != NULL) {
-		if ((location->view.unchanged == 0) || ((button->state & CHANGED) == CHANGED)) {
+		if ((location->view.unchanged == 0) || (button->state & CHANGED) == CHANGED) {
 			int
 				x,
 				y;
@@ -238,12 +251,14 @@ void G_EntityRender(G_Entity **entity) {
 			for (y = -(button->border); y <= (button->border); y += 1) {
 				for (x = -(button->border); x < (button->l+button->border); x += 1) {
 					if ((x == -1) || (x == button->l) ||
-							(y == -1) || (y == button->border)) {
+							(y == -1) || (y == 1)) {
 						dmatrix[x+button->x][y+button->y].changed = 1;
 						dmatrix[x+button->x][y+button->y].tile = BLACK;
 					} else {
 						dmatrix[x+button->x][y+button->y].changed = 1;
 						dmatrix[x+button->x][y+button->y].tile = button->name[x];
+						dmatrix[x+button->x][y+button->y].fg = white;
+						dmatrix[x+button->x][y+button->y].fg.blue = 255-button->focus;
 					}
 				}
 			}

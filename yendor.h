@@ -311,7 +311,8 @@ typedef struct G_ButtonComponent {
 	int
 		x,
 		y,
-		l;
+		l,
+		focus;
 	void
 		**data,
 		(*func)(void**);
@@ -410,6 +411,7 @@ void G_CastShadow(
 void G_MarkVisible(int *x, int *y, void *data);
 void G_AddLight(int *x, int *y, void *data);
 void G_ClearAndDecrement(void);
+void G_InvalidateView(void);
 boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 
 // tiles.c

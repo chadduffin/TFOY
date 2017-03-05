@@ -1,6 +1,6 @@
 CC = gcc
 TARGET = tfoy
-LIBS = -lSDL2 -lSDL2_image -lSDL2_net -lm
+LIBS = -lSDL2 -lSDL2_image -lSDL2_net -lm -lrt
 CFLAGS = -g -Wall -pedantic -std=c11 -O3
 
 .PHONY: default all clean

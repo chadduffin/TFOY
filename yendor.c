@@ -332,6 +332,12 @@ int G_IsPointWithin(int x, int y, G_View *view) {
 	return ((x >= view->x) && (x < view->x+view->w) && (y >= view->y) && (y < view->y+view->h));
 }
 
+void G_InvalidateView(void) {
+	assert(location != NULL);
+
+	location->view.unchanged = 0;
+}
+
 unsigned int G_GetID(void) {
 	G_ID += 1;
 	return G_ID-1;
