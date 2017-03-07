@@ -6,16 +6,15 @@
 */
 
 G_Attribute attributes[ATTRIBUTE_COUNT] = {
-	{"Strength",				"Description of strength."},
-	{"Agility", 				"Description of agility."},
+	{"Might",						"Description of might."},
 	{"Intellect", 			"Description of intellect."},
 	{"Constitution", 		"Description of constitution."},
 	
 	{"Attack Power", 		"Description of ap."},
 	{"Spell Power", 		"Description of sp."},
-	{"Critical Strike", "Description of cs."},
 	{"Haste", 					"Description of haste."},
 	{"Dexterity", 			"Description of dexterity."},
+	{"Critical Strike", "Description of critical strike."},
 
 	{"Dodge", 					"Description of dodge."},
 	{"Block", 					"Description of block."},
@@ -28,8 +27,8 @@ G_Attribute attributes[ATTRIBUTE_COUNT] = {
 	{"Experience", 			"Description of experience."},
 
 	{"Health",					"Description of health."},
-	{"Mana", 						"Description of mana."},
 	{"Energy", 					"Description of energy."},
+	{"Mana", 						"Description of mana."},
 	{"Rage", 						"Description of rage."},
 
 	{"Hunger", 					"Description of strength."},
@@ -43,12 +42,12 @@ G_Attribute attributes[ATTRIBUTE_COUNT] = {
 */
 
 const char* G_GetAttributeName(Attribute attribute) {
-	assert((attribute >= STRENGTH) && (attribute < ATTRIBUTE_COUNT));
+	assert((attribute >= MIGHT) && (attribute < ATTRIBUTE_COUNT));
 	return attributes[attribute].name;
 }
 
 const char* G_GetAttributeDescription(Attribute attribute) {
-	assert((attribute >= STRENGTH) && (attribute < ATTRIBUTE_COUNT));
+	assert((attribute >= MIGHT) && (attribute < ATTRIBUTE_COUNT));
 	return attributes[attribute].description;
 }
 

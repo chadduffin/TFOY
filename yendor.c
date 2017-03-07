@@ -144,6 +144,7 @@ int G_FrameCap(int last_update) {
 	int delay = (1000.0/FPS)-(SDL_GetTicks()-last_update+0.5);
 
 	if (delay > 0) {
+		printf("%d.\n", delay);
 		SDL_Delay(delay);
 	}
 
@@ -341,6 +342,69 @@ void G_InvalidateView(void) {
 unsigned int G_GetID(void) {
 	G_ID += 1;
 	return G_ID-1;
+}
+
+Tile G_CellToTile(int x, int y) {
+	assert ((x >= 0) && (x < COLS) && (y >= 0) && (y < ROWS));
+
+	if (dmatrix[x][y].entity[0] != -1) {
+		return G_EntityIDToTile(dmatrix[x][y].entity[0]);
+	} else if (dmatrix[x][y].entity[1] != -1) {
+		return G_EntityIDToTile(dmatrix[x][y].entity[1]);
+	}
+
+	return dmatrix[x][y].tile;
+}
+
+char* G_IntToChar(int value) {
+	char *string = (char*)malloc(4);
+	value = value%1000;
+
+	string[0] = (value > 99) ? ((value/100) + 48) : '.';
+	value = value%100;
+
+	if ((string[0] != '.') || (value > 9)) {
+		string[1] = (value/10)+48;
+	} else {
+		string[1] = '.';
+	}
+	value = value%10;
+
+	if ((string[1] != '.') || (value > 0)) {
+		string[2] = (value)+48;
+	} else {
+		string[2] = '.';
+	}
+
+	string[3] = '\0';
+
+	return string;
+}
+
+char* G_FloatToChar(float value) {
+	char *string = (char*)malloc(5);
+	value = (int)(value)%1000;
+
+	string[0] = (value > 99) ? ((value/100) + 48) : '.';
+	value = (int)(value)%100;
+
+	if ((string[0] != '.') || (value > 9)) {
+		string[1] = (value/10)+48;
+	} else {
+		string[1] = '.';
+	}
+	value = (int)(value)%10;
+
+	if ((string[1] != '.') || (value > 0)) {
+		string[2] = (value)+48;
+	} else {
+		string[2] = '.';
+	}
+
+	string[3] = '%';
+	string[4] = '\0';
+
+	return string;
 }
 
 /*

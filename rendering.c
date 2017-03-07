@@ -222,10 +222,10 @@ void G_RenderChanges(void) {
 
 	for (y = 0; y < ROWS; y += 1) {
 		for (x = 0; x < COLS; x += 1) {
-			to_draw = (dmatrix[x][y].entity == NOTHING) ? dmatrix[x][y].tile : dmatrix[x][y].entity;
+			to_draw = G_CellToTile(x, y);
 			G_Color
 				fg = (to_draw < 256) ? dmatrix[x][y].fg : *(descriptor_tiles[to_draw-256].fg),
-				bg = (to_draw < 256) ? black : *(descriptor_tiles[to_draw-256].bg);
+				bg = (to_draw < 256) ? dmatrix[x][y].bg : *(descriptor_tiles[to_draw-256].bg);
 
 			if (dmatrix[x][y].changed == 1) {
 				dst.x = game_info.display_x+(x*game_info.tile_w);
@@ -280,7 +280,7 @@ void G_RenderFlicker(float frequency) {
 
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
-			if ((dmatrix[x][y].visible == 0) || (dmatrix[x][y].entity != NOTHING)) {
+			if ((dmatrix[x][y].visible == 0) || (dmatrix[x][y].entity[0] != -1) || (dmatrix[x][y].entity[1] != -1)) {
 				continue;
 			}
 			if (G_TileFlickers(dmatrix[x][y].tile)) {
@@ -349,14 +349,11 @@ void G_RenderLightmap(void) {
 				intensity = (intensity < 0) ? 0 : intensity;
 				intensity = (intensity > 255) ? 255 : intensity;
 	
-				SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
+				SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255-intensity);
 				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
 				SDL_RenderFillRect(game_info.renderer, &dst);
-	
-				SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255-intensity);
-				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_BLEND);
-				SDL_RenderFillRect(game_info.renderer, &dst);
 		
+				SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
 			}
 
@@ -630,7 +627,7 @@ boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy) {
 
 	return (!(((fx != lx) && (fy != ly)) ||
 					((fx == lx) && (fy != ly) && (G_TileObstructs(G_SceneTile(dx+fx, dy)))) ||
-					((fx != lx) && (fy == ly) && (G_TileObstructs(G_SceneTile(dx, dy+fx))))));
+					((fx != lx) && (fy == ly) && (G_TileObstructs(G_SceneTile(dx, dy+fy))))));
 }
 
 /*

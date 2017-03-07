@@ -11,6 +11,8 @@ G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 	{"water", "some water", 14, 7, &blue, &scott_blue, FLICKERS, LIQUID},
 	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS, SOLID},
 
+	{"ball", "a ball", 9, 15, &white, &black, 0, ENTITY},
+
 	{"character", "", 1, 0, &white, &black, 0, ENTITY},
 
 	{"", "", 0, 0, &aqua, &aqua, 0, COLOR},

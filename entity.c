@@ -63,21 +63,22 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 				return light;
 			}
 			break;
-		case BUTTON_COMPONENT:
+		case UI_COMPONENT:
 			{
-				G_ButtonComponent *button = (G_ButtonComponent*)malloc(sizeof(G_ButtonComponent));
-				button->hotkey = '\0';
-				button->name = NULL;
-				button->x = 0;
-				button->y = 0;
-				button->l = 0;
-				button->focus = 0;
-				button->data = NULL;
-				button->func = NULL;
-				button->state = ACTIVE | CHANGED;
-				button->border = 1;
-				(*entity)->components[BUTTON_COMPONENT] = button;
-				return button;
+				G_UIComponent *ui = (G_UIComponent*)malloc(sizeof(G_UIComponent));
+				ui->hotkey = '\0';
+				ui->name = NULL;
+				ui->x = 0;
+				ui->y = 0;
+				ui->l = 0;
+				ui->focus = 0;
+				ui->data = NULL;
+				ui->on_click = NULL;
+				ui->on_hover = NULL;
+				ui->state = ACTIVE | CHANGED;
+				ui->border = 1;
+				(*entity)->components[UI_COMPONENT] = ui;
+				return ui;
 			}
 			break;
 		default:
@@ -121,7 +122,8 @@ void G_EntityUpdate(G_Entity **entity) {
 	assert((entity != NULL) && (*entity != NULL));
 	
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
-	G_ButtonComponent *button = (G_ButtonComponent*)(G_GetComponent(entity, BUTTON_COMPONENT));
+	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
+	G_CreatureComponent *creature = (G_CreatureComponent*)(G_GetComponent(entity, CREATURE_COMPONENT));
 	G_ControllerComponent *controller = (G_ControllerComponent*)(G_GetComponent(entity, CONTROLLER_COMPONENT));
 
 	if (render != NULL) {
@@ -152,6 +154,7 @@ void G_EntityUpdate(G_Entity **entity) {
 		}
 
 		if (render->tile != NOTHING) {
+			int i = (creature == NULL) ? 1 : 0;
 			G_View *view = G_SceneView(&location);
 
 			if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
@@ -161,57 +164,66 @@ void G_EntityUpdate(G_Entity **entity) {
 		
 				if (G_IsPointWithin(rx, ry, view)) {
 					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
-					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity = NOTHING;
+					if (dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity[i] == (*entity)->id) {
+						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity[i] = -1;
+					}
 				}
 			} else {
 				if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
 					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
-					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity = NOTHING;
+					if (dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity[i] == (*entity)->id) {
+						dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity[i] = -1;
+					}
 				}
 			}
 		}
 	}
 
-	if (button != NULL) {
+	if (ui != NULL) {
 		int
 			mouse_x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
 			mouse_y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
 
-		ButtonState state = button->state;
+		UIState state = ui->state;
 
-		if ((mouse_x < button->x-button->border) || (mouse_x >= button->x+button->l+button->border) ||
-				(mouse_y < button->y-button->border) || (mouse_y > button->y+button->border)) {
-			if ((button->state & PRESSED) == PRESSED) {
-				button->state = button->state ^ PRESSED;
+		if ((mouse_x < ui->x-ui->border) || (mouse_x >= ui->x+ui->l+ui->border) ||
+				(mouse_y < ui->y-ui->border) || (mouse_y > ui->y+ui->border)) {
+			if ((ui->state & PRESSED) == PRESSED) {
+				ui->state = ui->state ^ PRESSED;
 			}
-			if ((button->state & HOVER) == HOVER) {
-				button->state = button->state ^ HOVER;
+			if ((ui->state & HOVER) == HOVER) {
+				ui->state = ui->state ^ HOVER;
 			}
 
-			if (button->focus > 0) {
-				button->focus -= 17;
-				button->state = button->state | CHANGED;
+			if ((ui->focus > 0) && ((ui->on_hover != NULL) || (ui->on_click != NULL))) {
+				ui->focus -= 17;
+				ui->state = ui->state | CHANGED;
 				G_InvalidateView();
 			}
 		} else {
+			if (((ui->state & HOVER) != HOVER) && (ui->on_hover != NULL)) {
+				ui->on_hover(ui->data);
+			}
 			if (game_info.mouse_lb > 0) {
-				button->state = button->state | PRESSED;
-			} else if ((button->state & PRESSED) == PRESSED) {
-				button->state = button->state ^ PRESSED;
-				button->func(button->data);
+				ui->state = ui->state | PRESSED;
+			} else if ((ui->state & PRESSED) == PRESSED) {
+				ui->state = ui->state ^ PRESSED;
+				if (ui->on_click != NULL) {
+					ui->on_click(ui->data);
+				}
 			}
 
-			if (button->focus < 255) {
-				button->focus += 17;
-				button->state = button->state | CHANGED;
+			if ((ui->focus < 255) && ((ui->on_hover != NULL) || (ui->on_click != NULL))) {
+				ui->focus += 17;
+				ui->state = ui->state | CHANGED;
 				G_InvalidateView();
 			}
 
-			button->state = button->state | HOVER;
+			ui->state = ui->state | HOVER;
 		}
 
-		if (button->state != state) {
-			button->state = button->state | CHANGED;
+		if (ui->state != state) {
+			ui->state = ui->state | CHANGED;
 		}		
 	}
 }
@@ -222,12 +234,15 @@ void G_EntityRender(G_Entity **entity) {
 	G_View *view = G_SceneView(&location);
 	G_LightComponent *light = (G_LightComponent*)(G_GetComponent(entity, LIGHT_COMPONENT));
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
-	G_ButtonComponent *button = (G_ButtonComponent*)(G_GetComponent(entity, BUTTON_COMPONENT));
+	G_CreatureComponent *creature = (G_CreatureComponent*)(G_GetComponent(entity, CREATURE_COMPONENT));
+	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
 
 	if (render != NULL) {
+		int i = (creature == NULL) ? 1 : 0;
+
 		if ((render->tile != NOTHING) && (G_IsPointWithin(render->x, render->y, view))) {
 				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
-				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity = render->tile;
+				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity[i] = (*entity)->id;
 		}
 
 		if (light != NULL) {
@@ -241,25 +256,28 @@ void G_EntityRender(G_Entity **entity) {
 		}
 	}
 
-	if (button != NULL) {
-		if ((location->view.unchanged == 0) || (button->state & CHANGED) == CHANGED) {
+	if (ui != NULL) {
+		if ((location->view.unchanged == 0) || (ui->state & CHANGED) == CHANGED) {
 			int
 				x,
 				y;
-			button->state = button->state ^ CHANGED;
+			ui->state = ui->state ^ CHANGED;
 
-			for (y = -(button->border); y <= (button->border); y += 1) {
-				for (x = -(button->border); x < (button->l+button->border); x += 1) {
-					if ((x == -1) || (x == button->l) ||
+			for (y = -(ui->border); y <= (ui->border); y += 1) {
+				for (x = -(ui->border); x < (ui->l+ui->border); x += 1) {
+					if ((x == -1) || (x == ui->l) ||
 							(y == -1) || (y == 1)) {
-						dmatrix[x+button->x][y+button->y].changed = 1;
-						dmatrix[x+button->x][y+button->y].tile = BLACK;
+						dmatrix[x+ui->x][y+ui->y].tile = ' ';
 					} else {
-						dmatrix[x+button->x][y+button->y].changed = 1;
-						dmatrix[x+button->x][y+button->y].tile = button->name[x];
-						dmatrix[x+button->x][y+button->y].fg = white;
-						dmatrix[x+button->x][y+button->y].fg.blue = 255-button->focus;
+						dmatrix[x+ui->x][y+ui->y].tile = ui->name[x];
 					}
+
+					dmatrix[x+ui->x][y+ui->y].changed = 1;
+					dmatrix[x+ui->x][y+ui->y].fg = white;
+					dmatrix[x+ui->x][y+ui->y].fg.blue = 255-ui->focus;
+					dmatrix[x+ui->x][y+ui->y].bg.red = ui->focus/7;
+					dmatrix[x+ui->x][y+ui->y].bg.green = ui->focus/7;
+					dmatrix[x+ui->x][y+ui->y].bg.blue = ui->focus/7;
 				}
 			}
 		}
@@ -271,6 +289,20 @@ EntityType G_GetEntityType(G_Entity **entity) {
 	
 	return (*entity)->type;
 }
+
+Tile G_EntityIDToTile(int ID) {
+	G_Entity *entity = G_FindEntity(&location, ID);
 	
+	if (entity != NULL) {
+		G_RenderComponent *render = G_GetComponent(&entity, RENDER_COMPONENT);
+
+		if (render != NULL) {
+			return render->tile;
+		}
+	}
+
+	return NOTHING;
+}
+
 /*
 */

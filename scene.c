@@ -49,28 +49,7 @@ void G_InitializeMenu(void) {
 		}
 	}
 
-	G_Entity *button = G_CreateEntity(UI_ENTITY);
-	G_ButtonComponent *comp = (G_ButtonComponent*)G_AddComponent(&button, BUTTON_COMPONENT);
-	comp->x = (COLS/2)-2;
-	comp->y = 38;
-	comp->l = 4;
-	comp->name = (char*)malloc(5);
-	comp->name = "PLAY\0";
-	comp->border = 1;
-	comp->data = (void**)(&overworld);
-	comp->func = &G_ChangeScene;
-	G_AddEntity(&menu, &button);
-	button = G_CreateEntity(UI_ENTITY);
-	comp = (G_ButtonComponent*)G_AddComponent(&button, BUTTON_COMPONENT);
-	comp->x = (COLS/2)-2;
-	comp->y = 48;
-	comp->l = 4;
-	comp->name = (char*)malloc(5);
-	comp->name = "QUIT\0";
-	comp->border = 1;
-	comp->data = NULL;
-	comp->func = &G_Quit;
-	G_AddEntity(&menu, &button);
+	G_InitializeUI(&menu);
 }
 
 void G_InitializeOverworld(void) {
@@ -129,10 +108,11 @@ void G_InitializeOverworld(void) {
 	l->light.blue = 128;
 	l->light.intensity = 24;
 	G_AddComponent(&player, CONTROLLER_COMPONENT);
+	G_AddComponent(&player, CREATURE_COMPONENT);
 	G_AddEntity(&overworld, &player);
 	G_Entity *t = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&t, RENDER_COMPONENT);
-	r->tile = HUMAN;
+	r->tile = BALL;
 	r->x = 480;
 	r->y = 210;
 	r->x_previous = r->x;
@@ -145,7 +125,7 @@ void G_InitializeOverworld(void) {
 	G_AddEntity(&overworld, &t);
 	G_Entity *x = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
-	r->tile = HUMAN;
+	r->tile = BALL;
 	r->x = 480;
 	r->y = 240;
 	r->x_previous = r->x;
@@ -156,6 +136,21 @@ void G_InitializeOverworld(void) {
 	l->light.blue = 255;
 	l->light.intensity = 48;
 	G_AddEntity(&overworld, &x);
+	G_Entity *v = G_CreateEntity(GAME_ENTITY);
+	r = (G_RenderComponent*)G_AddComponent(&v, RENDER_COMPONENT);
+	r->tile = BALL;
+	r->x = 445;
+	r->y = 220;
+	r->x_previous = r->x;
+	r->y_previous = r->y;
+	l = (G_LightComponent*)G_AddComponent(&v, LIGHT_COMPONENT);
+	l->light.red = 0;
+	l->light.green = 255;
+	l->light.blue = 0;
+	l->light.intensity = 16;
+	G_AddEntity(&overworld, &v);
+
+	G_InitializeUI(&overworld);
 }
 
 void G_ChangeScene(void **scene) {
@@ -169,10 +164,11 @@ void G_ChangeScene(void **scene) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].fg = white;
-				dmatrix[x][y].bg = white;
+				dmatrix[x][y].bg = black;
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].visible = 1;
-				dmatrix[x][y].entity = NOTHING;
+				dmatrix[x][y].entity[0] = -1;
+				dmatrix[x][y].entity[1] = -1;
 				dmatrix[x][y].tile = G_SceneTile(x, y);
 
 				dmatrix[x][y].light.id = -1;
@@ -193,7 +189,8 @@ void G_ChangeScene(void **scene) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].entity = NOTHING;
+				dmatrix[x][y].entity[0] = -1;
+				dmatrix[x][y].entity[1] = -1;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
@@ -201,7 +198,7 @@ void G_ChangeScene(void **scene) {
 					dmatrix[x][y].tile = G_SceneTile(x+x_offset, y+y_offset);
 				} else {
 					dmatrix[x][y].visible = 1;
-					dmatrix[x][y].tile = BLACK;
+					dmatrix[x][y].tile = WHITE;
 				}
 
 				dmatrix[x][y].light.id = -1;
@@ -212,6 +209,46 @@ void G_ChangeScene(void **scene) {
 				dmatrix[x][y].light.light.intensity = 0;
 			}
 		}
+	}
+}
+
+void G_InitializeUI(G_Scene **scene) {
+	assert((scene != NULL) && (*scene != NULL));
+
+	if (*scene == menu) {
+		G_Entity *entity = G_CreateEntity(UI_ENTITY);
+		G_UIComponent *ui = (G_UIComponent*)G_AddComponent(&entity, UI_COMPONENT);
+		ui->x = (COLS/2)-2;
+		ui->y = 38;
+		ui->l = 4;
+		ui->name = (char*)malloc(5);
+		ui->name = "PLAY\0";
+		ui->border = 1;
+		ui->data = (void**)(&overworld);
+		ui->on_click = &G_ChangeScene;
+		G_AddEntity(scene, &entity);
+		entity = G_CreateEntity(UI_ENTITY);
+		ui = (G_UIComponent*)G_AddComponent(&entity, UI_COMPONENT);
+		ui->x = (COLS/2)-2;
+		ui->y = 48;
+		ui->l = 4;
+		ui->name = (char*)malloc(5);
+		ui->name = "QUIT\0";
+		ui->border = 1;
+		ui->data = NULL;
+		ui->on_click = &G_Quit;
+		G_AddEntity(scene, &entity);
+	} else {
+	/*G_Entity *entity = G_CreateEntity(UI_ENTITY);
+		G_UIComponent *ui = (G_UIComponent*)G_AddComponent(&entity, UI_COMPONENT);
+		ui->x = DCOLS_OFFSET;
+		ui->y = 0;
+		ui->l = 16;
+		ui->name = (char*)malloc(17);
+		ui->name = "You see nothing.\0";
+		ui->border = 0;
+		G_AddEntity(scene, &entity);
+		(*scene)->inspect = entity;*/
 	}
 }
 
@@ -292,6 +329,22 @@ G_Entity* G_GetEntities(G_Scene **scene) {
 	assert((scene != NULL) && (*scene != NULL));
 
 	return (*scene)->head;
+}
+
+G_Entity* G_FindEntity(G_Scene **scene, int ID) {
+	assert((scene != NULL) && (*scene != NULL));
+
+	G_Entity *head = (G_Entity*)((*scene)->head);
+
+	while (head != NULL) {
+		if (head->id == ID) {
+			return head;
+		}
+
+		head = (G_Entity*)(head->next);
+	}
+
+	return NULL;
 }
 
 Tile G_SceneTile(int x, int y) {

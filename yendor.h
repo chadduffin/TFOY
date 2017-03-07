@@ -32,15 +32,15 @@
 #define TILE_SOURCE_WIDTH 16
 #define TILE_SOURCE_HEIGHT 16
 
-#define MESSAGE_ROWS 5
-#define STAT_BAR_WIDTH 19
 #define COLS 108
 #define ROWS 64
+#define UI_COLS 19
+#define MESSAGE_ROWS 7
 
-#define DCOLS (COLS - STAT_BAR_WIDTH - 2)
-#define DROWS (ROWS - MESSAGE_ROWS - 2)
-#define DCOLS_OFFSET (COLS - DCOLS - 1)
-#define DROWS_OFFSET (ROWS - DROWS - 1)
+#define DCOLS (COLS - (UI_COLS + 1))
+#define DROWS (ROWS - (MESSAGE_ROWS + 2))
+#define DCOLS_OFFSET (COLS - DCOLS)
+#define DROWS_OFFSET 1
 
 #define WORLD_COLS 512
 #define WORLD_ROWS 256
@@ -51,7 +51,7 @@
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
 
-#define FLICKER_RATE 250
+#define FLICKER_RATE 512
 #define LIGHT_DISTANCE 128
 
 #define boolean unsigned char
@@ -61,16 +61,16 @@
 */
 
 typedef enum Attribute {
-	STRENGTH,
-	AGILITY,
+	MIGHT,
 	INTELLECT,
 	CONSTITUTION,
 
 	ATTACK_POWER,
 	SPELL_POWER,
-	CRITICAL_STRIKE,
+
 	HASTE,
 	DEXTERITY,
+	CRITICAL_STRIKE,
 	
 	DODGE,
 	BLOCK,
@@ -83,8 +83,8 @@ typedef enum Attribute {
 	EXPERIENCE,
 
 	HEALTH,
-	MANA,
 	ENERGY,
+	MANA,
 	RAGE,
 
 	HUNGER,
@@ -109,7 +109,7 @@ typedef enum Component {
 	RENDER_COMPONENT,
 	LIGHT_COMPONENT,
 
-	BUTTON_COMPONENT,
+	UI_COMPONENT,
 
 	COMPONENT_COUNT
 } Component;
@@ -163,6 +163,8 @@ typedef enum Tile {
 	WATER,
 	WALL,
 
+	BALL,
+
 	HUMAN,
 
 	AQUA,
@@ -194,14 +196,21 @@ typedef enum Keybinding {
 	KEYBINDING_COUNT
 } Keybinding;
 
-typedef enum ButtonState {
+typedef enum UIState {
 	INACTIVE = 0,
 	ACTIVE = 1,
 	HOVER = 2,
 	PRESSED = 4,
 	CHANGED = 8,
 
-} ButtonState;
+} UIState;
+
+typedef enum DataType {
+	INT_TYPE = 0,
+	FLOAT_TYPE,
+
+	DATA_TYPE_COUNT
+} DataType;
 
 /*
 ** TYPEDEFS
@@ -259,12 +268,12 @@ typedef struct G_Tile {
 } G_Tile;
 
 typedef struct G_Cell {
+	int entity[2];
 	boolean
 		changed,
 		visible;
 	Tile
-		tile,
-		entity;
+		tile;
 	G_Color
 		fg,
 		bg;
@@ -281,7 +290,7 @@ typedef struct G_Entity {
 }	G_Entity;
 
 typedef struct G_ControllerComponent {
-	char a; // just to appease compiler
+	G_Entity *entity;
 } G_ControllerComponent;
 
 typedef struct G_CreatureComponent {
@@ -304,7 +313,7 @@ typedef struct G_LightComponent {
 	G_Light light;
 } G_LightComponent;
 
-typedef struct G_ButtonComponent {
+typedef struct G_UIComponent {
 	char
 		hotkey,
 		*name;
@@ -315,10 +324,11 @@ typedef struct G_ButtonComponent {
 		focus;
 	void
 		**data,
-		(*func)(void**);
+		(*on_click)(void**),
+		(*on_hover)(void**);
 	boolean border;
-	ButtonState state;
-} G_ButtonComponent;
+	UIState state;
+} G_UIComponent;
 
 typedef struct G_View {
 	int
@@ -341,7 +351,8 @@ typedef struct G_Scene {
 	G_Entity
 		*head,
 		*tail,
-		*focus;
+		*focus,
+		*inspect;
 	G_View view;
 	G_Light ambient;
 } G_Scene;
@@ -391,6 +402,9 @@ int G_CheckBound(Keybinding key);
 int G_CheckPhysical(SDL_Scancode key);
 int G_IsPointWithin(int x, int y, G_View *view);
 unsigned int G_GetID(void);
+Tile G_CellToTile(int x, int y);
+char* G_IntToChar(int value);
+char* G_FloatToChar(float value);
 
 // rendering.c
 void G_UpdateRenderingInfo(void);
@@ -440,17 +454,20 @@ void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst);
 void G_EntityUpdate(G_Entity **entity);
 void G_EntityRender(G_Entity **entity);
 EntityType G_GetEntityType(G_Entity **entity);
+Tile G_EntityIDToTile(int ID);
 
 // scene.c
 void G_InitializeMenu(void);
 void G_InitializeOverworld(void);
 void G_ChangeScene(void **scene);
+void G_InitializeUI(G_Scene **scene);
 void G_CleanupScene(G_Scene **scene);
 void G_AddEntity(G_Scene **scene, G_Entity **entity);
 void G_DelEntity(G_Scene **scene, G_Entity **entity);
 void G_PopEntity(G_Scene **scene, G_Entity **entity);
 G_View* G_SceneView(G_Scene **scene);
 G_Entity* G_GetEntities(G_Scene **scene);
+G_Entity* G_FindEntity(G_Scene **scene, int ID);
 Tile G_SceneTile(int x, int y);
 
 /*
