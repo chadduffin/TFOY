@@ -154,25 +154,33 @@ void G_EntityUpdate(G_Entity **entity) {
 		}
 
 		if (render->tile != NOTHING) {
-			int i = (creature == NULL) ? 1 : 0;
+			TileLayer layer;
 			G_View *view = G_SceneView(&location);
 
-			if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
-				int
-					rx = render->x_previous+(view->x-view->xp),
-					ry = render->y_previous+(view->y-view->yp);
-		
-				if (G_IsPointWithin(rx, ry, view)) {
-					dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
-					if (dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity[i] == (*entity)->id) {
-						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].entity[i] = -1;
-					}
-				}
+			if (creature != NULL) {
+				layer = CREATURE_LAYER;
 			} else {
-				if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
-					dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
-					if (dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity[i] == (*entity)->id) {
-						dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].entity[i] = -1;
+				layer = ORNAMENT_LAYER;
+			}
+
+			if (layer != -1) {
+				if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
+					int
+						rx = render->x_previous+(view->x-view->xp),
+						ry = render->y_previous+(view->y-view->yp);
+			
+					if (G_IsPointWithin(rx, ry, view)) {
+						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
+						if (dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].layers[layer] == (*entity)->id) {
+							dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].layers[layer] = -1;
+						}
+					}
+				} else {
+					if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
+						dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
+						if (dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].layers[layer] == (*entity)->id) {
+							dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].layers[layer] = -1;
+						}
 					}
 				}
 			}
@@ -238,11 +246,17 @@ void G_EntityRender(G_Entity **entity) {
 	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
 
 	if (render != NULL) {
-		int i = (creature == NULL) ? 1 : 0;
+		TileLayer layer;
 
-		if ((render->tile != NOTHING) && (G_IsPointWithin(render->x, render->y, view))) {
+		if (creature != NULL) {
+			layer = CREATURE_LAYER;
+		} else {
+			layer = ORNAMENT_LAYER;
+		}
+
+		if ((layer != -1) && (render->tile != NOTHING) && (G_IsPointWithin(render->x, render->y, view))) {
 				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
-				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].entity[i] = (*entity)->id;
+				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].layers[layer] = (*entity)->id;
 		}
 
 		if (light != NULL) {

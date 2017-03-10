@@ -89,8 +89,14 @@ void G_InitializeOverworld(void) {
 			int
 				x = i%WORLD_COLS,	
 				y = i/WORLD_COLS;
-			if ((x+rand()%4 > WORLD_COLS-24) && (y+rand()%4 > WORLD_ROWS-24)) {
-				overworld->tiles[i].tile = WATER;
+			if ((x+rand()%4 > WORLD_COLS-30) && (y+rand()%4 > WORLD_ROWS-24)) {
+				if (overworld->tiles[i].tile != WALL) {
+					overworld->tiles[i].tile = WATER;
+				}
+			} else if ((x+rand()%4 > WORLD_COLS-48) && (x+rand()%4 < WORLD_COLS-24) && (y+rand()%4 > WORLD_ROWS-24)) {
+				if (overworld->tiles[i].tile != WALL) {
+					overworld->tiles[i].tile = GRASS;
+				}
 			}
 		}
 	}
@@ -106,7 +112,7 @@ void G_InitializeOverworld(void) {
 	l->light.red = 255;
 	l->light.green = 255;
 	l->light.blue = 128;
-	l->light.intensity = 24;
+	l->light.intensity = 32;
 	G_AddComponent(&player, CONTROLLER_COMPONENT);
 	G_AddComponent(&player, CREATURE_COMPONENT);
 	G_AddEntity(&overworld, &player);
@@ -118,9 +124,9 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&t, LIGHT_COMPONENT);
-	l->light.red = 255;
+	l->light.red = 0;
 	l->light.green = 0;
-	l->light.blue = 0;
+	l->light.blue = 255;
 	l->light.intensity = 32;
 	G_AddEntity(&overworld, &t);
 	G_Entity *x = G_CreateEntity(GAME_ENTITY);
@@ -131,10 +137,10 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
-	l->light.red = 0;
-	l->light.green = 0;
+	l->light.red = 255;
+	l->light.green = 255;
 	l->light.blue = 255;
-	l->light.intensity = 48;
+	l->light.intensity = 32;
 	G_AddEntity(&overworld, &x);
 	G_Entity *v = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&v, RENDER_COMPONENT);
@@ -156,7 +162,8 @@ void G_InitializeOverworld(void) {
 void G_ChangeScene(void **scene) {
 	int
 		x,
-		y;
+		y,
+		z;
 	location = (G_Scene*)(*scene);
 	location->view.unchanged = 0;
 
@@ -167,8 +174,6 @@ void G_ChangeScene(void **scene) {
 				dmatrix[x][y].bg = black;
 				dmatrix[x][y].changed = 1;
 				dmatrix[x][y].visible = 1;
-				dmatrix[x][y].entity[0] = -1;
-				dmatrix[x][y].entity[1] = -1;
 				dmatrix[x][y].tile = G_SceneTile(x, y);
 
 				dmatrix[x][y].light.id = -1;
@@ -177,6 +182,10 @@ void G_ChangeScene(void **scene) {
 				dmatrix[x][y].light.light.green = 0;
 				dmatrix[x][y].light.light.blue = 0;
 				dmatrix[x][y].light.light.intensity = 0;
+
+				for (z = 0; z < TILE_LAYER_COUNT; z += 1) {
+					dmatrix[x][y].layers[z] = -1;
+				}
 			}
 		}
 	} else {
@@ -189,8 +198,6 @@ void G_ChangeScene(void **scene) {
 		for (y = 0; y < ROWS; y += 1) {
 			for (x = 0; x < COLS; x += 1) {
 				dmatrix[x][y].changed = 1;
-				dmatrix[x][y].entity[0] = -1;
-				dmatrix[x][y].entity[1] = -1;
 
 				if ((x >= DCOLS_OFFSET) && (x < DCOLS+DCOLS_OFFSET) &&
 						(y >= DROWS_OFFSET) && (y < DROWS+DROWS_OFFSET)) {
@@ -207,6 +214,10 @@ void G_ChangeScene(void **scene) {
 				dmatrix[x][y].light.light.green = 0;
 				dmatrix[x][y].light.light.blue = 0;
 				dmatrix[x][y].light.light.intensity = 0;
+
+				for (z = 0; z < TILE_LAYER_COUNT; z += 1) {
+					dmatrix[x][y].layers[z] = -1;
+				}
 			}
 		}
 	}

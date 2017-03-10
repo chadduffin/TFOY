@@ -7,9 +7,10 @@
 
 G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 	{"empty", "description", 0, 0, &black, &black, 0, EMPTY},
-	{"ground", "the ground", 14, 2, &grey, &dark_blue, 0, GROUND},
+	{"dirt", "some dirt", 14, 2, &grey, &dark_blue, FLICKER_ONCE, GROUND},
+	{"grass", "some grass", 2, 2, &dark_green, &forest_green, FLAMMABLE | FLICKER_ONCE, GROUND},
 	{"water", "some water", 14, 7, &blue, &scott_blue, FLICKERS, LIQUID},
-	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS, SOLID},
+	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS | FLICKER_ONCE, SOLID},
 
 	{"ball", "a ball", 9, 15, &white, &black, 0, ENTITY},
 
@@ -67,6 +68,15 @@ boolean G_TileFlickers(Tile tile) {
 	}
 
 	return ((descriptor_tiles[tile-NOTHING].flags & FLICKERS) == FLICKERS);
+}
+
+boolean G_TileFlickerOnce(Tile tile) {
+	if ((tile < NOTHING) || (tile >= END_TILE)) {
+		return 0;
+	}
+
+	return (((descriptor_tiles[tile-NOTHING].flags & FLICKERS) == FLICKERS) ||
+					((descriptor_tiles[tile-NOTHING].flags & FLICKER_ONCE) == FLICKER_ONCE));
 }
 
 boolean G_TileObstructs(Tile tile) {

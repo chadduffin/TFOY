@@ -49,6 +49,8 @@ extern const G_Color brown;
 extern const G_Color grey;
 extern const G_Color dark_blue;
 extern const G_Color scott_blue;
+extern const G_Color dark_green;
+extern const G_Color forest_green;
 
 /*
 */

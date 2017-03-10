@@ -34,13 +34,13 @@
 
 #define COLS 108
 #define ROWS 64
-#define UI_COLS 19
-#define MESSAGE_ROWS 7
+#define UI_COLS 0
+#define MESSAGE_ROWS 0
 
-#define DCOLS (COLS - (UI_COLS + 1))
-#define DROWS (ROWS - (MESSAGE_ROWS + 2))
-#define DCOLS_OFFSET (COLS - DCOLS)
-#define DROWS_OFFSET 1
+#define DCOLS COLS
+#define DROWS ROWS
+#define DCOLS_OFFSET 0
+#define DROWS_OFFSET 0
 
 #define WORLD_COLS 512
 #define WORLD_ROWS 256
@@ -155,11 +155,13 @@ typedef enum TileFlag {
 	BREAKABLE = 8,
 
 	FLICKERS = 16,
+	FLICKER_ONCE = 32,
 } TileFlag;
 
 typedef enum Tile {
 	NOTHING = 256,
 	DIRT,
+	GRASS,
 	WATER,
 	WALL,
 
@@ -205,12 +207,16 @@ typedef enum UIState {
 
 } UIState;
 
-typedef enum DataType {
-	INT_TYPE = 0,
-	FLOAT_TYPE,
+typedef enum TileLayer {
+	CREATURE_LAYER = 0,
+	ORNAMENT_LAYER,
+	EFFECT_LAYER,
+	ITEM_LAYER,
+	GAS_LAYER,
+	UI_LAYER,
 
-	DATA_TYPE_COUNT
-} DataType;
+	TILE_LAYER_COUNT
+} TileLayer;
 
 /*
 ** TYPEDEFS
@@ -268,7 +274,7 @@ typedef struct G_Tile {
 } G_Tile;
 
 typedef struct G_Cell {
-	int entity[2];
+	int layers[TILE_LAYER_COUNT];
 	boolean
 		changed,
 		visible;
@@ -312,7 +318,7 @@ typedef struct G_RenderComponent {
 typedef struct G_LightComponent {
 	G_Light light;
 } G_LightComponent;
-
+ 
 typedef struct G_UIComponent {
 	char
 		hotkey,
@@ -402,7 +408,6 @@ int G_CheckBound(Keybinding key);
 int G_CheckPhysical(SDL_Scancode key);
 int G_IsPointWithin(int x, int y, G_View *view);
 unsigned int G_GetID(void);
-Tile G_CellToTile(int x, int y);
 char* G_IntToChar(int value);
 char* G_FloatToChar(float value);
 
@@ -427,6 +432,7 @@ void G_AddLight(int *x, int *y, void *data);
 void G_ClearAndDecrement(void);
 void G_InvalidateView(void);
 boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
+Tile G_CellToTile(int x, int y);
 
 // tiles.c
 const char* G_TileName(Tile tile);
@@ -436,6 +442,7 @@ G_Color G_TileBackground(Tile tile);
 TileFlag G_TileFlags(Tile tile);
 boolean G_TileSolid(Tile tile);
 boolean G_TileFlickers(Tile tile);
+boolean G_TileFlickerOnce(Tile tile);
 boolean G_TileObstructs(Tile tile);
 void G_TileSource(Tile tile, SDL_Rect *source);
 

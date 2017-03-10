@@ -237,7 +237,7 @@ void G_RenderChanges(void) {
 						g,
 						b;
 	
-					G_EvaluateRGB(bg, &r, &g, &b, G_TileFlickers(to_draw));
+					G_EvaluateRGB(bg, &r, &g, &b, G_TileFlickerOnce(to_draw));
 	
 					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
 					SDL_RenderFillRect(game_info.renderer, &dst);	
@@ -280,7 +280,7 @@ void G_RenderFlicker(float frequency) {
 
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
-			if ((dmatrix[x][y].visible == 0) || (dmatrix[x][y].entity[0] != -1) || (dmatrix[x][y].entity[1] != -1)) {
+			if ((dmatrix[x][y].visible == 0) || (dmatrix[x][y].tile != G_CellToTile(x, y))) {
 				continue;
 			}
 			if (G_TileFlickers(dmatrix[x][y].tile)) {
@@ -348,13 +348,19 @@ void G_RenderLightmap(void) {
 	
 				intensity = (intensity < 0) ? 0 : intensity;
 				intensity = (intensity > 255) ? 255 : intensity;
-	
-				SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255-intensity);
-				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
-				SDL_RenderFillRect(game_info.renderer, &dst);
-		
-				SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
-				SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
+
+				if ((intensity == 0) && (r == 0) && (g == 0) && (b == 0)) {
+					SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+					SDL_RenderFillRect(game_info.renderer, &dst);
+					dmatrix[x][y].visible = 0;
+				} else {	
+					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255-intensity);
+					SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
+					SDL_RenderFillRect(game_info.renderer, &dst);
+			
+					SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+					SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
+				}
 			}
 
 			dmatrix[x][y].light.id = -1;
@@ -628,6 +634,24 @@ boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy) {
 	return (!(((fx != lx) && (fy != ly)) ||
 					((fx == lx) && (fy != ly) && (G_TileObstructs(G_SceneTile(dx+fx, dy)))) ||
 					((fx != lx) && (fy == ly) && (G_TileObstructs(G_SceneTile(dx, dy+fy))))));
+}
+
+Tile G_CellToTile(int x, int y) {
+	assert ((x >= 0) && (x < COLS) && (y >= 0) && (y < ROWS));
+
+	if (dmatrix[x][y].layers[UI_LAYER] != -1) {
+		return G_EntityIDToTile(dmatrix[x][y].layers[UI_LAYER]);
+	} else if (dmatrix[x][y].layers[CREATURE_LAYER] != -1) {
+		return G_EntityIDToTile(dmatrix[x][y].layers[CREATURE_LAYER]);
+	} else if (dmatrix[x][y].layers[ITEM_LAYER] != -1) {
+		return G_EntityIDToTile(dmatrix[x][y].layers[ITEM_LAYER]);
+	} else if (dmatrix[x][y].layers[ORNAMENT_LAYER] != -1) {
+		return G_EntityIDToTile(dmatrix[x][y].layers[ORNAMENT_LAYER]);
+	} else if (dmatrix[x][y].layers[EFFECT_LAYER] != -1) {
+		return G_EntityIDToTile(dmatrix[x][y].layers[EFFECT_LAYER]);
+	}
+
+	return dmatrix[x][y].tile;
 }
 
 /*

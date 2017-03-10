@@ -344,18 +344,6 @@ unsigned int G_GetID(void) {
 	return G_ID-1;
 }
 
-Tile G_CellToTile(int x, int y) {
-	assert ((x >= 0) && (x < COLS) && (y >= 0) && (y < ROWS));
-
-	if (dmatrix[x][y].entity[0] != -1) {
-		return G_EntityIDToTile(dmatrix[x][y].entity[0]);
-	} else if (dmatrix[x][y].entity[1] != -1) {
-		return G_EntityIDToTile(dmatrix[x][y].entity[1]);
-	}
-
-	return dmatrix[x][y].tile;
-}
-
 char* G_IntToChar(int value) {
 	char *string = (char*)malloc(4);
 	value = value%1000;
