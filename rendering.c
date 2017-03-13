@@ -436,6 +436,8 @@ void G_CastShadow(
 		y_adj,
 		nx_adj,	
 		ny_adj,
+		imm_nx_adj,	
+		imm_ny_adj,
 		x_bound,
 		y_bound,
 		started,
@@ -484,11 +486,15 @@ void G_CastShadow(
 				y_adj = y+(i*dy);
 				nx_adj = x+(j*dx);
 				ny_adj = (i < x_bound-1) ? y+((i+1)*dy) : y_adj;
+				imm_nx_adj = x+((j-1.0)*dx);
+				imm_ny_adj = y+(i*dy);
 			} else {
 				x_adj = x+(i*dx);
 				y_adj = y+(j*dy);
 				nx_adj = (i < x_bound-1) ? x+((i+1)*dx) : x_adj;
 				ny_adj = y+(j*dy);
+				imm_nx_adj = x+(i*dx);
+				imm_ny_adj = y+((j-1)*dy);
 			}
 
 			started = (started == 0) ? 1 : started;
@@ -500,7 +506,11 @@ void G_CastShadow(
 						start = ((float)(j-0.5))/((float)(i+0.5));
 					}
 					if ((j > 0) && (G_TileObstructs(G_SceneTile(nx_adj, ny_adj)))) {
-						start = ((float)(j))/((float)(i+0.5));
+            if (G_TileObstructs(G_SceneTile(imm_nx_adj, imm_ny_adj))) {
+              start = ((float)(j-1.0))/((float)(i));
+            } else {
+              start = ((float)(j))/((float)(i+0.5));
+            }
 					} else {
 						start = ((float)(j-0.5))/((float)(i+0.5));
 					}
@@ -517,7 +527,7 @@ void G_CastShadow(
 				func(&x_adj, &y_adj, light);
 			} else if ((started == 1) && (current < end)) {
 				return;
-			}
+      }
 		}
 
 		was_blocked = 0;

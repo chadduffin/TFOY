@@ -102,17 +102,17 @@ void G_InitializeOverworld(void) {
 	}
 
 	G_Entity *player = G_CreateEntity(GAME_ENTITY);
+	G_LightComponent *l = (G_LightComponent*)G_AddComponent(&player, LIGHT_COMPONENT);
+	l->light.red = 255;
+	l->light.green = 255;
+	l->light.blue = 255;
+	l->light.intensity = 24;
 	G_RenderComponent *r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 460;
 	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
-	G_LightComponent *l = (G_LightComponent*)G_AddComponent(&player, LIGHT_COMPONENT);
-	l->light.red = 255;
-	l->light.green = 255;
-	l->light.blue = 255;
-	l->light.intensity = 64;
 	G_AddComponent(&player, CONTROLLER_COMPONENT);
 	G_AddComponent(&player, CREATURE_COMPONENT);
 	G_AddEntity(&overworld, &player);
@@ -137,7 +137,7 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
-	l->light.red = 255;
+	l->light.red = 512;
 	l->light.green = 0;
 	l->light.blue = 0;
 	l->light.intensity = 24;
@@ -150,9 +150,9 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&v, LIGHT_COMPONENT);
-	l->light.red = 0;
-	l->light.green = 255;
-	l->light.blue = 0;
+	l->light.red = 255;
+	l->light.green = 0;
+	l->light.blue = 255;
 	l->light.intensity = 16;
 	G_AddEntity(&overworld, &v);
 
