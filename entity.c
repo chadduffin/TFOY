@@ -121,8 +121,8 @@ void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst) {
 void G_EntityUpdate(G_Entity **entity) {
 	assert((entity != NULL) && (*entity != NULL));
 	
-	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
 	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
+	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
 	G_CreatureComponent *creature = (G_CreatureComponent*)(G_GetComponent(entity, CREATURE_COMPONENT));
 	G_ControllerComponent *controller = (G_ControllerComponent*)(G_GetComponent(entity, CONTROLLER_COMPONENT));
 
@@ -187,55 +187,58 @@ void G_EntityUpdate(G_Entity **entity) {
 		}
 	}
 
-	if (ui != NULL) {
-		int
-			mouse_x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
-			mouse_y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
-
-		UIState state = ui->state;
-
-		if ((mouse_x < ui->x-ui->border) || (mouse_x >= ui->x+ui->l+ui->border) ||
-				(mouse_y < ui->y-ui->border) || (mouse_y > ui->y+ui->border)) {
-			if ((ui->state & PRESSED) == PRESSED) {
-				ui->state = ui->state ^ PRESSED;
-			}
-			if ((ui->state & HOVER) == HOVER) {
-				ui->state = ui->state ^ HOVER;
-			}
-
-			if ((ui->focus > 0) && ((ui->on_hover != NULL) || (ui->on_click != NULL))) {
-				ui->focus -= 17;
-				ui->state = ui->state | CHANGED;
-				G_InvalidateView();
-			}
-		} else {
-			if (((ui->state & HOVER) != HOVER) && (ui->on_hover != NULL)) {
-				ui->on_hover(ui->data);
-			}
-			if (game_info.mouse_lb > 0) {
-				ui->state = ui->state | PRESSED;
-			} else if ((ui->state & PRESSED) == PRESSED) {
-				ui->state = ui->state ^ PRESSED;
-				if (ui->on_click != NULL) {
-					ui->on_click(ui->data);
-				}
-			}
-
-			if ((ui->focus < 255) && ((ui->on_hover != NULL) || (ui->on_click != NULL))) {
-				ui->focus += 17;
-				ui->state = ui->state | CHANGED;
-				G_InvalidateView();
-			}
-
-			ui->state = ui->state | HOVER;
-		}
-
-		if (ui->state != state) {
-			ui->state = ui->state | CHANGED;
-		}		
-	}
+  G_UIEntityUpdate(&ui);
 }
 	
+void G_UIEntityUpdate(G_UIComponent **ui) {
+  if ((ui != NULL) && (*ui != NULL)) {
+  	int
+  		mouse_x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
+  		mouse_y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
+
+  	UIState state = (*ui)->state;
+  
+  	if ((mouse_x < (*ui)->x-(*ui)->border) || (mouse_x >= (*ui)->x+(*ui)->l+(*ui)->border) ||
+  			(mouse_y < (*ui)->y-(*ui)->border) || (mouse_y > (*ui)->y+(*ui)->border)) {
+  		if (((*ui)->state & PRESSED) == PRESSED) {
+  			(*ui)->state = (*ui)->state ^ PRESSED;
+  		}
+  		if (((*ui)->state & HOVER) == HOVER) {
+  			(*ui)->state = (*ui)->state ^ HOVER;
+  		}
+  		if (((*ui)->focus > 0) && (((*ui)->on_hover != NULL) || ((*ui)->on_click != NULL))) {
+  			(*ui)->focus -= 17;
+  			(*ui)->state = (*ui)->state | CHANGED;
+  			G_InvalidateView();
+  		}
+  	} else {
+  		if ((((*ui)->state & HOVER) != HOVER) && ((*ui)->on_hover != NULL)) {
+  			(*ui)->on_hover((*ui)->data);
+  		}
+  		if (game_info.mouse_lb > 0) {
+  			(*ui)->state = (*ui)->state | PRESSED;
+  		} else if (((*ui)->state & PRESSED) == PRESSED) {
+  			(*ui)->state = (*ui)->state ^ PRESSED;
+  			if ((*ui)->on_click != NULL) {
+  				(*ui)->on_click((*ui)->data);
+  			}
+  		}
+  
+  		if (((*ui)->focus < 255) && (((*ui)->on_hover != NULL) || ((*ui)->on_click != NULL))) {
+  			(*ui)->focus += 17;
+  			(*ui)->state = (*ui)->state | CHANGED;
+  			G_InvalidateView();
+  		}
+  
+  		(*ui)->state = (*ui)->state | HOVER;
+  	}
+  
+  	if ((*ui)->state != state) {
+  		(*ui)->state = (*ui)->state | CHANGED;
+  	}		
+  }
+}
+  
 void G_EntityRender(G_Entity **entity) {
 	assert((entity != NULL) && (*entity != NULL));
 

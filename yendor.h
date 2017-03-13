@@ -106,6 +106,7 @@ typedef enum EntityType {
 typedef enum Component {
 	CONTROLLER_COMPONENT = 0,
 	CREATURE_COMPONENT,
+  ELEMENT_COMPONENT,
 	RENDER_COMPONENT,
 	LIGHT_COMPONENT,
 
@@ -158,6 +159,17 @@ typedef enum TileFlag {
 	FLICKER_ONCE = 32,
 } TileFlag;
 
+typedef enum TileLayer {
+	CREATURE_LAYER = 0,
+	ORNAMENT_LAYER,
+	EFFECT_LAYER,
+	ITEM_LAYER,
+	GAS_LAYER,
+	UI_LAYER,
+
+	TILE_LAYER_COUNT
+} TileLayer;
+
 typedef enum Tile {
 	NOTHING = 256,
 	DIRT,
@@ -166,6 +178,7 @@ typedef enum Tile {
 	WALL,
 
 	BALL,
+	FIRE,
 
 	HUMAN,
 
@@ -206,17 +219,6 @@ typedef enum UIState {
 	CHANGED = 8,
 
 } UIState;
-
-typedef enum TileLayer {
-	CREATURE_LAYER = 0,
-	ORNAMENT_LAYER,
-	EFFECT_LAYER,
-	ITEM_LAYER,
-	GAS_LAYER,
-	UI_LAYER,
-
-	TILE_LAYER_COUNT
-} TileLayer;
 
 /*
 ** TYPEDEFS
@@ -459,6 +461,7 @@ void G_RemoveComponent(G_Entity **entity, Component component);
 void G_EntityPos(G_Entity **entity, int *x, int *y);
 void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst);
 void G_EntityUpdate(G_Entity **entity);
+void G_UIEntityUpdate(G_UIComponent **ui);
 void G_EntityRender(G_Entity **entity);
 EntityType G_GetEntityType(G_Entity **entity);
 Tile G_EntityIDToTile(int ID);

@@ -144,7 +144,6 @@ int G_FrameCap(int last_update) {
 	int delay = (1000.0/FPS)-(SDL_GetTicks()-last_update+0.5);
 
 	if (delay > 0) {
-		printf("%d.\n", delay);
 		SDL_Delay(delay);
 	}
 

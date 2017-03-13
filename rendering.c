@@ -71,18 +71,17 @@ void G_Render(void) {
 
 	SDL_SetRenderTarget(game_info.renderer, NULL);	
 	SDL_RenderCopy(game_info.renderer, game_info.buffers[game_info.target_buffer], NULL, NULL);
+	game_info.target_buffer = (game_info.target_buffer == 0) ? 1 : 0;	
 
 	if (location != menu) {
 		if (SDL_GetTicks()-last_flicker > FLICKER_RATE) {
 			G_RenderFlicker(0.0001);
 			last_flicker += rand()%FLICKER_RATE;
 		}
-
 		G_RenderLightmap();
 	}
 
 	SDL_RenderPresent(game_info	.renderer);
-	game_info.target_buffer = (game_info.target_buffer == 0) ? 1 : 0;	
 }
 
 void G_LightRender(void) {
@@ -276,7 +275,7 @@ void G_RenderFlicker(float frequency) {
 	dst.w = src.w = game_info.tile_w;
 	dst.h = src.h = game_info.tile_h;
 
-	SDL_SetRenderTarget(game_info.renderer, game_info.buffers[!game_info.target_buffer]);	
+  SDL_SetRenderTarget(game_info.renderer, game_info.buffers[!game_info.target_buffer]);
 
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
@@ -306,7 +305,7 @@ void G_RenderFlicker(float frequency) {
 		}
 	}
 
-	SDL_SetRenderTarget(game_info.renderer, NULL);	
+  SDL_SetRenderTarget(game_info.renderer, NULL);
 	SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 }
 

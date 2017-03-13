@@ -13,6 +13,7 @@ G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS | FLICKER_ONCE, SOLID},
 
 	{"ball", "a ball", 9, 15, &white, &black, 0, ENTITY},
+	{"fire", "some fire", 14, 1, &white, &black, 0, ENTITY},
 
 	{"character", "", 1, 0, &white, &black, 0, ENTITY},
 
