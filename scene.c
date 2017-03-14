@@ -20,9 +20,12 @@ void G_InitializeMenu(void) {
 	menu->h = ROWS;
 	menu->l = COLS*ROWS;
 	menu->entity_count = 0;
-	menu->head = NULL;
-	menu->tail = NULL;
+	menu->transition_count = 0;
+  menu->scene_step = 0;
 	menu->focus = NULL;
+	menu->inspect = NULL;
+	menu->head_entity = NULL;
+	menu->tail_entity = NULL;
 	menu->view.x = 0;
 	menu->view.y = 0;
 	menu->view.xp = 0;
@@ -34,6 +37,8 @@ void G_InitializeMenu(void) {
 	menu->ambient.green = 255;
 	menu->ambient.blue = 255;
 	menu->ambient.intensity = 255;
+	menu->head_transition = NULL;
+	menu->tail_transition = NULL;
 
 	menu->tiles = (G_Tile*)malloc(sizeof(G_Tile)*menu->l);
 
@@ -47,6 +52,8 @@ void G_InitializeMenu(void) {
 		} else {
 			menu->tiles[i].tile = MAGENTA;
 		}
+
+    menu->tiles[i].changed = 0;
 	}
 
 	G_InitializeUI(&menu);
@@ -59,9 +66,12 @@ void G_InitializeOverworld(void) {
 	overworld->h = WORLD_ROWS;
 	overworld->l = WORLD_COLS*WORLD_ROWS;
 	overworld->entity_count = 0;
-	overworld->head = NULL;
-	overworld->tail = NULL;
+	overworld->transition_count = 0;
+  overworld->scene_step = 0;
 	overworld->focus = NULL;
+	overworld->inspect = NULL;
+	overworld->head_entity = NULL;
+	overworld->tail_entity = NULL;
 	overworld->view.x = 0;
 	overworld->view.y = 0;
 	overworld->view.xp = 0;
@@ -73,6 +83,8 @@ void G_InitializeOverworld(void) {
 	overworld->ambient.green = 0;
 	overworld->ambient.blue = 0;
 	overworld->ambient.intensity = 255;
+	overworld->head_transition = NULL;
+	overworld->tail_transition = NULL;
 
 	overworld->tiles = (G_Tile*)malloc(sizeof(G_Tile)*overworld->l);
 
@@ -99,6 +111,8 @@ void G_InitializeOverworld(void) {
 				}
 			}
 		}
+
+    overworld->tiles[i].changed = 0;
 	}
 
 	G_Entity *player = G_CreateEntity(GAME_ENTITY);
@@ -106,7 +120,7 @@ void G_InitializeOverworld(void) {
 	l->light.red = 255;
 	l->light.green = 255;
 	l->light.blue = 255;
-	l->light.intensity = 24;
+	l->light.intensity = 64;
 	G_RenderComponent *r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 460;
@@ -126,7 +140,7 @@ void G_InitializeOverworld(void) {
 	l = (G_LightComponent*)G_AddComponent(&t, LIGHT_COMPONENT);
 	l->light.red = 0;
 	l->light.green = 0;
-	l->light.blue = 255;
+	l->light.blue = 750;
 	l->light.intensity = 24;
 	G_AddEntity(&overworld, &t);
 	G_Entity *x = G_CreateEntity(GAME_ENTITY);
@@ -137,7 +151,7 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
-	l->light.red = 512;
+	l->light.red = 750;
 	l->light.green = 0;
 	l->light.blue = 0;
 	l->light.intensity = 24;
@@ -150,13 +164,24 @@ void G_InitializeOverworld(void) {
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&v, LIGHT_COMPONENT);
-	l->light.red = 255;
+	l->light.red = 380;
 	l->light.green = 0;
-	l->light.blue = 255;
+	l->light.blue = 380;
 	l->light.intensity = 16;
 	G_AddEntity(&overworld, &v);
 
 	G_InitializeUI(&overworld);
+
+  G_TileTransition *test = (G_TileTransition*)malloc(sizeof(G_TileTransition));
+  test->x = 480;
+  test->y = 215;
+  test->when = 10;
+  test->next = NULL;
+  test->prev = NULL;
+  test->is = BURNT_GRASS;
+  test->to = GRASS;
+  G_ChangeTile(&overworld, 480, 215, BURNT_GRASS, 1);
+  G_AddTileTransition(&overworld, &test);
 }
 
 void G_ChangeScene(void **scene) {
@@ -266,12 +291,12 @@ void G_InitializeUI(G_Scene **scene) {
 void G_CleanupScene(G_Scene **scene) {
 	assert((scene != NULL) && (*scene != NULL));
 
-	G_Entity *entity = (*scene)->head;
+	G_Entity *entity = (*scene)->head_entity;
 	
 	while (entity != NULL) {
-		(*scene)->head = (G_Entity*)(entity->next);
+		(*scene)->head_entity = (G_Entity*)(entity->next);
 		free(entity);
-		entity = (*scene)->head;
+		entity = (*scene)->head_entity;
 	}
 
 	free((*scene)->tiles);
@@ -280,13 +305,13 @@ void G_CleanupScene(G_Scene **scene) {
 void G_AddEntity(G_Scene **scene, G_Entity **entity) {
 	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
 
-	if ((*scene)->head == NULL) {
-		(*scene)->head = (*entity);
-		(*scene)->tail = (*entity);
+	if ((*scene)->head_entity == NULL) {
+		(*scene)->head_entity = (*entity);
+		(*scene)->tail_entity = (*entity);
 	} else {
-		(*entity)->prev = (void*)((*scene)->tail);
-		(*scene)->tail->next = (void*)(*entity);
-		(*scene)->tail = (*entity);
+		(*entity)->prev = (void*)((*scene)->tail_entity);
+		(*scene)->tail_entity->next = (void*)(*entity);
+		(*scene)->tail_entity = (*entity);
 	}
 	
 	if ((*scene)->focus == NULL) {
@@ -308,7 +333,7 @@ void G_DelEntity(G_Scene **scene, G_Entity **entity) {
 void G_PopEntity(G_Scene **scene, G_Entity **entity) {
 	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
 
-	if ((*entity != (*scene)->head) && (*entity != (*scene)->tail)) {
+	if ((*entity != (*scene)->head_entity) && (*entity != (*scene)->tail_entity)) {
 		if ((*entity)->next != NULL) {
 			((G_Entity*)((*entity)->next))->prev = (*entity)->prev;
 		}
@@ -316,8 +341,8 @@ void G_PopEntity(G_Scene **scene, G_Entity **entity) {
 			((G_Entity*)((*entity)->prev))->next = (*entity)->next;
 		}
 	} else {
-		(*scene)->head = ((*entity) == (*scene)->head) ? (G_Entity*)((*scene)->head->next) : (*scene)->head;
-		(*scene)->tail = ((*entity) == (*scene)->tail) ? (G_Entity*)((*scene)->tail->prev) : (*scene)->tail;
+		(*scene)->head_entity = ((*entity) == (*scene)->head_entity) ? (G_Entity*)((*scene)->head_entity->next) : (*scene)->head_entity;
+		(*scene)->tail_entity = ((*entity) == (*scene)->tail_entity) ? (G_Entity*)((*scene)->tail_entity->prev) : (*scene)->tail_entity;
 
 		if ((*entity)->next != NULL) {
 			((G_Entity*)((*entity)->next))->prev = NULL;
@@ -330,6 +355,86 @@ void G_PopEntity(G_Scene **scene, G_Entity **entity) {
 	(*scene)->entity_count -= 1;
 }
 
+void G_AddTileTransition(G_Scene **scene, G_TileTransition **transition) {
+	assert((scene != NULL) && (*scene != NULL) && (transition != NULL) && (*transition != NULL));
+
+	if ((*scene)->head_transition == NULL) {
+		(*scene)->head_transition = (*transition);
+		(*scene)->tail_transition = (*transition);
+	} else {
+		(*transition)->prev = (void*)((*scene)->tail_transition);
+		(*scene)->tail_transition->next = (void*)(*transition);
+		(*scene)->tail_transition = (*transition);
+	}
+	
+	(*scene)->transition_count += 1;
+}
+
+void G_DelTileTransition(G_Scene **scene, G_TileTransition **transition) {
+	assert((scene != NULL) && (*scene != NULL) && (transition != NULL) && (*transition != NULL));
+
+	if ((*scene != NULL) && (*transition != NULL)) {
+		G_PopTileTransition(scene, transition);
+		free(*transition);
+	}
+}
+
+void G_PopTileTransition(G_Scene **scene, G_TileTransition **transition) {
+	assert((scene != NULL) && (*scene != NULL) && (transition != NULL) && (*transition != NULL));
+
+	if ((*transition != (*scene)->head_transition) && (*transition != (*scene)->tail_transition)) {
+		if ((*transition)->next != NULL) {
+			((G_TileTransition*)((*transition)->next))->prev = (*transition)->prev;
+		}
+		if ((*transition)->prev != NULL) {
+			((G_TileTransition*)((*transition)->prev))->next = (*transition)->next;
+		}
+	} else {
+		(*scene)->head_transition = ((*transition) == (*scene)->head_transition) ? (G_TileTransition*)((*scene)->head_transition->next) : (*scene)->head_transition;
+		(*scene)->tail_transition = ((*transition) == (*scene)->tail_transition) ? (G_TileTransition*)((*scene)->tail_transition->prev) : (*scene)->tail_transition;
+
+		if ((*transition)->next != NULL) {
+			((G_TileTransition*)((*transition)->next))->prev = NULL;
+		}
+		if ((*transition)->prev != NULL) {
+			((G_TileTransition*)((*transition)->prev))->next = NULL;
+		}
+	}
+
+	(*scene)->transition_count -= 1;
+}
+
+void G_ChangeTile(G_Scene **scene, int x, int y, Tile tile, boolean changed) {
+	assert((scene != NULL) && (*scene != NULL));
+
+  (*scene)->tiles[x+(y*(*scene)->w)].tile = tile;
+  (*scene)->tiles[x+(y*(*scene)->w)].changed = changed;
+}
+
+void G_CheckTileTransitions(G_Scene **scene) {
+	assert((scene != NULL) && (*scene != NULL));
+
+  G_TileTransition *head = (*scene)->head_transition;
+
+  while ((head != NULL) && (head->when < (*scene)->scene_step)) {
+    G_ChangeTile(scene, head->x, head->y, head->to, 0);
+
+    if ((scene == &location) &&
+        (G_IsPointWithin(head->x, head->y, &((*scene)->view)))) {
+      head->x -= (*scene)->view.x;
+      head->y -= (*scene)->view.y;
+
+      if (G_CellToTile(head->x, head->y) == head->is) {
+        dmatrix[head->x][head->y].changed = 1;
+        dmatrix[head->x][head->y].tile = head->to;
+      }
+    }
+
+    G_DelTileTransition(scene, &head);
+    head = (*scene)->head_transition;
+  }
+}
+
 G_View* G_SceneView(G_Scene **scene) {
 	assert((scene != NULL) && (*scene != NULL));
 
@@ -339,13 +444,13 @@ G_View* G_SceneView(G_Scene **scene) {
 G_Entity* G_GetEntities(G_Scene **scene) {
 	assert((scene != NULL) && (*scene != NULL));
 
-	return (*scene)->head;
+	return (*scene)->head_entity;
 }
 
 G_Entity* G_FindEntity(G_Scene **scene, int ID) {
 	assert((scene != NULL) && (*scene != NULL));
 
-	G_Entity *head = (G_Entity*)((*scene)->head);
+	G_Entity *head = (G_Entity*)((*scene)->head_entity);
 
 	while (head != NULL) {
 		if (head->id == ID) {

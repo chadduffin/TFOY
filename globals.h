@@ -12,12 +12,12 @@
 // globals.c
 extern G_Info game_info;
 extern G_Cell dmatrix[COLS][ROWS];
+extern unsigned long long G_ID;
 
 extern int phys_keys[SDL_NUM_SCANCODES];
 extern int virt_keys[KEYBINDING_COUNT];
 extern int last_flicker;
 extern int port;
-extern int G_ID;
 extern IPaddress ipaddress;
 extern TCPsocket socket;
 extern char *name;
@@ -47,6 +47,7 @@ extern const G_Color yellow;
 extern const G_Color magenta;
 extern const G_Color brown;
 extern const G_Color grey;
+extern const G_Color dark_grey;
 extern const G_Color orange;
 extern const G_Color dark_blue;
 extern const G_Color scott_blue;

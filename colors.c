@@ -17,6 +17,7 @@ const G_Color orange = {255, 165, 0, 64, 32, 16};
 
 const G_Color brown = {105, 90, 70, 16, 14, 12};
 const G_Color grey = {225, 225, 225, 32, 32, 32};
+const G_Color dark_grey = {155, 155, 155, 32, 32, 32};
 const G_Color dark_blue = {0, 0, 75, 8, 8, 16};
 const G_Color scott_blue = {16, 16, 255, 32, 32, 64};
 const G_Color dark_green = {0, 100, 0, 16, 32, 16};

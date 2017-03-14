@@ -154,9 +154,10 @@ typedef enum TileFlag {
 	FLAMMABLE = 2,
 	FREEZABLE = 4,
 	BREAKABLE = 8,
+  EXTINGUISHABLE = 16,
 
-	FLICKERS = 16,
-	FLICKER_ONCE = 32,
+	FLICKERS = 32,
+	FLICKER_ONCE = 64,
 } TileFlag;
 
 typedef enum TileLayer {
@@ -174,6 +175,7 @@ typedef enum Tile {
 	NOTHING = 256,
 	DIRT,
 	GRASS,
+	BURNT_GRASS,
 	WATER,
 	WALL,
 
@@ -220,9 +222,21 @@ typedef enum UIState {
 
 } UIState;
 
+typedef enum ElementFlag {
+  SPREADS = 1,
+  DIFFUSE = 2,
+} ElementFlag;
+
 /*
 ** TYPEDEFS
 */
+
+typedef struct G_Node {
+  void
+    *data,
+    *next,
+    *prev;
+} G_Node;
 
 typedef struct G_Color {
 	int
@@ -272,8 +286,23 @@ typedef struct G_TileDescriptor {
 } G_TileDescriptor;
 
 typedef struct G_Tile {
+  boolean changed;
 	Tile tile;
 } G_Tile;
+
+typedef struct G_TileTransition {
+  int
+    x,
+    y;
+  unsigned long long
+    when;
+  void
+    *next,
+    *prev;
+  Tile
+    is,
+    to;
+} G_TileTransition;
 
 typedef struct G_Cell {
 	int layers[TILE_LAYER_COUNT];
@@ -306,6 +335,11 @@ typedef struct G_CreatureComponent {
 	CreatureFlag flags;
 	CreatureCategory category;
 } G_CreatureComponent;
+
+typedef struct G_ElementComponent {
+  TileFlag tile_flags;
+  ElementFlag element_flags;
+} G_ElementComponent;
 
 typedef struct G_RenderComponent {
 	int
@@ -354,15 +388,21 @@ typedef struct G_Scene {
 		w,
 		h,
 		l,
-		entity_count;
+		entity_count,
+		transition_count;
+  unsigned long long
+    scene_step;
 	G_Tile *tiles;
 	G_Entity
-		*head,
-		*tail,
 		*focus,
-		*inspect;
+		*inspect,
+		*head_entity,
+		*tail_entity;
 	G_View view;
 	G_Light ambient;
+  G_TileTransition
+    *head_transition,
+    *tail_transition;
 } G_Scene;
 
 typedef struct G_Info {
@@ -403,15 +443,16 @@ int G_PollEvents(void);
 int G_HandleEvents(void);
 void G_FocusView(void);
 void G_Update(void);
-void G_LightUpdate(void);
 void G_LoopEntities(EntityType type, void (*func)(G_Entity**));
 void G_InitializeKeybindings(void);
 int G_CheckBound(Keybinding key);
 int G_CheckPhysical(SDL_Scancode key);
 int G_IsPointWithin(int x, int y, G_View *view);
-unsigned int G_GetID(void);
+unsigned long long G_GetID(void);
 char* G_IntToChar(int value);
 char* G_FloatToChar(float value);
+unsigned long long G_GetGameStep();
+void G_IncGameStep();
 
 // rendering.c
 void G_UpdateRenderingInfo(void);
@@ -475,6 +516,11 @@ void G_CleanupScene(G_Scene **scene);
 void G_AddEntity(G_Scene **scene, G_Entity **entity);
 void G_DelEntity(G_Scene **scene, G_Entity **entity);
 void G_PopEntity(G_Scene **scene, G_Entity **entity);
+void G_AddTileTransition(G_Scene **scene, G_TileTransition **G_TileTransition);
+void G_DelTileTransition(G_Scene **scene, G_TileTransition **G_TileTransition);
+void G_PopTileTransition(G_Scene **scene, G_TileTransition **G_TileTransition);
+void G_ChangeTile(G_Scene **scene, int x, int y, Tile tile, boolean changed);
+void G_CheckTileTransitions(G_Scene **scene);
 G_View* G_SceneView(G_Scene **scene);
 G_Entity* G_GetEntities(G_Scene **scene);
 G_Entity* G_FindEntity(G_Scene **scene, int ID);

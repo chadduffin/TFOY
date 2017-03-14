@@ -6,12 +6,12 @@
 
 G_Info game_info;
 G_Cell dmatrix[COLS][ROWS];
+unsigned long long G_ID = 0;
 
 int phys_keys[SDL_NUM_SCANCODES];
 int virt_keys[KEYBINDING_COUNT];
 int last_flicker = 0;
 int port = 32768;
-int G_ID = 0;
 
 IPaddress ipaddress;
 TCPsocket socket;

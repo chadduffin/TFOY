@@ -39,6 +39,13 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 				return creature;
 			}
 			break;
+    case ELEMENT_COMPONENT:
+      {
+        G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
+        (*entity)->components[ELEMENT_COMPONENT] = element;
+        return element;
+      }
+      break;
 		case RENDER_COMPONENT:
 			{
 				G_RenderComponent *render = (G_RenderComponent*)malloc(sizeof(G_RenderComponent));

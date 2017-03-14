@@ -9,6 +9,7 @@ G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
 	{"empty", "description", 0, 0, &black, &black, 0, EMPTY},
 	{"dirt", "some dirt", 14, 2, &grey, &dark_blue, FLICKER_ONCE, GROUND},
 	{"grass", "some grass", 2, 2, &dark_green, &forest_green, FLAMMABLE | FLICKER_ONCE, GROUND},
+	{"burnt grass", "some burnt grass", 2, 2, &dark_grey, &grey, FLICKER_ONCE, GROUND},
 	{"water", "some water", 14, 7, &blue, &scott_blue, FLICKERS, LIQUID},
 	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS | FLICKER_ONCE, SOLID},
 

@@ -66,7 +66,7 @@ void G_Render(void) {
 	}	
 
 	G_LoopEntities(ANY_ENTITY, &G_EntityRender);
-
+  G_CheckTileTransitions(&location);
 	G_RenderChanges();
 
 	SDL_SetRenderTarget(game_info.renderer, NULL);	

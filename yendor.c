@@ -281,12 +281,10 @@ void G_Update(void) {
 		// perform a full game step and re-focus view
 		G_LoopEntities(ANY_ENTITY, &G_EntityUpdate);
 		G_FocusView();
+    G_IncGameStep();
 	} else {
 		G_LoopEntities(UI_ENTITY, &G_EntityUpdate);
 	}
-}
-
-void G_LightUpdate(void) {
 }
 
 void G_LoopEntities(EntityType type, void (*func)(G_Entity**)) {
@@ -338,7 +336,7 @@ void G_InvalidateView(void) {
 	location->view.unchanged = 0;
 }
 
-unsigned int G_GetID(void) {
+unsigned long long G_GetID(void) {
 	G_ID += 1;
 	return G_ID-1;
 }
@@ -392,6 +390,18 @@ char* G_FloatToChar(float value) {
 	string[4] = '\0';
 
 	return string;
+}
+
+unsigned long long G_GetGameStep() {
+  assert(location != NULL);
+
+  return location->scene_step;
+}
+
+void G_IncGameStep() {
+  assert(location != NULL);
+
+  location->scene_step += 1;
 }
 
 /*
