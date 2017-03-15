@@ -65,7 +65,7 @@ void G_Render(void) {
 		SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
 	}	
 
-	G_LoopEntities(ANY_ENTITY, &G_EntityRender);
+	G_LoopEntities(ANY_ENTITY, &G_EntityRender, &(location->entity->root->left));
   G_CheckTileTransitions(&location);
 	G_RenderChanges();
 
@@ -78,6 +78,7 @@ void G_Render(void) {
 			G_RenderFlicker(0.0001);
 			last_flicker += rand()%FLICKER_RATE;
 		}
+
 		G_RenderLightmap();
 	}
 

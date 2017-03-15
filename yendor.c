@@ -18,6 +18,11 @@ int G_Init() {
 	game_info.target_buffer = 0;
 	game_info.running = 0;
 
+  NIL = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  NIL->color = 'b';
+  NIL->key = -2;
+  NIL->left = NIL->right = NIL->parent = NIL;
+  
 	srand(time(NULL) & 2147483647);
 
 	if ((status & NOT_OK) == NOT_OK) {
@@ -279,22 +284,26 @@ void G_Update(void) {
 
 	if (G_HandleEvents() != -1) {
 		// perform a full game step and re-focus view
-		G_LoopEntities(ANY_ENTITY, &G_EntityUpdate);
+		G_LoopEntities(ANY_ENTITY, &G_EntityUpdate, &(location->entity->root->left));
 		G_FocusView();
     G_IncGameStep();
 	} else {
-		G_LoopEntities(UI_ENTITY, &G_EntityUpdate);
+		G_LoopEntities(UI_ENTITY, &G_EntityUpdate, &(location->entity->root->left));
 	}
 }
 
-void G_LoopEntities(EntityType type, void (*func)(G_Entity**)) {
-	G_Entity *entity = G_GetEntities(&location);
+void G_LoopEntities(EntityType type, void (*func)(G_Entity**), G_TreeNode **node) {
+  assert((node != NULL) && (*node != NULL));
 
-	while (entity != NULL) {
-		if (G_GetEntityType(&entity) & type) {
-			func(&entity);
-		}
-		entity = (G_Entity*)(entity->next);
+	if (*node != NIL) {
+    G_Entity *entity = (G_Entity*)((*node)->data);
+
+  	if (G_GetEntityType(&entity) & type) {
+  		func(&entity);
+    }
+
+    G_LoopEntities(type, func, &((*node)->left));
+    G_LoopEntities(type, func, &((*node)->right));
 	}
 }
 
@@ -334,11 +343,6 @@ void G_InvalidateView(void) {
 	assert(location != NULL);
 
 	location->view.unchanged = 0;
-}
-
-unsigned long long G_GetID(void) {
-	G_ID += 1;
-	return G_ID-1;
 }
 
 char* G_IntToChar(int value) {
@@ -392,7 +396,12 @@ char* G_FloatToChar(float value) {
 	return string;
 }
 
-unsigned long long G_GetGameStep() {
+long long G_GetID(void) {
+	G_ID += 1;
+	return G_ID-1;
+}
+
+long long G_GetGameStep() {
   assert(location != NULL);
 
   return location->scene_step;

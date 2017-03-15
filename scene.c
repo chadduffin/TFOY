@@ -24,8 +24,6 @@ void G_InitializeMenu(void) {
   menu->scene_step = 0;
 	menu->focus = NULL;
 	menu->inspect = NULL;
-	menu->head_entity = NULL;
-	menu->tail_entity = NULL;
 	menu->view.x = 0;
 	menu->view.y = 0;
 	menu->view.xp = 0;
@@ -37,8 +35,12 @@ void G_InitializeMenu(void) {
 	menu->ambient.green = 255;
 	menu->ambient.blue = 255;
 	menu->ambient.intensity = 255;
-	menu->head_transition = NULL;
-	menu->tail_transition = NULL;
+
+  menu->entity = NULL;
+  menu->transition = NULL;
+
+  G_TreeInitialize(&(menu->entity));
+  G_TreeInitialize(&(menu->transition));
 
 	menu->tiles = (G_Tile*)malloc(sizeof(G_Tile)*menu->l);
 
@@ -70,8 +72,6 @@ void G_InitializeOverworld(void) {
   overworld->scene_step = 0;
 	overworld->focus = NULL;
 	overworld->inspect = NULL;
-	overworld->head_entity = NULL;
-	overworld->tail_entity = NULL;
 	overworld->view.x = 0;
 	overworld->view.y = 0;
 	overworld->view.xp = 0;
@@ -83,8 +83,12 @@ void G_InitializeOverworld(void) {
 	overworld->ambient.green = 0;
 	overworld->ambient.blue = 0;
 	overworld->ambient.intensity = 255;
-	overworld->head_transition = NULL;
-	overworld->tail_transition = NULL;
+
+  overworld->entity = NULL;
+  overworld->transition = NULL;
+
+  G_TreeInitialize(&(overworld->entity));
+  G_TreeInitialize(&(overworld->transition));
 
 	overworld->tiles = (G_Tile*)malloc(sizeof(G_Tile)*overworld->l);
 
@@ -121,13 +125,13 @@ void G_InitializeOverworld(void) {
 	l->light.green = 255;
 	l->light.blue = 255;
 	l->light.intensity = 64;
+	G_AddComponent(&player, CONTROLLER_COMPONENT);
 	G_RenderComponent *r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
 	r->tile = HUMAN;
 	r->x = 460;
 	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
-	G_AddComponent(&player, CONTROLLER_COMPONENT);
 	G_AddComponent(&player, CREATURE_COMPONENT);
 	G_AddEntity(&overworld, &player);
 	G_Entity *t = G_CreateEntity(GAME_ENTITY);
@@ -147,7 +151,7 @@ void G_InitializeOverworld(void) {
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
 	r->tile = FIRE;
 	r->x = 480;
-	r->y = 240;
+	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
@@ -291,117 +295,22 @@ void G_InitializeUI(G_Scene **scene) {
 void G_CleanupScene(G_Scene **scene) {
 	assert((scene != NULL) && (*scene != NULL));
 
-	G_Entity *entity = (*scene)->head_entity;
+  G_TreeNode *node = (*scene)->entity->root->left;
+
+	while (node != NIL) {
+    G_TreeNodeDelete(&((*scene)->entity), &node);
+    node = (*scene)->entity->root->left;
+	}
+
+	free((*scene)->entity);
+  node = (*scene)->transition->root->left;
 	
-	while (entity != NULL) {
-		(*scene)->head_entity = (G_Entity*)(entity->next);
-		free(entity);
-		entity = (*scene)->head_entity;
+	while (node != NIL) {
+    G_TreeNodeDelete(&((*scene)->transition), &node);
+    node = (*scene)->transition->root->left;
 	}
 
-	free((*scene)->tiles);
-}
-
-void G_AddEntity(G_Scene **scene, G_Entity **entity) {
-	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
-
-	if ((*scene)->head_entity == NULL) {
-		(*scene)->head_entity = (*entity);
-		(*scene)->tail_entity = (*entity);
-	} else {
-		(*entity)->prev = (void*)((*scene)->tail_entity);
-		(*scene)->tail_entity->next = (void*)(*entity);
-		(*scene)->tail_entity = (*entity);
-	}
-	
-	if ((*scene)->focus == NULL) {
-		(*scene)->focus = *entity;
-	}
-	
-	(*scene)->entity_count += 1;
-}
-
-void G_DelEntity(G_Scene **scene, G_Entity **entity) {
-	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
-
-	if ((*scene != NULL) && (*entity != NULL)) {
-		G_PopEntity(scene, entity);
-		free(*entity);
-	}
-}
-
-void G_PopEntity(G_Scene **scene, G_Entity **entity) {
-	assert((scene != NULL) && (*scene != NULL) && (entity != NULL) && (*entity != NULL));
-
-	if ((*entity != (*scene)->head_entity) && (*entity != (*scene)->tail_entity)) {
-		if ((*entity)->next != NULL) {
-			((G_Entity*)((*entity)->next))->prev = (*entity)->prev;
-		}
-		if ((*entity)->prev != NULL) {
-			((G_Entity*)((*entity)->prev))->next = (*entity)->next;
-		}
-	} else {
-		(*scene)->head_entity = ((*entity) == (*scene)->head_entity) ? (G_Entity*)((*scene)->head_entity->next) : (*scene)->head_entity;
-		(*scene)->tail_entity = ((*entity) == (*scene)->tail_entity) ? (G_Entity*)((*scene)->tail_entity->prev) : (*scene)->tail_entity;
-
-		if ((*entity)->next != NULL) {
-			((G_Entity*)((*entity)->next))->prev = NULL;
-		}
-		if ((*entity)->prev != NULL) {
-			((G_Entity*)((*entity)->prev))->next = NULL;
-		}
-	}
-
-	(*scene)->entity_count -= 1;
-}
-
-void G_AddTileTransition(G_Scene **scene, G_TileTransition **transition) {
-	assert((scene != NULL) && (*scene != NULL) && (transition != NULL) && (*transition != NULL));
-
-	if ((*scene)->head_transition == NULL) {
-		(*scene)->head_transition = (*transition);
-		(*scene)->tail_transition = (*transition);
-	} else {
-		(*transition)->prev = (void*)((*scene)->tail_transition);
-		(*scene)->tail_transition->next = (void*)(*transition);
-		(*scene)->tail_transition = (*transition);
-	}
-	
-	(*scene)->transition_count += 1;
-}
-
-void G_DelTileTransition(G_Scene **scene, G_TileTransition **transition) {
-	assert((scene != NULL) && (*scene != NULL) && (transition != NULL) && (*transition != NULL));
-
-	if ((*scene != NULL) && (*transition != NULL)) {
-		G_PopTileTransition(scene, transition);
-		free(*transition);
-	}
-}
-
-void G_PopTileTransition(G_Scene **scene, G_TileTransition **transition) {
-	assert((scene != NULL) && (*scene != NULL) && (transition != NULL) && (*transition != NULL));
-
-	if ((*transition != (*scene)->head_transition) && (*transition != (*scene)->tail_transition)) {
-		if ((*transition)->next != NULL) {
-			((G_TileTransition*)((*transition)->next))->prev = (*transition)->prev;
-		}
-		if ((*transition)->prev != NULL) {
-			((G_TileTransition*)((*transition)->prev))->next = (*transition)->next;
-		}
-	} else {
-		(*scene)->head_transition = ((*transition) == (*scene)->head_transition) ? (G_TileTransition*)((*scene)->head_transition->next) : (*scene)->head_transition;
-		(*scene)->tail_transition = ((*transition) == (*scene)->tail_transition) ? (G_TileTransition*)((*scene)->tail_transition->prev) : (*scene)->tail_transition;
-
-		if ((*transition)->next != NULL) {
-			((G_TileTransition*)((*transition)->next))->prev = NULL;
-		}
-		if ((*transition)->prev != NULL) {
-			((G_TileTransition*)((*transition)->prev))->next = NULL;
-		}
-	}
-
-	(*scene)->transition_count -= 1;
+	free((*scene)->transition);
 }
 
 void G_ChangeTile(G_Scene **scene, int x, int y, Tile tile, boolean changed) {
@@ -414,25 +323,346 @@ void G_ChangeTile(G_Scene **scene, int x, int y, Tile tile, boolean changed) {
 void G_CheckTileTransitions(G_Scene **scene) {
 	assert((scene != NULL) && (*scene != NULL));
 
-  G_TileTransition *head = (*scene)->head_transition;
+  G_TreeNode *node = G_TreeNodeMinimum(&((*scene)->transition));
+  G_TileTransition *transition = (G_TileTransition*)(node->data);
 
-  while ((head != NULL) && (head->when < (*scene)->scene_step)) {
-    G_ChangeTile(scene, head->x, head->y, head->to, 0);
+  while ((transition != NULL) && (transition->when <= (*scene)->scene_step)) {
+    G_ChangeTile(scene, transition->x, transition->y, transition->to, 0);
 
     if ((scene == &location) &&
-        (G_IsPointWithin(head->x, head->y, &((*scene)->view)))) {
-      head->x -= (*scene)->view.x;
-      head->y -= (*scene)->view.y;
+        (G_IsPointWithin(transition->x, transition->y, &((*scene)->view)))) {
+      transition->x -= (*scene)->view.x;
+      transition->y -= (*scene)->view.y;
 
-      if (G_CellToTile(head->x, head->y) == head->is) {
-        dmatrix[head->x][head->y].changed = 1;
-        dmatrix[head->x][head->y].tile = head->to;
+      if (G_CellToTile(transition->x, transition->y) == transition->is) {
+        dmatrix[transition->x][transition->y].changed = 1;
+        dmatrix[transition->x][transition->y].tile = transition->to;
       }
     }
 
-    G_DelTileTransition(scene, &head);
-    head = (*scene)->head_transition;
+    G_TreeNodeDelete(&((*scene)->transition), &node);
+    node = G_TreeNodeMinimum(&((*scene)->transition));
+    transition = (G_TileTransition*)(node->data);
   }
+}
+
+void G_AddEntity(G_Scene **scene, G_Entity **entity) {
+  assert((scene != NULL) && (*scene != NULL) &&
+        (entity != NULL) && (*entity != NULL));
+
+  if ((*scene)->focus == NULL) {
+    (*scene)->focus = *entity;
+  }
+
+  G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  node->key = (*entity)->id;
+  node->data = (void*)(*entity);
+  G_TreeNodeInsert(&((*scene)->entity), &node);
+}
+
+void G_AddTileTransition(G_Scene **scene, G_TileTransition **transition) {
+  assert((scene != NULL) && (*scene != NULL) &&
+        (transition != NULL) && (*transition != NULL));
+
+  G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  node->key = (*transition)->x+((*transition)->y*(*scene)->w);
+  node->data = (void*)(*transition);
+  G_TreeNodeInsert(&((*scene)->transition), &node);
+}
+
+void G_TreeInitialize(G_Tree **tree) {
+  assert((tree != NULL) && (*tree == NULL));
+
+  (*tree) = (G_Tree*)malloc(sizeof(G_Tree));
+  (*tree)->root = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  (*tree)->root->right = (*tree)->root->left = (*tree)->root->parent = NIL;
+  (*tree)->root->color = 'b';
+  (*tree)->root->data = NULL;
+  (*tree)->root->key = -1;
+} 
+
+void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
+  assert((tree != NULL) && (*tree != NULL) &&
+        (node != NULL) && (*node != NULL));
+
+  G_TreeNode
+    *other = (*tree)->root->left,
+    *parent = (*tree)->root,
+    *uncle = NULL;
+
+  while (other != NIL) {
+    parent = other;
+
+    if ((*node)->key < other->key) {
+      other = other->left;
+    } else {
+      other = other->right;
+    }
+  }
+
+  (*node)->left = NIL;
+  (*node)->right = NIL;
+  (*node)->parent = parent;
+  (*node)->color = 'r';
+
+  if ((parent == (*tree)->root) || (parent->key > (*node)->key)) {
+    parent->left = *node;
+  } else {
+    parent->right = *node;
+  }
+
+  while ((*node)->parent->color == 'r') {
+    if ((*node)->parent == (*node)->parent->parent->left) {
+      uncle = (*node)->parent->parent->right;
+
+      if (uncle->color == 'r') {
+        (*node)->parent->color = 'b';
+        (*node)->parent->parent->color = 'r';
+        uncle->color = 'b';
+        node = &((*node)->parent->parent);
+      } else {
+        if (*node == (*node)->parent->right) {
+          *node = (*node)->parent;
+          G_TreeNodeRotateLeft(tree, node);
+        }
+
+        (*node)->parent->color = 'b';
+        (*node)->parent->parent->color = 'r';
+        G_TreeNodeRotateRight(tree, &((*node)->parent->parent));
+      }
+    } else {
+      uncle = (*node)->parent->parent->left;
+
+      if (uncle->color == 'r') {
+        (*node)->parent->color = 'b';
+        (*node)->parent->parent->color = 'r';
+        uncle->color = 'b';
+        node = &((*node)->parent->parent);
+      } else {
+        if (*node == (*node)->parent->left) {
+          *node = (*node)->parent;
+          G_TreeNodeRotateRight(tree, node);
+        }
+
+        (*node)->parent->color = 'b';
+        (*node)->parent->parent->color = 'r';
+        G_TreeNodeRotateLeft(tree, &((*node)->parent->parent));
+
+      }
+    }
+  }
+
+  (*tree)->root->left->color = 'b';
+}
+
+void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
+  assert((tree != NULL) && (*tree != NULL) &&
+        (node != NULL) && (*node != NULL));
+
+  G_Tree *t = (*tree);
+  G_TreeNode
+    *x,
+    *y,
+    *z = (*node);
+
+  if ((z->left == NIL) || (z->right == NIL)) {
+    y = z;
+  } else {
+    y = G_TreeNodeSuccessor(tree, node);
+  }
+
+  x = (y->left == NIL) ? y->right : y->left;
+  x->parent = y->parent;
+
+  if (x->parent == t->root) {
+    t->root->left = x;
+  } else {
+    if (y == y->parent->left) {
+      y->parent->left = x;
+    } else {
+      y->parent->right = x;
+    }
+  }
+
+  if (y->color == 'b') {
+    G_TreeDeleteFix(tree, &x);
+  }
+  if (y != z) {
+    y->left = z->left;
+    y->right = z->right;
+    y->parent = z->parent;
+    y->color = z->color;
+    z->left->parent = z->right->parent = y;
+    
+    if (z == z->parent->left) {
+      z->parent->left = y;
+    } else {
+      z->parent->right = y;
+    }
+  }
+
+  free(z);
+}
+
+void G_TreeNodeRotateLeft(G_Tree **tree, G_TreeNode **node) {
+  assert((tree != NULL) && (*tree != NULL));
+  G_TreeNode *n = (*node);
+
+  G_TreeNode *child = n->right;
+  n->right = child->left;
+
+  if (child->left != NIL) {
+    child->left->parent = n;
+  }
+
+  child->parent = n->parent;
+
+  if (n == n->parent->left) {
+    n->parent->left = child;
+  } else {
+    n->parent->right = child;
+  }
+
+  child->left = n;
+  n->parent = child;
+}
+
+void G_TreeNodeRotateRight(G_Tree **tree, G_TreeNode **node) {
+  assert((tree != NULL) && (*tree != NULL));
+
+  G_TreeNode *child = (*node)->left;
+  (*node)->left = child->right;
+
+  if (child->right != NIL) {
+    child->right->parent = *node;
+  }
+
+  child->parent = (*node)->parent;
+
+  if ((*node) == (*node)->parent->right) {
+    (*node)->parent->right = child;
+  } else {
+    (*node)->parent->left = child;
+  }
+
+  child->right = (*node);
+  (*node)->parent = child;
+}
+
+void G_TreeDeleteFix(G_Tree **tree, G_TreeNode **node) {
+  assert((tree != NULL) && (*tree != NULL) &&
+        (node != NULL) && (*node != NULL));
+
+  G_TreeNode
+    *n = (*node),
+    *sibling;
+
+  while (n->color == 'b') {
+    if (n == n->parent->left) {
+      sibling = n->parent->right;
+
+      if (sibling->color == 'r') {
+        sibling->color = 'b';
+        n->parent->color = 'r';
+        G_TreeNodeRotateLeft(tree, &(n->parent));
+        sibling = n->parent->right;
+      }
+      if ((sibling->right->color == 'b') && (sibling->left->color == 'b')) {
+        sibling->color = 'r';
+        n = n->parent;
+      } else {
+        if (sibling->right->color == 'b') {
+          sibling->left->color = 'b';
+          sibling->color = 'r';
+          G_TreeNodeRotateRight(tree, &sibling);
+          sibling = n->parent->right;
+        }
+
+        sibling->color = n->parent->color;
+        n->parent->color = 'b';
+        sibling->right->color = 'b';
+        G_TreeNodeRotateLeft(tree, &(n->parent));
+        break;
+      }
+    } else {
+      sibling = n->parent->left;
+
+      if (sibling->color == 'r') {
+        sibling->color = 'b';
+        n->parent->color = 'r';
+        G_TreeNodeRotateRight(tree, &(n->parent));
+        sibling = n->parent->left;
+      }
+      if ((sibling->left->color == 'b') && (sibling->right->color == 'b')) {
+        sibling->color = 'r';
+        n = n->parent;
+      } else {
+        if (sibling->left->color == 'b') {
+          sibling->right->color = 'b';
+          sibling->color = 'r';
+          G_TreeNodeRotateLeft(tree, &sibling);
+          sibling = n->parent->left;
+        }
+
+        sibling->color = n->parent->color;
+        n->parent->color = 'b';
+        sibling->left->color = 'b';
+        G_TreeNodeRotateRight(tree, &(n->parent));
+        break;
+      }
+    }
+  }
+}
+
+G_TreeNode* G_TreeNodeRoot(G_Tree **tree) {
+  return (*tree)->root->left;
+}
+
+G_TreeNode* G_TreeNodeFind(G_Tree **tree, long long key) {
+  assert((tree != NULL) && (*tree != NULL));
+
+  G_TreeNode *node = (*tree)->root->left;
+
+  while ((node != NIL) && (node->key != key)) {
+    node = (node->key < key) ? node->right : node->left;
+  }
+
+  return (node == NIL) ? NULL : node;
+}
+
+G_TreeNode* G_TreeNodeMinimum(G_Tree **tree) {
+  assert((tree != NULL) && (*tree != NULL));
+
+  G_TreeNode *other = (*tree)->root;
+
+  while (other->left != NIL) {
+    other = other->left;
+  }
+
+  return (other == NIL) ? NIL : other;
+}
+
+G_TreeNode* G_TreeNodeSuccessor(G_Tree **tree, G_TreeNode **node) {
+  G_Tree *t = (*tree);
+  G_TreeNode
+    *n = (*node),
+    *succ = n->right;
+
+  if (succ != NIL) {
+    while (succ->left != NIL) {
+      succ = succ->left;
+    }
+  } else {
+    for (succ = n->parent; n == succ->right; succ = succ->parent) {
+      n = succ;
+    }
+
+    if (succ == t->root) {
+      succ = NIL;
+    }
+  }
+
+  return succ;
 }
 
 G_View* G_SceneView(G_Scene **scene) {
@@ -441,26 +671,18 @@ G_View* G_SceneView(G_Scene **scene) {
 	return &((*scene)->view);
 }
 
-G_Entity* G_GetEntities(G_Scene **scene) {
+G_Tree* G_GetEntities(G_Scene **scene) {
 	assert((scene != NULL) && (*scene != NULL));
 
-	return (*scene)->head_entity;
+	return (*scene)->entity;
 }
 
-G_Entity* G_FindEntity(G_Scene **scene, int ID) {
+G_Entity* G_FindEntity(G_Scene **scene, long long ID) {
 	assert((scene != NULL) && (*scene != NULL));
 
-	G_Entity *head = (G_Entity*)((*scene)->head_entity);
+	G_TreeNode *node = G_TreeNodeFind(&((*scene)->entity), ID);
 
-	while (head != NULL) {
-		if (head->id == ID) {
-			return head;
-		}
-
-		head = (G_Entity*)(head->next);
-	}
-
-	return NULL;
+	return (node == NULL) ? NULL : (G_Entity*)(node->data);
 }
 
 Tile G_SceneTile(int x, int y) {

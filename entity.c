@@ -118,13 +118,6 @@ void G_EntityPos(G_Entity **entity, int *x, int *y) {
 	}
 }
 
-void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst) {
-	assert((entity != NULL) && (*entity != NULL) && (src != NULL) && (*src != NULL) && (dst != NULL) && (*dst != NULL));
-
-	G_PopEntity(src, entity);
-	G_AddEntity(dst, entity);
-}
-
 void G_EntityUpdate(G_Entity **entity) {
 	assert((entity != NULL) && (*entity != NULL));
 	
@@ -265,8 +258,8 @@ void G_EntityRender(G_Entity **entity) {
 		}
 
 		if ((layer != -1) && (render->tile != NOTHING) && (G_IsPointWithin(render->x, render->y, view))) {
-				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
-				dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].layers[layer] = (*entity)->id;
+			dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
+			dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].layers[layer] = (*entity)->id;
 		}
 
 		if (light != NULL) {

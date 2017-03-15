@@ -12,7 +12,8 @@
 // globals.c
 extern G_Info game_info;
 extern G_Cell dmatrix[COLS][ROWS];
-extern unsigned long long G_ID;
+extern G_TreeNode *NIL;
+extern long long G_ID;
 
 extern int phys_keys[SDL_NUM_SCANCODES];
 extern int virt_keys[KEYBINDING_COUNT];

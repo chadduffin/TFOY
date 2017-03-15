@@ -231,12 +231,21 @@ typedef enum ElementFlag {
 ** TYPEDEFS
 */
 
-typedef struct G_Node {
+typedef struct G_TreeNode {
+  char color;
+  long long
+    key;
   void
-    *data,
-    *next,
-    *prev;
-} G_Node;
+    *data;
+  struct G_TreeNode
+    *left,
+    *right,
+    *parent;
+} G_TreeNode;
+
+typedef struct G_Tree {
+  G_TreeNode *root;
+} G_Tree;
 
 typedef struct G_Color {
 	int
@@ -260,8 +269,8 @@ typedef struct G_LightNode {
 	int
 		x,
 		y,
-		id,
 		count;
+	long long id;
 	G_Light light;
 } G_LightNode;
 
@@ -318,7 +327,7 @@ typedef struct G_Cell {
 } G_Cell;
 
 typedef struct G_Entity {
-	unsigned int id;
+	long long id;
 	void
 		*components[COMPONENT_COUNT],
 		*prev,
@@ -395,14 +404,12 @@ typedef struct G_Scene {
 	G_Tile *tiles;
 	G_Entity
 		*focus,
-		*inspect,
-		*head_entity,
-		*tail_entity;
+		*inspect;
+  G_Tree
+		*entity,
+		*transition;
 	G_View view;
 	G_Light ambient;
-  G_TileTransition
-    *head_transition,
-    *tail_transition;
 } G_Scene;
 
 typedef struct G_Info {
@@ -443,15 +450,15 @@ int G_PollEvents(void);
 int G_HandleEvents(void);
 void G_FocusView(void);
 void G_Update(void);
-void G_LoopEntities(EntityType type, void (*func)(G_Entity**));
+void G_LoopEntities(EntityType type, void (*func)(G_Entity**), G_TreeNode **node);
 void G_InitializeKeybindings(void);
 int G_CheckBound(Keybinding key);
 int G_CheckPhysical(SDL_Scancode key);
 int G_IsPointWithin(int x, int y, G_View *view);
-unsigned long long G_GetID(void);
 char* G_IntToChar(int value);
 char* G_FloatToChar(float value);
-unsigned long long G_GetGameStep();
+long long G_GetID(void);
+long long G_GetGameStep();
 void G_IncGameStep();
 
 // rendering.c
@@ -514,16 +521,22 @@ void G_ChangeScene(void **scene);
 void G_InitializeUI(G_Scene **scene);
 void G_CleanupScene(G_Scene **scene);
 void G_AddEntity(G_Scene **scene, G_Entity **entity);
-void G_DelEntity(G_Scene **scene, G_Entity **entity);
-void G_PopEntity(G_Scene **scene, G_Entity **entity);
-void G_AddTileTransition(G_Scene **scene, G_TileTransition **G_TileTransition);
-void G_DelTileTransition(G_Scene **scene, G_TileTransition **G_TileTransition);
-void G_PopTileTransition(G_Scene **scene, G_TileTransition **G_TileTransition);
+void G_AddTileTransition(G_Scene **scene, G_TileTransition **transition);
 void G_ChangeTile(G_Scene **scene, int x, int y, Tile tile, boolean changed);
 void G_CheckTileTransitions(G_Scene **scene);
+void G_TreeInitialize(G_Tree **tree);
+void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node);
+void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node);
+void G_TreeNodeRotateLeft(G_Tree **tree, G_TreeNode **node);
+void G_TreeNodeRotateRight(G_Tree **tree, G_TreeNode **node);
+void G_TreeDeleteFix(G_Tree **tree, G_TreeNode **node);
+G_TreeNode* G_TreeNodeRoot(G_Tree **tree);
+G_TreeNode* G_TreeNodeFind(G_Tree **tree, long long key);
+G_TreeNode* G_TreeNodeMinimum(G_Tree **tree);
+G_TreeNode* G_TreeNodeSuccessor(G_Tree **tree, G_TreeNode **node);
 G_View* G_SceneView(G_Scene **scene);
-G_Entity* G_GetEntities(G_Scene **scene);
-G_Entity* G_FindEntity(G_Scene **scene, int ID);
+G_Tree* G_GetEntities(G_Scene **scene);
+G_Entity* G_FindEntity(G_Scene **scene, long long ID);
 Tile G_SceneTile(int x, int y);
 
 /*

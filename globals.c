@@ -6,7 +6,8 @@
 
 G_Info game_info;
 G_Cell dmatrix[COLS][ROWS];
-unsigned long long G_ID = 0;
+G_TreeNode *NIL;
+long long G_ID = 0;
 
 int phys_keys[SDL_NUM_SCANCODES];
 int virt_keys[KEYBINDING_COUNT];
