@@ -10,8 +10,6 @@ G_Entity* G_CreateEntity(EntityType type) {
 	G_Entity *entity = (G_Entity*)malloc(sizeof(G_Entity));
 
 	entity->id = G_GetID();
-	entity->prev = NULL;
-	entity->next = NULL;
 	entity->type = type;
 
 	for (i = 0; i < COMPONENT_COUNT; i += 1) {

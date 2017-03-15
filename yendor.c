@@ -138,6 +138,8 @@ int G_Exit(int status) {
 		SDL_Quit();
 	}
 
+  free(NIL);
+
 	return 0;
 }
 

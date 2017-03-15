@@ -303,11 +303,8 @@ typedef struct G_TileTransition {
   int
     x,
     y;
-  unsigned long long
+  long long
     when;
-  void
-    *next,
-    *prev;
   Tile
     is,
     to;
@@ -328,10 +325,7 @@ typedef struct G_Cell {
 
 typedef struct G_Entity {
 	long long id;
-	void
-		*components[COMPONENT_COUNT],
-		*prev,
-		*next;
+	void *components[COMPONENT_COUNT];
 	EntityType type;
 }	G_Entity;
 
@@ -399,7 +393,7 @@ typedef struct G_Scene {
 		l,
 		entity_count,
 		transition_count;
-  unsigned long long
+  long long
     scene_step;
 	G_Tile *tiles;
 	G_Entity

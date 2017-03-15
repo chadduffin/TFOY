@@ -112,6 +112,15 @@ void G_InitializeOverworld(void) {
 			} else if ((x+rand()%4 > WORLD_COLS-48) && (x+rand()%4 < WORLD_COLS-24) && (y+rand()%4 > WORLD_ROWS-24)) {
 				if (overworld->tiles[i].tile != WALL) {
 					overworld->tiles[i].tile = GRASS;
+
+          G_TileTransition *test = (G_TileTransition*)malloc(sizeof(G_TileTransition));
+          test->x = x;
+          test->y = y;
+          test->when = 20+rand()%20;
+          test->is = BURNT_GRASS;
+          test->to = GRASS;
+          G_ChangeTile(&overworld, x, y, BURNT_GRASS, 1);
+          G_AddTileTransition(&overworld, &test);
 				}
 			}
 		}
@@ -124,7 +133,7 @@ void G_InitializeOverworld(void) {
 	l->light.red = 255;
 	l->light.green = 255;
 	l->light.blue = 255;
-	l->light.intensity = 64;
+	l->light.intensity = 32;
 	G_AddComponent(&player, CONTROLLER_COMPONENT);
 	G_RenderComponent *r = (G_RenderComponent*)G_AddComponent(&player, RENDER_COMPONENT);
 	r->tile = HUMAN;
@@ -175,17 +184,6 @@ void G_InitializeOverworld(void) {
 	G_AddEntity(&overworld, &v);
 
 	G_InitializeUI(&overworld);
-
-  G_TileTransition *test = (G_TileTransition*)malloc(sizeof(G_TileTransition));
-  test->x = 480;
-  test->y = 215;
-  test->when = 10;
-  test->next = NULL;
-  test->prev = NULL;
-  test->is = BURNT_GRASS;
-  test->to = GRASS;
-  G_ChangeTile(&overworld, 480, 215, BURNT_GRASS, 1);
-  G_AddTileTransition(&overworld, &test);
 }
 
 void G_ChangeScene(void **scene) {
@@ -365,7 +363,7 @@ void G_AddTileTransition(G_Scene **scene, G_TileTransition **transition) {
         (transition != NULL) && (*transition != NULL));
 
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
-  node->key = (*transition)->x+((*transition)->y*(*scene)->w);
+  node->key = (*transition)->when;//(*transition)->x+((*transition)->y*(*scene)->w);
   node->data = (void*)(*transition);
   G_TreeNodeInsert(&((*scene)->transition), &node);
 }
@@ -385,7 +383,9 @@ void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
   assert((tree != NULL) && (*tree != NULL) &&
         (node != NULL) && (*node != NULL));
 
+  G_Tree *t = (*tree);
   G_TreeNode
+    *n = (*node),
     *other = (*tree)->root->left,
     *parent = (*tree)->root,
     *uncle = NULL;
@@ -393,66 +393,65 @@ void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
   while (other != NIL) {
     parent = other;
 
-    if ((*node)->key < other->key) {
+    if (n->key < other->key) {
       other = other->left;
     } else {
       other = other->right;
     }
   }
 
-  (*node)->left = NIL;
-  (*node)->right = NIL;
-  (*node)->parent = parent;
-  (*node)->color = 'r';
+  n->left = NIL;
+  n->right = NIL;
+  n->parent = parent;
+  n->color = 'r';
 
-  if ((parent == (*tree)->root) || (parent->key > (*node)->key)) {
-    parent->left = *node;
+  if ((parent == t->root) || (parent->key > n->key)) {
+    parent->left = n;
   } else {
-    parent->right = *node;
+    parent->right = n;
   }
 
-  while ((*node)->parent->color == 'r') {
-    if ((*node)->parent == (*node)->parent->parent->left) {
-      uncle = (*node)->parent->parent->right;
+  while (n->parent->color == 'r') {
+    if (n->parent == n->parent->parent->left) {
+      uncle = n->parent->parent->right;
 
       if (uncle->color == 'r') {
-        (*node)->parent->color = 'b';
-        (*node)->parent->parent->color = 'r';
+        n->parent->color = 'b';
+        n->parent->parent->color = 'r';
         uncle->color = 'b';
-        node = &((*node)->parent->parent);
+        n = n->parent->parent;
       } else {
-        if (*node == (*node)->parent->right) {
-          *node = (*node)->parent;
-          G_TreeNodeRotateLeft(tree, node);
+        if (n == n->parent->right) {
+          n = n->parent;
+          G_TreeNodeRotateLeft(tree, &n);
         }
 
-        (*node)->parent->color = 'b';
-        (*node)->parent->parent->color = 'r';
-        G_TreeNodeRotateRight(tree, &((*node)->parent->parent));
+        n->parent->color = 'b';
+        n->parent->parent->color = 'r';
+        G_TreeNodeRotateRight(tree, &(n->parent->parent));
       }
     } else {
-      uncle = (*node)->parent->parent->left;
+      uncle = n->parent->parent->left;
 
       if (uncle->color == 'r') {
-        (*node)->parent->color = 'b';
-        (*node)->parent->parent->color = 'r';
+        n->parent->color = 'b';
+        n->parent->parent->color = 'r';
         uncle->color = 'b';
-        node = &((*node)->parent->parent);
+        n = n->parent->parent;
       } else {
-        if (*node == (*node)->parent->left) {
-          *node = (*node)->parent;
-          G_TreeNodeRotateRight(tree, node);
+        if (n == n->parent->left) {
+          n = n->parent;
+          G_TreeNodeRotateRight(tree, &n);
         }
 
-        (*node)->parent->color = 'b';
-        (*node)->parent->parent->color = 'r';
-        G_TreeNodeRotateLeft(tree, &((*node)->parent->parent));
-
+        n->parent->color = 'b';
+        n->parent->parent->color = 'r';
+        G_TreeNodeRotateLeft(tree, &(n->parent->parent));
       }
     }
   }
 
-  (*tree)->root->left->color = 'b';
+  t->root->left->color = 'b';
 }
 
 void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
@@ -506,47 +505,52 @@ void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
 
 void G_TreeNodeRotateLeft(G_Tree **tree, G_TreeNode **node) {
   assert((tree != NULL) && (*tree != NULL));
-  G_TreeNode *n = (*node);
 
-  G_TreeNode *child = n->right;
-  n->right = child->left;
+  G_TreeNode
+    *n = (*node),
+    *other = n->right;
 
-  if (child->left != NIL) {
-    child->left->parent = n;
+  n->right = other->left;
+
+  if (other->left != NIL) {
+    other->left->parent = n;
   }
 
-  child->parent = n->parent;
+  other->parent = n->parent;
 
   if (n == n->parent->left) {
-    n->parent->left = child;
+    n->parent->left = other;
   } else {
-    n->parent->right = child;
+    n->parent->right = other;
   }
 
-  child->left = n;
-  n->parent = child;
+  other->left = n;
+  n->parent = other;
 }
 
 void G_TreeNodeRotateRight(G_Tree **tree, G_TreeNode **node) {
   assert((tree != NULL) && (*tree != NULL));
 
-  G_TreeNode *child = (*node)->left;
-  (*node)->left = child->right;
+  G_TreeNode
+    *n = (*node),
+    *other = n->left;
 
-  if (child->right != NIL) {
-    child->right->parent = *node;
+  n->left = other->right;
+
+  if (other->right != NIL) {
+    other->right->parent = n;
   }
 
-  child->parent = (*node)->parent;
+  other->parent = n->parent;
 
-  if ((*node) == (*node)->parent->right) {
-    (*node)->parent->right = child;
+  if (n == n->parent->right) {
+    n->parent->right = other;
   } else {
-    (*node)->parent->left = child;
+    n->parent->left = other;
   }
 
-  child->right = (*node);
-  (*node)->parent = child;
+  other->right = n;
+  n->parent = other;
 }
 
 void G_TreeDeleteFix(G_Tree **tree, G_TreeNode **node) {
@@ -555,58 +559,58 @@ void G_TreeDeleteFix(G_Tree **tree, G_TreeNode **node) {
 
   G_TreeNode
     *n = (*node),
-    *sibling;
+    *other;
 
   while (n->color == 'b') {
     if (n == n->parent->left) {
-      sibling = n->parent->right;
+      other = n->parent->right;
 
-      if (sibling->color == 'r') {
-        sibling->color = 'b';
+      if (other->color == 'r') {
+        other->color = 'b';
         n->parent->color = 'r';
         G_TreeNodeRotateLeft(tree, &(n->parent));
-        sibling = n->parent->right;
+        other = n->parent->right;
       }
-      if ((sibling->right->color == 'b') && (sibling->left->color == 'b')) {
-        sibling->color = 'r';
+      if ((other->right->color == 'b') && (other->left->color == 'b')) {
+        other->color = 'r';
         n = n->parent;
       } else {
-        if (sibling->right->color == 'b') {
-          sibling->left->color = 'b';
-          sibling->color = 'r';
-          G_TreeNodeRotateRight(tree, &sibling);
-          sibling = n->parent->right;
+        if (other->right->color == 'b') {
+          other->left->color = 'b';
+          other->color = 'r';
+          G_TreeNodeRotateRight(tree, &other);
+          other = n->parent->right;
         }
 
-        sibling->color = n->parent->color;
+        other->color = n->parent->color;
         n->parent->color = 'b';
-        sibling->right->color = 'b';
+        other->right->color = 'b';
         G_TreeNodeRotateLeft(tree, &(n->parent));
         break;
       }
     } else {
-      sibling = n->parent->left;
+      other = n->parent->left;
 
-      if (sibling->color == 'r') {
-        sibling->color = 'b';
+      if (other->color == 'r') {
+        other->color = 'b';
         n->parent->color = 'r';
         G_TreeNodeRotateRight(tree, &(n->parent));
-        sibling = n->parent->left;
+        other = n->parent->left;
       }
-      if ((sibling->left->color == 'b') && (sibling->right->color == 'b')) {
-        sibling->color = 'r';
+      if ((other->left->color == 'b') && (other->right->color == 'b')) {
+        other->color = 'r';
         n = n->parent;
       } else {
-        if (sibling->left->color == 'b') {
-          sibling->right->color = 'b';
-          sibling->color = 'r';
-          G_TreeNodeRotateLeft(tree, &sibling);
-          sibling = n->parent->left;
+        if (other->left->color == 'b') {
+          other->right->color = 'b';
+          other->color = 'r';
+          G_TreeNodeRotateLeft(tree, &other);
+          other = n->parent->left;
         }
 
-        sibling->color = n->parent->color;
+        other->color = n->parent->color;
         n->parent->color = 'b';
-        sibling->left->color = 'b';
+        other->left->color = 'b';
         G_TreeNodeRotateRight(tree, &(n->parent));
         break;
       }
@@ -633,7 +637,7 @@ G_TreeNode* G_TreeNodeFind(G_Tree **tree, long long key) {
 G_TreeNode* G_TreeNodeMinimum(G_Tree **tree) {
   assert((tree != NULL) && (*tree != NULL));
 
-  G_TreeNode *other = (*tree)->root;
+  G_TreeNode *other = (*tree)->root->left;
 
   while (other->left != NIL) {
     other = other->left;
@@ -646,23 +650,23 @@ G_TreeNode* G_TreeNodeSuccessor(G_Tree **tree, G_TreeNode **node) {
   G_Tree *t = (*tree);
   G_TreeNode
     *n = (*node),
-    *succ = n->right;
+    *other = n->right;
 
-  if (succ != NIL) {
-    while (succ->left != NIL) {
-      succ = succ->left;
+  if (other != NIL) {
+    while (other->left != NIL) {
+      other = other->left;
     }
   } else {
-    for (succ = n->parent; n == succ->right; succ = succ->parent) {
-      n = succ;
+    for (other = n->parent; n == other->right; other = other->parent) {
+      n = other;
     }
 
-    if (succ == t->root) {
-      succ = NIL;
+    if (other == t->root) {
+      other = NIL;
     }
   }
 
-  return succ;
+  return other;
 }
 
 G_View* G_SceneView(G_Scene **scene) {
@@ -681,7 +685,6 @@ G_Entity* G_FindEntity(G_Scene **scene, long long ID) {
 	assert((scene != NULL) && (*scene != NULL));
 
 	G_TreeNode *node = G_TreeNodeFind(&((*scene)->entity), ID);
-
 	return (node == NULL) ? NULL : (G_Entity*)(node->data);
 }
 
