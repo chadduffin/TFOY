@@ -159,8 +159,8 @@ void G_InitializeOverworld(void) {
 	G_Entity *x = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
 	r->tile = FIRE;
-	r->x = 480;
-	r->y = 230;
+	r->x = 470;
+	r->y = 240;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
@@ -172,8 +172,8 @@ void G_InitializeOverworld(void) {
 	G_Entity *v = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&v, RENDER_COMPONENT);
 	r->tile = FIRE;
-	r->x = 445;
-	r->y = 220;
+	r->x = 424;
+	r->y = 230;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&v, LIGHT_COMPONENT);
@@ -363,7 +363,7 @@ void G_AddTileTransition(G_Scene **scene, G_TileTransition **transition) {
         (transition != NULL) && (*transition != NULL));
 
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
-  node->key = (*transition)->when;//(*transition)->x+((*transition)->y*(*scene)->w);
+  node->key = (*transition)->when;
   node->data = (void*)(*transition);
   G_TreeNodeInsert(&((*scene)->transition), &node);
 }
@@ -377,6 +377,7 @@ void G_TreeInitialize(G_Tree **tree) {
   (*tree)->root->color = 'b';
   (*tree)->root->data = NULL;
   (*tree)->root->key = -1;
+  (*tree)->size = 0;
 } 
 
 void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
@@ -452,6 +453,7 @@ void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
   }
 
   t->root->left->color = 'b';
+  t->size += 1;
 }
 
 void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
@@ -501,6 +503,7 @@ void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
   }
 
   free(z);
+  t->size -= 1;
 }
 
 void G_TreeNodeRotateLeft(G_Tree **tree, G_TreeNode **node) {

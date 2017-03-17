@@ -244,6 +244,7 @@ typedef struct G_TreeNode {
 } G_TreeNode;
 
 typedef struct G_Tree {
+  int size;
   G_TreeNode *root;
 } G_Tree;
 

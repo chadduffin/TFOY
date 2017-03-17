@@ -152,7 +152,7 @@ void G_EntityUpdate(G_Entity **entity) {
 		}
 
 		if (render->tile != NOTHING) {
-			TileLayer layer;
+			TileLayer layer = -1;
 			G_View *view = G_SceneView(&location);
 
 			if (creature != NULL) {
@@ -247,7 +247,7 @@ void G_EntityRender(G_Entity **entity) {
 	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
 
 	if (render != NULL) {
-		TileLayer layer;
+		TileLayer layer = -1;
 
 		if (creature != NULL) {
 			layer = CREATURE_LAYER;
