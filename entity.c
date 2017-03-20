@@ -40,6 +40,10 @@ void* G_AddComponent(G_Entity **entity, Component component) {
     case ELEMENT_COMPONENT:
       {
         G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
+        element->lifespan = 16;
+        element->coefficient = 1.0;
+        element->tile_flags = 0;
+        element->element_flags = SPREADS | BURNING;
         (*entity)->components[ELEMENT_COMPONENT] = element;
         return element;
       }
@@ -121,6 +125,7 @@ void G_EntityUpdate(G_Entity **entity) {
 	
 	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
 	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
+  G_ElementComponent *element = (G_ElementComponent*)(G_GetComponent(entity, ELEMENT_COMPONENT));
 	G_CreatureComponent *creature = (G_CreatureComponent*)(G_GetComponent(entity, CREATURE_COMPONENT));
 	G_ControllerComponent *controller = (G_ControllerComponent*)(G_GetComponent(entity, CONTROLLER_COMPONENT));
 
@@ -186,6 +191,7 @@ void G_EntityUpdate(G_Entity **entity) {
 	}
 
   G_UIEntityUpdate(&ui);
+  G_ElementEntityUpdate(render->x, render->y, &element);
 }
 	
 void G_UIEntityUpdate(G_UIComponent **ui) {
@@ -234,6 +240,30 @@ void G_UIEntityUpdate(G_UIComponent **ui) {
   	if ((*ui)->state != state) {
   		(*ui)->state = (*ui)->state | CHANGED;
   	}		
+  }
+}
+
+void G_ElementEntityUpdate(int x, int y, G_ElementComponent **element) {
+  if ((element != NULL) && (*element != NULL)) {
+    if (((*element)->element_flags & SPREADS) == SPREADS) {
+      int
+        j,
+        i;
+
+      for (j = -1; j < 2; j += 1) {
+        for (i = -1; i < 2; i += 1) {
+          if ((j == 0) && (i == 0)) {
+            continue;
+          }
+
+          float chance = (float)(1+rand()%100)/(100.0);
+
+          if (chance <= (*element)->coefficient) {
+            G_ExposeTileTo(x+i, y+j, (*element)->element_flags);
+          }
+        }
+      }
+    }
   }
 }
   
@@ -297,6 +327,44 @@ void G_EntityRender(G_Entity **entity) {
 			}
 		}
 	}
+}
+
+void G_ExposeTileTo(int x, int y, TileFlag flags) {
+  assert(location != NULL);
+
+  Tile target = G_SceneTile(x, y);
+
+  if ((G_TileFlags(target) & FLAMMABLE) && (flags & BURNING)) {
+    G_Entity *flame = G_CreateEntity(GAME_ENTITY);
+    G_LightComponent *light = (G_LightComponent*)G_AddComponent(&flame, LIGHT_COMPONENT);
+    G_RenderComponent *render = (G_RenderComponent*)G_AddComponent(&flame, RENDER_COMPONENT);
+    G_ElementComponent *element = (G_ElementComponent*)G_AddComponent(&flame, ELEMENT_COMPONENT);
+
+    light->light.red = 255;
+    light->light.green = 165;
+    light->light.blue= 0;
+    light->light.intensity = 3;
+
+    render->x = x;
+    render->y = y;
+    render->x_previous = x;
+    render->y_previous = y;
+    render->tile = FIRE;
+
+    element->lifespan = location->scene_step+16+rand()%32;
+    element->coefficient = 0.2;
+
+    G_AddEntity(&location, &flame);
+
+    G_TileTransition *effect = (G_TileTransition*)malloc(sizeof(G_TileTransition));
+    effect->x = x;
+    effect->y = y;
+    effect->when = location->scene_step+128+rand()%16;
+    effect->is = BURNT_GRASS;
+    effect->to = GRASS;
+    G_ChangeTile(&location, x, y, BURNT_GRASS, 1);
+    G_AddTileTransition(&location, &effect);
+  }
 }
 
 EntityType G_GetEntityType(G_Entity **entity) {

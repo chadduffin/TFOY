@@ -1,5 +1,6 @@
 #include "yendor.h"
 #include "globals.h"
+#include <sys/time.h>
 
 /*
 ** FUNCTIONS
@@ -50,7 +51,8 @@ void G_Render(void) {
 
 	if (location != menu) {
 		G_RenderSalvage();
-		
+    G_CheckTileTransitions(&location);
+
 		if (location->focus != NULL) {
 			int
 				x,
@@ -66,7 +68,6 @@ void G_Render(void) {
 	}	
 
 	G_LoopEntities(ANY_ENTITY, &G_EntityRender, &(location->entity->root->left));
-  G_CheckTileTransitions(&location);
 	G_RenderChanges();
 
 	SDL_SetRenderTarget(game_info.renderer, NULL);	
@@ -82,7 +83,7 @@ void G_Render(void) {
 		G_RenderLightmap();
 	}
 
-	SDL_RenderPresent(game_info	.renderer);
+	SDL_RenderPresent(game_info.renderer);
 }
 
 void G_LightRender(void) {
@@ -283,10 +284,11 @@ void G_RenderFlicker(float frequency) {
 			if ((dmatrix[x][y].visible == 0) || (dmatrix[x][y].tile != G_CellToTile(x, y))) {
 				continue;
 			}
-			if (G_TileFlickers(dmatrix[x][y].tile)) {
-				if (frequency > (float)(rand()%100)/100) {
-					tile = dmatrix[x][y].tile;
 
+      tile = G_CellToTile(x, y);
+
+			if (G_TileFlickers(tile)) {
+				if (frequency > (float)(rand()%100)/100) {
 					dst.x = x*game_info.tile_w+game_info.display_x;
 					dst.y = y*game_info.tile_h+game_info.display_y;
 
@@ -442,33 +444,39 @@ void G_CastShadow(
 		x_bound,
 		y_bound,
 		started,
-		was_blocked = 0;
+		was_blocked = 0,
+    max = LIGHT_DISTANCE;
 	float current;
 
+  if (light != NULL) {
+    max = ((G_LightNode*)light)->light.intensity;
+    max = (max < LIGHT_DISTANCE) ? max : LIGHT_DISTANCE;
+  }
+
 	if (dx > 0) {
-		if (x+LIGHT_DISTANCE >= location->w) {
+		if (x+max >= location->w) {
 			x_bound = location->w-x;
 		} else {
-			x_bound = LIGHT_DISTANCE;
+			x_bound = max;
 		}
 	} else {
-		if (x-LIGHT_DISTANCE < 0) {
+		if (x-max < 0) {
 			x_bound = x+1;
 		} else {
-			x_bound = LIGHT_DISTANCE;
+			x_bound = max;
 		}
 	}
 	if (dy > 0) {
-		if (y+LIGHT_DISTANCE >= location->h) {
+		if (y+max >= location->h) {
 			y_bound = location->h-y;
 		} else {
-			y_bound = LIGHT_DISTANCE;
+			y_bound = max;
 		}
 	} else {
-		if (y-LIGHT_DISTANCE < 0) {
+		if (y-max < 0) {
 			y_bound = y+1;
 		} else {
-			y_bound = LIGHT_DISTANCE;
+			y_bound = max;
 		}
 	}
 

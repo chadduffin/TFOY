@@ -209,6 +209,7 @@ typedef enum Keybinding {
 	RIGHT_DOWN,
 	UP,
 	DOWN,
+  WAIT,
 
 	KEYBINDING_COUNT
 } Keybinding;
@@ -219,12 +220,15 @@ typedef enum UIState {
 	HOVER = 2,
 	PRESSED = 4,
 	CHANGED = 8,
-
 } UIState;
 
 typedef enum ElementFlag {
   SPREADS = 1,
   DIFFUSE = 2,
+
+  BURNING = 4,
+  FREEZING = 8,
+
 } ElementFlag;
 
 /*
@@ -341,6 +345,8 @@ typedef struct G_CreatureComponent {
 } G_CreatureComponent;
 
 typedef struct G_ElementComponent {
+  int lifespan;
+  float coefficient;
   TileFlag tile_flags;
   ElementFlag element_flags;
 } G_ElementComponent;
@@ -505,7 +511,9 @@ void G_EntityPos(G_Entity **entity, int *x, int *y);
 void G_EntityMov(G_Entity **entity, G_Scene **src, G_Scene **dst);
 void G_EntityUpdate(G_Entity **entity);
 void G_UIEntityUpdate(G_UIComponent **ui);
+void G_ElementEntityUpdate(int x, int y, G_ElementComponent **element);
 void G_EntityRender(G_Entity **entity);
+void G_ExposeTileTo(int x, int y, TileFlag flags);
 EntityType G_GetEntityType(G_Entity **entity);
 Tile G_EntityIDToTile(int ID);
 

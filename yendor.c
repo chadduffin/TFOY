@@ -232,6 +232,10 @@ int G_PollEvents() {
 int G_HandleEvents() {
 	short to_return = -1;
 
+	if (G_CheckBound(WAIT)) {
+		to_return = 0;
+    location->view.unchanged = 0;
+	}
 	if (G_CheckBound(RIGHT)) {
 		to_return = 0;
 	}
@@ -299,11 +303,30 @@ void G_LoopEntities(EntityType type, void (*func)(G_Entity**), G_TreeNode **node
 
 	if (*node != NIL) {
     G_Entity *entity = (G_Entity*)((*node)->data);
+    G_RenderComponent *render = G_GetComponent(&entity, RENDER_COMPONENT);
+    G_ElementComponent *element = G_GetComponent(&entity, ELEMENT_COMPONENT);
+
+    if (element != NULL) {
+      if (element->lifespan < location->scene_step) {
+        if (G_IsPointWithin(render->x, render->y, &(location->view))) {
+          int
+            x = render->x-location->view.x,
+            y = render->y-location->view.y;
+
+          dmatrix[x][y].layers[ORNAMENT_LAYER] = -1;
+          dmatrix[x][y].changed = 1;
+          dmatrix[x][y].tile = G_SceneTile(render->x, render->y);
+        }
+        
+        G_RemoveComponent(&entity, RENDER_COMPONENT);
+        G_RemoveComponent(&entity, ELEMENT_COMPONENT);
+      }
+    }
 
   	if (G_GetEntityType(&entity) & type) {
   		func(&entity);
     }
-
+    
     G_LoopEntities(type, func, &((*node)->left));
     G_LoopEntities(type, func, &((*node)->right));
 	}
@@ -327,6 +350,7 @@ void G_InitializeKeybindings() {
 	virt_keys[RIGHT_DOWN] = SDL_SCANCODE_N;
 	virt_keys[UP] = SDL_SCANCODE_J;
 	virt_keys[DOWN] = SDL_SCANCODE_K;
+	virt_keys[WAIT] = SDL_SCANCODE_Z;
 }
 
 int G_CheckBound(Keybinding keybinding) {

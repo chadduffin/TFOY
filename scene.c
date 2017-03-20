@@ -106,27 +106,23 @@ void G_InitializeOverworld(void) {
 				x = i%WORLD_COLS,	
 				y = i/WORLD_COLS;
 			if ((x+rand()%4 > WORLD_COLS-30) && (y+rand()%4 > WORLD_ROWS-24)) {
-				if (overworld->tiles[i].tile != WALL) {
 					overworld->tiles[i].tile = WATER;
-				}
-			} else if ((x+rand()%4 > WORLD_COLS-48) && (x+rand()%4 < WORLD_COLS-24) && (y+rand()%4 > WORLD_ROWS-24)) {
-				if (overworld->tiles[i].tile != WALL) {
+			} else if ((x+rand()%4 > WORLD_COLS-128) && (x+rand()%4 < WORLD_COLS-24) && (y+rand()%4 > WORLD_ROWS-24)) {
 					overworld->tiles[i].tile = GRASS;
-
-          G_TileTransition *test = (G_TileTransition*)malloc(sizeof(G_TileTransition));
-          test->x = x;
-          test->y = y;
-          test->when = 20+rand()%20;
-          test->is = BURNT_GRASS;
-          test->to = GRASS;
-          G_ChangeTile(&overworld, x, y, BURNT_GRASS, 1);
-          G_AddTileTransition(&overworld, &test);
-				}
 			}
 		}
 
     overworld->tiles[i].changed = 0;
 	}
+
+  G_TileTransition *test = (G_TileTransition*)malloc(sizeof(G_TileTransition));
+  test->x = 455;
+  test->y = 234;
+  test->when = 20+rand()%20;
+  test->is = GRASS;
+  test->to = WALL;
+  G_ChangeTile(&overworld, 455, 234, GRASS, 1);
+  G_AddTileTransition(&overworld, &test);
 
 	G_Entity *player = G_CreateEntity(GAME_ENTITY);
 	G_LightComponent *l = (G_LightComponent*)G_AddComponent(&player, LIGHT_COMPONENT);
@@ -145,7 +141,7 @@ void G_InitializeOverworld(void) {
 	G_AddEntity(&overworld, &player);
 	G_Entity *t = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&t, RENDER_COMPONENT);
-	r->tile = FIRE;
+	r->tile = NOTHING;
 	r->x = 480;
 	r->y = 210;
 	r->x_previous = r->x;
@@ -158,20 +154,20 @@ void G_InitializeOverworld(void) {
 	G_AddEntity(&overworld, &t);
 	G_Entity *x = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&x, RENDER_COMPONENT);
-	r->tile = FIRE;
+	r->tile = NOTHING;
 	r->x = 470;
 	r->y = 240;
 	r->x_previous = r->x;
 	r->y_previous = r->y;
 	l = (G_LightComponent*)G_AddComponent(&x, LIGHT_COMPONENT);
-	l->light.red = 750;
-	l->light.green = 0;
-	l->light.blue = 0;
+	l->light.red = 255;
+	l->light.green = 255;
+	l->light.blue = 255;
 	l->light.intensity = 24;
 	G_AddEntity(&overworld, &x);
 	G_Entity *v = G_CreateEntity(GAME_ENTITY);
 	r = (G_RenderComponent*)G_AddComponent(&v, RENDER_COMPONENT);
-	r->tile = FIRE;
+	r->tile = NOTHING;
 	r->x = 424;
 	r->y = 230;
 	r->x_previous = r->x;
@@ -277,10 +273,10 @@ void G_InitializeUI(G_Scene **scene) {
 		ui->on_click = &G_Quit;
 		G_AddEntity(scene, &entity);
 	} else {
-	/*G_Entity *entity = G_CreateEntity(UI_ENTITY);
+/*	  G_Entity *entity = G_CreateEntity(UI_ENTITY);
 		G_UIComponent *ui = (G_UIComponent*)G_AddComponent(&entity, UI_COMPONENT);
-		ui->x = DCOLS_OFFSET;
-		ui->y = 0;
+		ui->x = 64;
+		ui->y = 32;
 		ui->l = 16;
 		ui->name = (char*)malloc(17);
 		ui->name = "You see nothing.\0";
@@ -332,10 +328,8 @@ void G_CheckTileTransitions(G_Scene **scene) {
       transition->x -= (*scene)->view.x;
       transition->y -= (*scene)->view.y;
 
-      if (G_CellToTile(transition->x, transition->y) == transition->is) {
-        dmatrix[transition->x][transition->y].changed = 1;
-        dmatrix[transition->x][transition->y].tile = transition->to;
-      }
+      dmatrix[transition->x][transition->y].changed = 1;
+      dmatrix[transition->x][transition->y].tile = transition->to;
     }
 
     G_TreeNodeDelete(&((*scene)->transition), &node);
@@ -488,6 +482,7 @@ void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
   if (y->color == 'b') {
     G_TreeDeleteFix(tree, &x);
   }
+
   if (y != z) {
     y->left = z->left;
     y->right = z->right;

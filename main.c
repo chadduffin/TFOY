@@ -10,10 +10,13 @@ int main(int argc, char **argv) {
 		G_InitializeMenu();
 		G_InitializeOverworld();
 		G_InitializeKeybindings();
-		G_ChangeScene((void**)(&menu));
+		G_ChangeScene((void**)(&overworld));
 
 		G_Render();
 		location->view.unchanged = 0;
+
+  G_ExposeTileTo(470, 235, BURNING);
+
 
 		while (game_info.running) {
 			if (G_PollEvents() == -1) {
