@@ -1,43 +1,28 @@
 #include "yendor.h"
 #include "globals.h"
 
-
 int main(int argc, char **argv) {
-	int status = G_Init(),
-		last_update = SDL_GetTicks();
+  int status = 0;
 
-	if (status > GRPHCS_OK) {
-		G_InitializeMenu();
-		G_InitializeOverworld();
-		G_InitializeKeybindings();
-		G_ChangeScene((void**)(&overworld));
+  G_Init(NULL);
 
-		G_Render();
-		location->view.unchanged = 0;
+  threads[INITIALIZE_THREAD] = SDL_CreateThread(G_NetworkingInit, "networking-initialization", NULL);
+  SDL_DetachThread(threads[INITIALIZE_THREAD]);
 
-  G_ExposeTileTo(470, 235, BURNING);
+  while (game_info.running) {
+unsigned int a = SDL_GetTicks();
+    G_UpdateBegin();
 
+    threads[UPDATE_THREAD] = SDL_CreateThread(G_Update, "game-updating", NULL);
+    threads[RENDER_THREAD] = SDL_CreateThread(G_Render, "game-renderering", NULL);
+    
+    SDL_WaitThread(threads[UPDATE_THREAD], &status);
+    SDL_WaitThread(threads[RENDER_THREAD], &status);
 
-		while (game_info.running) {
-			if (G_PollEvents() == -1) {
-				break;
-			}
+    G_UpdateEnd();
+printf("%u elapsed.\n", SDL_GetTicks()-a);
+  };
 
-			G_Update();
-	
-			if (location != NULL) {
-				if (G_SceneView(&location)->unchanged == 0) {
-					G_Render();
-				} else {
-					G_LightRender();
-				}
-			}
-
-			last_update = G_FrameCap(last_update);
-		}
-	}
-
-	G_CleanupScene(&menu);
-	G_CleanupScene(&overworld);
-  return G_Exit(status);
+  G_Quit();
+  return 0;
 }

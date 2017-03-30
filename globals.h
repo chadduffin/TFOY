@@ -1,61 +1,75 @@
 #ifndef __GLOBALS__
 #define __GLOBALS__
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_net.h>
-#include <SDL2/SDL_image.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
-/*
-** EXTERNS
-*/
+#ifdef __unix__
+	#include <SDL2/SDL.h>
+	#include <SDL2/SDL_net.h>
+	#include <SDL2/SDL_image.h>
+#elif __linux__
+	#include <SDL2/SDL.h>
+	#include <SDL2/SDL_net.h>
+	#include <SDL2/SDL_image.h>
+#elif __APPLE__
+	#include <SDL2/SDL.h>
+	#include <SDL2_net/SDL_net.h>
+	#include <SDL2_image/SDL_image.h>
+#elif _WIN32
+	#ifdef _WIN64
+		/* 64-Bit Windows */
+	#else
+		/* 32-Bit Windows */
+	#endif
+#endif
 
-// globals.c
-extern G_Info game_info;
-extern G_Cell dmatrix[COLS][ROWS];
-extern G_TreeNode *NIL;
-extern long long G_ID;
+/* globals.c */
 
-extern int phys_keys[SDL_NUM_SCANCODES];
-extern int virt_keys[KEYBINDING_COUNT];
-extern int last_flicker;
-extern int port;
-extern IPaddress ipaddress;
-extern TCPsocket socket;
-extern char *name;
-extern char *images[];
-extern char *server_name;
-extern char title[ROWS][COLS];
+extern SDL_Thread *threads[GAME_THREAD_COUNT];
 
-// attributes.c
-extern G_Attribute attributes[ATTRIBUTE_COUNT];
+extern boolean vismap[COLS][ROWS];
+extern G_TileCell tilemap[COLS][ROWS];
+extern G_LightNode lightmap[COLS][ROWS];
 
-// tiles.c
-extern G_TileDescriptor descriptor_tiles[TILE_COUNT];
+extern G_Console console;
+extern G_GameInformation game_info;
 
-// scenes.c
-extern G_Scene *menu;
-extern G_Scene *overworld;
-extern G_Scene *location;
+extern G_Tree *scenes;
+extern G_Scene *active_scene;
 
-// colors.c
-extern const G_Color red;
-extern const G_Color blue;
-extern const G_Color aqua;
-extern const G_Color black;
-extern const G_Color white;
-extern const G_Color green;
-extern const G_Color yellow;
-extern const G_Color magenta;
-extern const G_Color brown;
-extern const G_Color grey;
-extern const G_Color dark_grey;
-extern const G_Color orange;
-extern const G_Color dark_blue;
-extern const G_Color scott_blue;
-extern const G_Color dark_green;
-extern const G_Color forest_green;
+/* tiles.c */
 
-/*
-*/
+extern G_TileInformation tile_info[TILE_COUNT];
+
+/* colors.c */
+
+extern G_Color black;
+extern G_Color white;
+
+extern G_Color red;
+extern G_Color grey;
+extern G_Color teal;
+extern G_Color blue;
+extern G_Color brown;
+extern G_Color green;
+extern G_Color orange;
+extern G_Color yellow;
+extern G_Color violet;
+extern G_Color purple;
+extern G_Color magenta;
+
+extern G_Color dred;
+extern G_Color dgrey;
+extern G_Color dteal;
+extern G_Color dblue;
+extern G_Color dbrown;
+extern G_Color dgreen;
+extern G_Color dorange;
+extern G_Color dyellow;
+extern G_Color dviolet;
+extern G_Color dpurple;
+extern G_Color dmagenta;
 
 #endif /* GLOBALS */

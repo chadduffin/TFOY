@@ -1,27 +1,27 @@
 #include "yendor.h"
 #include "globals.h"
 
-/*
-** EXTERNS
-*/
+G_Color black = {0, 0, 0, 0, 0, 0};
+G_Color white = {255, 255, 255, 0, 0, 0};
 
-const G_Color black = {0, 0, 0, 0, 0, 0};
-const G_Color white = {255, 255, 255, 0, 0, 0};
-const G_Color red = {255, 0, 0, 64, 32, 32};
-const G_Color green = {0, 255, 0, 32, 64, 32};
-const G_Color blue = {0, 0, 255, 32, 32, 64};
-const G_Color yellow = {255, 255, 0, 64, 64, 32};
-const G_Color magenta = {255, 0, 255, 64, 32, 64};
-const G_Color aqua = {0, 255, 255, 32, 64, 64};
-const G_Color orange = {255, 165, 0, 64, 32, 16};
+G_Color red = {255, 51, 51, 50, 10, 10};
+G_Color grey = {160, 160, 160, 32, 32, 32};
+G_Color teal = {102, 255, 255, 20, 51, 51};
+G_Color blue = {51, 153, 255, 10, 30, 51};
+G_Color brown = {179, 131, 68, 36, 26, 13};
+G_Color green = {153, 255, 51, 30, 51, 10};
+G_Color orange = {255, 153, 51, 51, 30, 10};
+G_Color yellow = {255, 255, 102, 51, 51, 20};
+G_Color violet = {153, 51, 255, 30, 10, 51};
+G_Color magenta = {255, 0, 255, 51, 0, 51};
 
-const G_Color brown = {105, 90, 70, 16, 14, 12};
-const G_Color grey = {225, 225, 225, 32, 32, 32};
-const G_Color dark_grey = {155, 155, 155, 32, 32, 32};
-const G_Color dark_blue = {0, 0, 75, 8, 8, 16};
-const G_Color scott_blue = {16, 16, 255, 32, 32, 64};
-const G_Color dark_green = {0, 100, 0, 16, 32, 16};
-const G_Color forest_green = {34, 139, 34, 4, 8, 4};
-
-/*
-*/
+G_Color dred = {102, 0, 0, 20, 0, 0};
+G_Color dgrey = {64, 64, 64, 12, 12, 12};
+G_Color dteal = {0, 102, 102, 0, 20, 20};
+G_Color dblue = {0, 51, 102, 0, 10, 20};
+G_Color dbrown = {102, 51, 0, 20, 10, 0};
+G_Color dgreen = {51, 102, 50, 10, 20, 10};
+G_Color dorange = {102, 51, 0, 20, 10, 0};
+G_Color dyellow = {102, 102, 0, 20, 20, 0};
+G_Color dviolet = {51, 0, 102, 10, 0, 20};
+G_Color dmagenta = {102, 0, 102, 20, 0, 20};

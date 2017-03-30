@@ -1,103 +1,43 @@
 #include "yendor.h"
 #include "globals.h"
 
-/*
-** EXTERNS
-*/
+G_TileInformation tile_info[TILE_COUNT] = {
+  {"Nothing", "", 0, 0, &white, &black, 0},
 
-G_TileDescriptor descriptor_tiles[TILE_COUNT] = {
-	{"empty", "description", 0, 0, &black, &black, 0, EMPTY},
-	{"dirt", "some dirt", 14, 2, &grey, &dark_blue, FLICKER_ONCE, GROUND},
-	{"grass", "some grass", 2, 2, &dark_green, &forest_green, FLAMMABLE | FLICKER_ONCE, GROUND},
-	{"burnt grass", "some burnt grass", 2, 2, &dark_grey, &brown, FLICKER_ONCE, GROUND},
-	{"water", "some water", 14, 7, &blue, &scott_blue, FLICKERS, LIQUID},
-	{"wall", "a wall", 3, 2, &brown, &grey, OBSTRUCTS | FLICKER_ONCE, SOLID},
+  {"Ground", "", 14, 2, &brown, &dblue, 0},
+  {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
+  {"Grass", "", 2, 2, &dgreen, &green, FLAMMABLE},
+  {"Burnt Grass", "", 2, 2, &dbrown, &brown, 0},
+  {"Water", "", 14, 7, &dblue, &blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
 
-	{"ball", "a ball", 9, 15, &white, &black, 0, ENTITY},
-	{"fire", "some fire", 14, 1, &red, &orange, 0, ENTITY},
+  {"Fire", "", 14, 1, &red, &orange, FLICKERS_QUICK | DISABLES_ACTIONS},
 
-	{"character", "", 1, 0, &white, &black, 0, ENTITY},
-
-	{"", "", 0, 0, &aqua, &aqua, 0, COLOR},
-	{"", "", 0, 0, &black, &black, 0, COLOR},
-	{"", "", 0, 0, &blue, &blue, 0, COLOR},
-	{"", "", 0, 0, &green, &green, 0, COLOR},
-	{"", "", 0, 0, &magenta, &magenta, 0, COLOR},
-	{"", "", 0, 0, &red, &red, 0, COLOR},
-	{"", "", 0, 0, &white, &white, 0, COLOR},
-	{"", "", 0, 0, &yellow, &yellow, 0, COLOR},
+  {"Human", "", 1, 0, &white, &black, OBSTRUCTS_MOVEMENT},
 };
 
-const char* G_TileName(Tile tile) {
-	assert((tile >= NOTHING) && (tile < END_TILE));
-
-	return (descriptor_tiles[tile-NOTHING].name);
-}
-
-const char* G_TileDescription(Tile tile) {
-	assert((tile >= NOTHING) && (tile < END_TILE));
-
-	return (descriptor_tiles[tile-NOTHING].description);
-}
-
-G_Color G_TileForeground(Tile tile) {
-	assert((tile >= NOTHING) && (tile < END_TILE));
-
-	return *(descriptor_tiles[tile-NOTHING].fg);
-}
-
-G_Color G_TileBackground(Tile tile) {
-	assert((tile >= NOTHING) && (tile < END_TILE));
-
-	return *(descriptor_tiles[tile-NOTHING].bg);
-}
-
 TileFlag G_TileFlags(Tile tile) {
-	assert((tile >= NOTHING) && (tile < END_TILE));
+  if ((tile >= NOTHING) && (tile < END_TILE)) {
+    return tile_info[tile-NOTHING].flags;
+  }
 
-	return (descriptor_tiles[tile-NOTHING].flags);
-}	
-
-boolean G_TileSolid(Tile tile) {
-	assert((tile >= NOTHING) && (tile < END_TILE));
-
-	return (descriptor_tiles[tile-NOTHING].base == SOLID);
+  return 0;
 }
 
-boolean G_TileFlickers(Tile tile) {
-	if ((tile < NOTHING) || (tile >= END_TILE)) {
-		return 0;
-	}
+SDL_Rect G_TileSource(Tile tile) {
+	assert((tile >= 0) && (tile < END_TILE));
 
-	return ((descriptor_tiles[tile-NOTHING].flags & FLICKERS) == FLICKERS);
-}
-
-boolean G_TileFlickerOnce(Tile tile) {
-	if ((tile < NOTHING) || (tile >= END_TILE)) {
-		return 0;
-	}
-
-	return (((descriptor_tiles[tile-NOTHING].flags & FLICKERS) == FLICKERS) ||
-					((descriptor_tiles[tile-NOTHING].flags & FLICKER_ONCE) == FLICKER_ONCE));
-}
-
-boolean G_TileObstructs(Tile tile) {
-	assert((tile >= NOTHING) && (tile < END_TILE));
-
-	return ((descriptor_tiles[tile-NOTHING].flags & OBSTRUCTS) == OBSTRUCTS);
-}
-
-void G_TileSource(Tile tile, SDL_Rect *source) {
-	assert((tile >= 0) && (tile < END_TILE) && (source != NULL));
+  SDL_Rect src;
+  
+  src.w = TILE_SOURCE_WIDTH;
+  src.h = TILE_SOURCE_HEIGHT;
 
 	if (tile < 256) {
-		source->x = (tile%16)*TILE_SOURCE_WIDTH;
-		source->y = (tile/16)*TILE_SOURCE_HEIGHT;
+		src.x = (tile%16)*TILE_SOURCE_WIDTH;
+		src.y = (tile/16)*TILE_SOURCE_HEIGHT;
 	} else {
-		source->x = descriptor_tiles[tile-NOTHING].x*TILE_SOURCE_WIDTH;
-		source->y = descriptor_tiles[tile-NOTHING].y*TILE_SOURCE_HEIGHT;
+		src.x = tile_info[tile-NOTHING].x*TILE_SOURCE_WIDTH;
+		src.y = tile_info[tile-NOTHING].y*TILE_SOURCE_HEIGHT;
 	}
-}
 
-/*
-*/
+  return src;
+}

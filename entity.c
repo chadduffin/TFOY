@@ -1,31 +1,36 @@
 #include "yendor.h"
 #include "globals.h"
 
-/*
-** FUNCTIONS
-*/
+G_Entity* G_EntityCreate(void) {
+  int i;
+  G_Entity *entity = (G_Entity*)malloc(sizeof(G_Entity));
 
-G_Entity* G_CreateEntity(EntityType type) {
-	int i;
-	G_Entity *entity = (G_Entity*)malloc(sizeof(G_Entity));
+  entity->id = G_GetId();
+  entity->parent.value = -1;
 
-	entity->id = G_GetID();
-	entity->type = type;
+  printf("%li created.\n", entity->id.value);
+  
+  for (i = 0; i < COMPONENT_COUNT; i += 1) {
+    entity->components[i] = NULL;
+  }
 
-	for (i = 0; i < COMPONENT_COUNT; i += 1) {
-		entity->components[i] = NULL;
-	}
-
-	return entity;
+  return entity;
 }
 
-void* G_AddComponent(G_Entity **entity, Component component) {
-	assert((entity != NULL) && (*entity != NULL));
+void* G_EntityComponentFind(G_Entity **entity, Component component) {
+  assert((entity != NULL) && (*entity != NULL));
+
+  return (*entity)->components[component];
+}
+
+void* G_EntityComponentInsert(G_Entity **entity, Component component) {
+  assert((entity != NULL) && (*entity != NULL));
 
 	switch (component) {
 		case CONTROLLER_COMPONENT:
 			{
 				G_ControllerComponent *controller = (G_ControllerComponent*)malloc(sizeof(G_ControllerComponent));
+        controller->entity = (*entity);
 				(*entity)->components[CONTROLLER_COMPONENT] = controller;
 				return controller;
 			}
@@ -40,10 +45,10 @@ void* G_AddComponent(G_Entity **entity, Component component) {
     case ELEMENT_COMPONENT:
       {
         G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
-        element->lifespan = 16;
-        element->coefficient = 1.0;
+        element->volume = 128+rand()%32;
+        element->spread = 15;
         element->tile_flags = 0;
-        element->element_flags = SPREADS | BURNING;
+        element->element_flags = 0;
         (*entity)->components[ELEMENT_COMPONENT] = element;
         return element;
       }
@@ -53,10 +58,10 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 				G_RenderComponent *render = (G_RenderComponent*)malloc(sizeof(G_RenderComponent));
 				render->x = 0;
 				render->y = 0;
-				render->z = 0;
-				render->x_previous = -1;
-				render->y_previous = -1;
+				render->xp = -1;
+				render->yp = -1;
 				render->tile = NOTHING;
+        render->layer = CREATURE_LAYER;
 				(*entity)->components[RENDER_COMPONENT] = render;
 				return render;
 			}
@@ -64,9 +69,9 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 		case LIGHT_COMPONENT:
 			{
 				G_LightComponent *light = (G_LightComponent*)malloc(sizeof(G_LightComponent));
-				light->light.red = 0;
-				light->light.green = 0;
-				light->light.blue = 0;
+				light->light.r = 0;
+				light->light.g = 0;
+				light->light.b = 0;
 				light->light.intensity = 0;
 				(*entity)->components[LIGHT_COMPONENT] = light;
 				return light;
@@ -75,17 +80,6 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 		case UI_COMPONENT:
 			{
 				G_UIComponent *ui = (G_UIComponent*)malloc(sizeof(G_UIComponent));
-				ui->hotkey = '\0';
-				ui->name = NULL;
-				ui->x = 0;
-				ui->y = 0;
-				ui->l = 0;
-				ui->focus = 0;
-				ui->data = NULL;
-				ui->on_click = NULL;
-				ui->on_hover = NULL;
-				ui->state = ACTIVE | CHANGED;
-				ui->border = 1;
 				(*entity)->components[UI_COMPONENT] = ui;
 				return ui;
 			}
@@ -93,299 +87,130 @@ void* G_AddComponent(G_Entity **entity, Component component) {
 		default:
 			printf("Invalid component type.\n");
 			return NULL;
-	}
+  }
 }
 
-void* G_GetComponent(G_Entity **entity, Component component) {
-	assert((entity != NULL) && (*entity != NULL));
-
-	return (*entity)->components[component];
+void G_EntityComponentDelete(G_Entity **entity, Component component) {
+  assert((entity != NULL) && (*entity != NULL));
+  
+  if ((*entity)->components[component] != NULL) {
+    free((*entity)->components[component]);
+  }
 }
 
-void G_RemoveComponent(G_Entity **entity, Component component) {
-	assert((entity != NULL) && (*entity != NULL) && ((*entity)->components[component] != NULL));
-		
-	free((*entity)->components[component]);
-	(*entity)->components[component] = NULL;
+void G_EntitySetLayer(G_Entity **entity, TileLayer layer) {
+  assert((entity != NULL) && (*entity != NULL));
+
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
+
+  render->layer = layer;
 }
 
 void G_EntityPos(G_Entity **entity, int *x, int *y) {
-	assert((entity != NULL) && (*entity != NULL) && (x != NULL) && (y != NULL));
+  assert((entity != NULL) && (*entity != NULL));
 
-	G_RenderComponent *render = G_GetComponent(entity, RENDER_COMPONENT);
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
 
-	if (render != NULL) {
-		*x = render->x;
-		*y = render->y;
-	}
+  *x = render->x;
+  *y = render->y;
 }
 
-void G_EntityUpdate(G_Entity **entity) {
-	assert((entity != NULL) && (*entity != NULL));
-	
-	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
-	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
-  G_ElementComponent *element = (G_ElementComponent*)(G_GetComponent(entity, ELEMENT_COMPONENT));
-	G_CreatureComponent *creature = (G_CreatureComponent*)(G_GetComponent(entity, CREATURE_COMPONENT));
-	G_ControllerComponent *controller = (G_ControllerComponent*)(G_GetComponent(entity, CONTROLLER_COMPONENT));
-
-	if (render != NULL) {
-		render->x_previous = render->x;
-		render->y_previous = render->y;
-		
-		if (controller != NULL) {
-			if (G_CheckBound(RIGHT)) {
-				render->x += 1;
-				phys_keys[virt_keys[RIGHT]] = 0;
-				G_InvalidateView();
-			}
-			if (G_CheckBound(LEFT)) {
-				render->x -= 1;
-				phys_keys[virt_keys[LEFT]] = 0;
-				G_InvalidateView();
-			}
-			if (G_CheckBound(UP)) {
-				render->y -= 1;
-				phys_keys[virt_keys[UP]] = 0;
-				G_InvalidateView();
-			}
-			if (G_CheckBound(DOWN)) {
-				render->y += 1;
-				phys_keys[virt_keys[DOWN]] = 0;
-				G_InvalidateView();
-			}
-		}
-
-		if (render->tile != NOTHING) {
-			TileLayer layer = -1;
-			G_View *view = G_SceneView(&location);
-
-			if (creature != NULL) {
-				layer = CREATURE_LAYER;
-			} else {
-				layer = ORNAMENT_LAYER;
-			}
-
-			if (layer != -1) {
-				if ((render->x == render->x_previous) && (render->y == render->y_previous)) {
-					int
-						rx = render->x_previous+(view->x-view->xp),
-						ry = render->y_previous+(view->y-view->yp);
-			
-					if (G_IsPointWithin(rx, ry, view)) {
-						dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].changed = 1;
-						if (dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].layers[layer] == (*entity)->id) {
-							dmatrix[rx-view->x+DCOLS_OFFSET][ry-view->y+DROWS_OFFSET].layers[layer] = -1;
-						}
-					}
-				} else {
-					if (G_IsPointWithin(render->x_previous, render->y_previous, view)) {
-						dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].changed = 1;
-						if (dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].layers[layer] == (*entity)->id) {
-							dmatrix[render->x_previous-view->x+DCOLS_OFFSET][render->y_previous-view->y+DROWS_OFFSET].layers[layer] = -1;
-						}
-					}
-				}
-			}
-		}
-	}
-
-  G_UIEntityUpdate(&ui);
-  G_ElementEntityUpdate(render->x, render->y, &element);
+void G_EntityDestroy(G_Entity **entity) {
+  assert((entity != NULL) && (*entity != NULL));
+  
+  free(*entity);
+  *entity = NULL;
 }
-	
-void G_UIEntityUpdate(G_UIComponent **ui) {
-  if ((ui != NULL) && (*ui != NULL)) {
-  	int
-  		mouse_x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
-  		mouse_y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
 
-  	UIState state = (*ui)->state;
-  
-  	if ((mouse_x < (*ui)->x-(*ui)->border) || (mouse_x >= (*ui)->x+(*ui)->l+(*ui)->border) ||
-  			(mouse_y < (*ui)->y-(*ui)->border) || (mouse_y > (*ui)->y+(*ui)->border)) {
-  		if (((*ui)->state & PRESSED) == PRESSED) {
-  			(*ui)->state = (*ui)->state ^ PRESSED;
-  		}
-  		if (((*ui)->state & HOVER) == HOVER) {
-  			(*ui)->state = (*ui)->state ^ HOVER;
-  		}
-  		if (((*ui)->focus > 0) && (((*ui)->on_hover != NULL) || ((*ui)->on_click != NULL))) {
-  			(*ui)->focus -= 17;
-  			(*ui)->state = (*ui)->state | CHANGED;
-  			G_InvalidateView();
-  		}
-  	} else {
-  		if ((((*ui)->state & HOVER) != HOVER) && ((*ui)->on_hover != NULL)) {
-  			(*ui)->on_hover((*ui)->data);
-  		}
-  		if (game_info.mouse_lb > 0) {
-  			(*ui)->state = (*ui)->state | PRESSED;
-  		} else if (((*ui)->state & PRESSED) == PRESSED) {
-  			(*ui)->state = (*ui)->state ^ PRESSED;
-  			if ((*ui)->on_click != NULL) {
-  				(*ui)->on_click((*ui)->data);
-  			}
-  		}
-  
-  		if (((*ui)->focus < 255) && (((*ui)->on_hover != NULL) || ((*ui)->on_click != NULL))) {
-  			(*ui)->focus += 17;
-  			(*ui)->state = (*ui)->state | CHANGED;
-  			G_InvalidateView();
-  		}
-  
-  		(*ui)->state = (*ui)->state | HOVER;
-  	}
-  
-  	if ((*ui)->state != state) {
-  		(*ui)->state = (*ui)->state | CHANGED;
-  	}		
+void G_EntityUpdate(void *entity) {
+  assert(entity != NULL);
+
+  G_Entity *e = *((G_Entity**)entity);
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
+
+  if (game_info.full) {
+    G_ElementComponentUpdate(&e);
+    G_ControllerComponentUpdate(&e);
   }
-}
 
-void G_ElementEntityUpdate(int x, int y, G_ElementComponent **element) {
-  if ((element != NULL) && (*element != NULL)) {
-    if (((*element)->element_flags & SPREADS) == SPREADS) {
-      int
-        j,
-        i;
-
-      for (j = -1; j < 2; j += 1) {
-        for (i = -1; i < 2; i += 1) {
-          if ((j == 0) && (i == 0)) {
-            continue;
-          }
-
-          float chance = (float)(1+rand()%100)/(100.0);
-
-          if (chance <= (*element)->coefficient) {
-            G_ExposeTileTo(x+i, y+j, (*element)->element_flags);
-          }
-        }
-      }
+  if (render != NULL) {
+    if (G_PointWithinView(render->x, render->y)) {
+      tilemap[render->x-active_scene->view.x+DCOLS_OFFSET][render->y-active_scene->view.y+DROWS_OFFSET].layers[render->layer] = render->tile;
     }
   }
 }
-  
-void G_EntityRender(G_Entity **entity) {
-	assert((entity != NULL) && (*entity != NULL));
 
-	G_View *view = G_SceneView(&location);
-	G_LightComponent *light = (G_LightComponent*)(G_GetComponent(entity, LIGHT_COMPONENT));
-	G_RenderComponent *render = (G_RenderComponent*)(G_GetComponent(entity, RENDER_COMPONENT));
-	G_CreatureComponent *creature = (G_CreatureComponent*)(G_GetComponent(entity, CREATURE_COMPONENT));
-	G_UIComponent *ui = (G_UIComponent*)(G_GetComponent(entity, UI_COMPONENT));
+void G_ElementComponentUpdate(G_Entity **entity) {
+  int x, y, spread;
+  G_Entity *e = *((G_Entity**)entity);
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
 
-	if (render != NULL) {
-		TileLayer layer = -1;
+  if ((render != NULL) && (element != NULL)) {
+    for (y = -1; y < 2; y += 1) {
+      for (x = -1; x < 2; x += 1) {
+        if (!((x == 0) && (y == 0))) {
+          spread = rand()%100;
 
-		if (creature != NULL) {
-			layer = CREATURE_LAYER;
-		} else {
-			layer = ORNAMENT_LAYER;
-		}
+          if (spread <= element->spread) {
+            G_SceneTileExpose(&active_scene, entity, render->x+x, render->y+y);
+          }
+        }
+      }
 
-		if ((layer != -1) && (render->tile != NOTHING) && (G_IsPointWithin(render->x, render->y, view))) {
-			dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].changed = 1;
-			dmatrix[render->x-view->x+DCOLS_OFFSET][render->y-view->y+DROWS_OFFSET].layers[layer] = (*entity)->id;
-		}
-
-		if (light != NULL) {
-			G_LightNode node;
-			node.x = render->x;
-			node.y = render->y;
-			node.id = (*entity)->id;
-			node.light = light->light;
-
-			G_GenerateFOV(render->x, render->y, &node, &G_AddLight);
-		}
-	}
-
-	if (ui != NULL) {
-		if ((location->view.unchanged == 0) || (ui->state & CHANGED) == CHANGED) {
-			int
-				x,
-				y;
-			ui->state = ui->state ^ CHANGED;
-
-			for (y = -(ui->border); y <= (ui->border); y += 1) {
-				for (x = -(ui->border); x < (ui->l+ui->border); x += 1) {
-					if ((x == -1) || (x == ui->l) ||
-							(y == -1) || (y == 1)) {
-						dmatrix[x+ui->x][y+ui->y].tile = ' ';
-					} else {
-						dmatrix[x+ui->x][y+ui->y].tile = ui->name[x];
-					}
-
-					dmatrix[x+ui->x][y+ui->y].changed = 1;
-					dmatrix[x+ui->x][y+ui->y].fg = white;
-					dmatrix[x+ui->x][y+ui->y].fg.blue = 255-ui->focus;
-					dmatrix[x+ui->x][y+ui->y].bg.red = ui->focus/7;
-					dmatrix[x+ui->x][y+ui->y].bg.green = ui->focus/7;
-					dmatrix[x+ui->x][y+ui->y].bg.blue = ui->focus/7;
-				}
-			}
-		}
-	}
+      element->volume -= 1;
+    
+      if (element->volume == 0) {
+        element->volume = -1;
+        G_SceneEntityDelete(&active_scene, entity);
+      }
+    } 
+  } 
 }
 
-void G_ExposeTileTo(int x, int y, TileFlag flags) {
-  assert(location != NULL);
+void G_ControllerComponentUpdate(G_Entity **entity) {
+  G_Entity *e = *entity;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
+  G_ControllerComponent *controller = (G_ControllerComponent*)G_EntityComponentFind(&e, CONTROLLER_COMPONENT);
 
-  Tile target = G_SceneTile(x, y);
-
-  if ((G_TileFlags(target) & FLAMMABLE) && (flags & BURNING)) {
-    G_Entity *flame = G_CreateEntity(GAME_ENTITY);
-    G_LightComponent *light = (G_LightComponent*)G_AddComponent(&flame, LIGHT_COMPONENT);
-    G_RenderComponent *render = (G_RenderComponent*)G_AddComponent(&flame, RENDER_COMPONENT);
-    G_ElementComponent *element = (G_ElementComponent*)G_AddComponent(&flame, ELEMENT_COMPONENT);
-
-    light->light.red = 255;
-    light->light.green = 165;
-    light->light.blue= 0;
-    light->light.intensity = 3;
-
-    render->x = x;
-    render->y = y;
-    render->x_previous = x;
-    render->y_previous = y;
-    render->tile = FIRE;
-
-    element->lifespan = location->scene_step+16+rand()%32;
-    element->coefficient = 0.2;
-
-    G_AddEntity(&location, &flame);
-
-    G_TileTransition *effect = (G_TileTransition*)malloc(sizeof(G_TileTransition));
-    effect->x = x;
-    effect->y = y;
-    effect->when = location->scene_step+128+rand()%16;
-    effect->is = BURNT_GRASS;
-    effect->to = GRASS;
-    G_ChangeTile(&location, x, y, BURNT_GRASS, 1);
-    G_AddTileTransition(&location, &effect);
+  if (controller != NULL) {
+    if (game_info.phys[SDL_SCANCODE_H]) {
+      render->x -= 1;
+      //active_scene->view.x -= 1;
+    }
+    if (game_info.phys[SDL_SCANCODE_J]) {
+      render->y -= 1;
+      //active_scene->view.y -= 1;
+    }
+    if (game_info.phys[SDL_SCANCODE_K]) {
+      render->y += 1;
+      //active_scene->view.y += 1;
+    }
+    if (game_info.phys[SDL_SCANCODE_L]) {
+      render->x += 1;
+      //active_scene->view.x += 1;
+    }
   }
 }
 
-EntityType G_GetEntityType(G_Entity **entity) {
-	assert((entity != NULL) && (*entity != NULL));
-	
-	return (*entity)->type;
+void G_EntityLightAdd(void *entity) {
+  assert(entity != NULL);
+
+  G_Entity *e = *((G_Entity**)entity);
+  G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(&e, LIGHT_COMPONENT);
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
+
+  if ((light != NULL) && (render != NULL)) {
+		G_LightNode node;
+
+		node.x = render->x;
+		node.y = render->y;
+		node.r = light->light.r;
+		node.g = light->light.g;
+		node.b = light->light.b;
+		node.intensity = light->light.intensity;
+		node.id = e->id;
+
+		G_GenerateFOV(render->x, render->y, &node, &G_AddLight);
+  }
 }
-
-Tile G_EntityIDToTile(int ID) {
-	G_Entity *entity = G_FindEntity(&location, ID);
-	
-	if (entity != NULL) {
-		G_RenderComponent *render = G_GetComponent(&entity, RENDER_COMPONENT);
-
-		if (render != NULL) {
-			return render->tile;
-		}
-	}
-
-	return NOTHING;
-}
-
-/*
-*/
