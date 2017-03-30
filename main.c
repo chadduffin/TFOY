@@ -10,17 +10,17 @@ int main(int argc, char **argv) {
   SDL_DetachThread(threads[INITIALIZE_THREAD]);
 
   while (game_info.running) {
-unsigned int a = SDL_GetTicks();
+    if (G_PollEvents(NULL) < 0) {
+      game_info.running = 0;
+    }
+
     G_UpdateBegin();
 
     threads[UPDATE_THREAD] = SDL_CreateThread(G_Update, "game-updating", NULL);
-    threads[RENDER_THREAD] = SDL_CreateThread(G_Render, "game-renderering", NULL);
-    
+    G_Render(NULL);
     SDL_WaitThread(threads[UPDATE_THREAD], &status);
-    SDL_WaitThread(threads[RENDER_THREAD], &status);
 
     G_UpdateEnd();
-printf("%u elapsed.\n", SDL_GetTicks()-a);
   };
 
   G_Quit();

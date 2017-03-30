@@ -3,6 +3,8 @@
 
 int G_Render(void *data) {
 	SDL_SetRenderTarget(game_info.renderer, game_info.buffers[game_info.target_buffer]);
+  SDL_RenderClear(game_info.renderer);
+
   SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
 
   G_RenderChanges();
@@ -19,7 +21,6 @@ int G_Render(void *data) {
 }
 
 void G_RenderChanges(void) {
-int tc = 0;
   int x, y, r, g, b;
   SDL_Rect src, dst;
   Tile tile;
@@ -33,7 +34,6 @@ int tc = 0;
   for (y = 0; y < ROWS; y += 1) {
     for (x = 0; x < COLS; x += 1) {
       if (console.changed[x][y]) {
-tc += 1;
         tile = G_GetTile(console.tilemap[x][y].layers);
 				dst.x = game_info.display_x+(x*game_info.tile_w);
 				dst.y = game_info.display_y+(y*game_info.tile_h);
@@ -61,7 +61,6 @@ tc += 1;
     }
   }
 
-printf("%i tiles redrawn.\n", tc);
 	SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
 }
 
@@ -103,7 +102,7 @@ void G_RenderLightmap(void) {
 					SDL_RenderFillRect(game_info.renderer, &dst);
 				} else {	
 					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255-intensity);
-					//SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
+					SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
 					SDL_RenderFillRect(game_info.renderer, &dst);
 			
 					SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);

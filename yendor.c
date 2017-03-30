@@ -77,7 +77,6 @@ int G_Init(void *data) {
 }
 
 int G_Update(void *data) {
-int timerthing = SDL_GetTicks();
   int status, x, y;
 
   if (active_scene != NULL) {
@@ -111,7 +110,7 @@ int timerthing = SDL_GetTicks();
     active_scene->step += game_info.full;
     game_info.full = 0;
   }
-printf("%u to update.\n", SDL_GetTicks()-timerthing);
+
   return 0;
 }
 
@@ -267,10 +266,10 @@ int G_CopyBuffer(void *data) {
   dst.x = game_info.display_x+(dst.x*game_info.tile_w);
   src.y = game_info.display_y+(src.y*game_info.tile_h);
   dst.y = game_info.display_y+(dst.y*game_info.tile_h);
-  src.w *= TILE_SOURCE_WIDTH;
-  dst.w *= TILE_SOURCE_WIDTH;
-  src.h *= TILE_SOURCE_HEIGHT;
-  dst.h *= TILE_SOURCE_HEIGHT;
+  src.w *= game_info.tile_w;
+  dst.w *= game_info.tile_w;
+  src.h *= game_info.tile_h;
+  dst.h *= game_info.tile_h;
 
   console.src = src;
   console.dst = dst;
@@ -342,17 +341,7 @@ void G_Quit(void) {
 }
 
 void G_UpdateBegin(void) {
-  int status;
-
-  threads[WORKER_THREAD_A] = SDL_CreateThread(G_CopyBuffer, "game-copy-buffer", NULL);
-//  threads[WORKER_THREAD_B] = SDL_CreateThread(G_PollEvents, "game-poll-events", NULL);
-
-  SDL_WaitThread(threads[WORKER_THREAD_A], &status);
-//  SDL_WaitThread(threads[WORKER_THREAD_B], &status);
-
-  if (status == -1) {
-    game_info.running = 0;
-  }
+  G_CopyBuffer(NULL);
 }
 
 void G_UpdateEnd(void) {

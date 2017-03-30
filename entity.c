@@ -7,8 +7,6 @@ G_Entity* G_EntityCreate(void) {
 
   entity->id = G_GetId();
   entity->parent.value = -1;
-
-  printf("%li created.\n", entity->id.value);
   
   for (i = 0; i < COMPONENT_COUNT; i += 1) {
     entity->components[i] = NULL;
