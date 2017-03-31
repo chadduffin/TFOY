@@ -73,4 +73,6 @@ extern G_Color dviolet;
 extern G_Color dpurple;
 extern G_Color dmagenta;
 
+extern G_Color bad_color;
+
 #endif /* GLOBALS */

@@ -7,10 +7,11 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Ground", "", 14, 2, &brown, &dblue, 0},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
   {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE},
+  {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
   {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
   {"Water", "", 14, 7, &dblue, &blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
 
-  {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS},
+  {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | LUMINESCENT},
 
   {"Fire", "", 14, 1, &red, &orange, FLICKERS_QUICK | DISABLES_ACTIONS},
 
@@ -43,3 +44,8 @@ SDL_Rect G_TileSource(Tile tile) {
 
   return src;
 }
+
+boolean G_TileFlagCompare(Tile tile, TileFlag flag) {
+  return (G_TileFlags(tile) & flag) == flag;
+}
+

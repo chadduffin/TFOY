@@ -142,7 +142,7 @@ G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y) {
 }
 
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y) {
-  return (G_TileFlags(G_SceneGetTile(scene, x, y)) & OBSTRUCTS);
+  return ((G_TileFlags(G_SceneGetTile(scene, x, y)) & OBSTRUCTS_VISION) == OBSTRUCTS_VISION);
 }
 
 void G_TestScene(G_Scene **scene) {
@@ -157,7 +157,7 @@ void G_TestScene(G_Scene **scene) {
     light->light.r = 255;// G_RandomNumber(0, 255);
     light->light.g = 255;// G_RandomNumber(0, 255);
     light->light.b = 255;// G_RandomNumber(0, 255);
-    light->light.intensity = 16+G_RandomNumber(0, 16);
+    light->light.intensity = 9;
   
     render->x = G_RandomNumber(0, 108);
     render->y = G_RandomNumber(0, 64);
@@ -180,10 +180,10 @@ void G_TestScene(G_Scene **scene) {
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentInsert(&fire, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentInsert(&fire, ELEMENT_COMPONENT);
 
-  light->light.r = 255;
-  light->light.g = 127;
+  light->light.r = 127;
+  light->light.g = 64;
   light->light.b = 0;
-  light->light.intensity = 3;
+  light->light.intensity = 2;
   
   render->x = 24;
   render->y = 24;
@@ -206,7 +206,7 @@ void G_TestScene(G_Scene **scene) {
       int dist = sqrt(h*h+w*w);
       G_Tile tile;
 
-      if ((dist > 8) && (dist < 12)) {
+      if ((dist > 8) && (dist < 12+rand()%2)) {
         tile.tile = WATER;
       } else if (dist < 36+rand()%12) {
         tile.tile = GRASS;
@@ -226,6 +226,20 @@ void G_TestScene(G_Scene **scene) {
       tile.tile = LAVA;
 
       if (dist < 10+rand()%3) {
+        tile.id.value = -1;
+        G_SceneSetGTile(&active_scene, tile, w, h);
+
+      }
+    }
+  }
+
+  for (h = 100; h < 120; h += 1) {
+    for (w = 24; w < 40; w += 1) {
+      int dist = sqrt((h-110)*(h-110)+(w-32)*(w-32));
+      G_Tile tile;
+      tile.tile = FUNGUS;
+
+      if (dist < 2+rand()%10) {
         tile.id.value = -1;
         G_SceneSetGTile(&active_scene, tile, w, h);
 

@@ -38,8 +38,16 @@ void G_RenderChanges(void) {
 				dst.x = game_info.display_x+(x*game_info.tile_w);
 				dst.y = game_info.display_y+(y*game_info.tile_h);
         if ((console.vismap[x][y]) && (tile != NOTHING)) {
-  				fg = (tile < 256) ? white : *(tile_info[tile-256].fg);
-  				bg = (tile < 256) ? black : *(tile_info[tile-256].bg);
+  				if (console.tilemap[x][y].fg == &bad_color) {
+            fg = (tile < 256) ? white : *(tile_info[tile-256].fg);
+          } else {
+            fg = *(console.tilemap[x][y].fg);
+          }
+  				if (console.tilemap[x][y].bg == &bad_color) {
+            bg = (tile < 256) ? black : *(tile_info[tile-256].bg);
+          } else {
+            bg = *(console.tilemap[x][y].bg);
+          }
 
           G_EvaluateColor(bg, &r, &g, &b, G_TileFlags(tile) & FLICKERS);
 

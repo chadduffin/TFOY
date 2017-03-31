@@ -25,3 +25,5 @@ G_Color dorange = {102, 51, 0, 20, 10, 0};
 G_Color dyellow = {102, 102, 0, 20, 20, 0};
 G_Color dviolet = {51, 0, 102, 10, 0, 20};
 G_Color dmagenta = {102, 0, 102, 20, 0, 20};
+
+G_Color bad_color = {-1, -1, -1, -1, -1, -1};

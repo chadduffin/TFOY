@@ -103,7 +103,12 @@ int G_Update(void *data) {
 
     for (y = 0; y < DROWS; y += 1) {
       for (x = 0; x < DCOLS; x += 1) {
-        tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = G_SceneGetTile(&active_scene, x+active_scene->view.x, y+active_scene->view.y);
+        Tile tile = G_SceneGetTile(&active_scene, x+active_scene->view.x, y+active_scene->view.y);
+        tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = tile;
+
+        if (G_TileFlagCompare(tile, LUMINESCENT)) {
+          G_AddPointLight(x+active_scene->view.x, y+active_scene->view.y, tile_info[tile-NOTHING].fg->r, tile_info[tile-NOTHING].fg->g, tile_info[tile-NOTHING].fg->b, 2);
+        }
       }
     }
 
@@ -257,6 +262,9 @@ int G_CopyBuffer(void *data) {
       for (z = 0; z < TILE_LAYER_COUNT; z += 1) {
         tilemap[x][y].layers[z] = NOTHING;
       }
+
+      tilemap[x][y].fg = &bad_color;
+      tilemap[x][y].bg = &bad_color;
     }
   }
 
@@ -414,6 +422,9 @@ void G_ClearBuffers(void) {
       for (z = 0; z < TILE_LAYER_COUNT; z += 1) {
         tilemap[x][y].layers[z] = NOTHING;
       }
+
+      tilemap[x][y].fg = &bad_color;
+      tilemap[x][y].bg = &bad_color;
     }
   }
 }
@@ -626,6 +637,20 @@ void G_AddLight(int *x, int *y, void *data) {
 	}
 }
 
+void G_AddPointLight(int x, int y, int r, int g, int b, int intensity) {
+  G_LightNode node;
+
+  node.x = x;
+  node.y = y;
+  node.r = r;
+ 	node.g = g;
+ 	node.b = b;
+  node.intensity = intensity;
+ 	node.id.value = game_info.id.value+x+y*active_scene->w;
+
+  G_GenerateFOV(x, y, &node, &G_AddLight);
+}
+
 void G_MakeVisible(int *x, int *y, void *data) {
 	assert((x != NULL) && (y != NULL));
 
@@ -675,7 +700,7 @@ boolean G_CellChanged(int x, int y, int a, int b) {
       if (flags & FLICKERS_QUICK) {
         range = FLICKER_RANGE/2;
       } else if (flags & FLICKERS_SLOW) {
-        range = FLICKER_RANGE*2;
+        range = FLICKER_RANGE*8;
       } else {
         range = FLICKER_RANGE;
       }

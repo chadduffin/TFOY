@@ -98,6 +98,7 @@ typedef enum Tile {
   GROUND,
   WALL,
   GRASS,
+  FUNGUS,
   BURNT_GRASS,
   WATER,
 
@@ -127,15 +128,16 @@ typedef enum TileFlag {
   FLAMMABLE = 8,
   FREEZABLE = 16,
   BREAKABLE = 32,
+  LUMINESCENT = 64,
 
-  IS_BURNING = 64,
-  IS_FREEZING = 128,
+  IS_BURNING = 128,
+  IS_FREEZING = 256,
 
-  OBSTRUCTS_VISION = 256,
-  OBSTRUCTS_MOVEMENT = 512,
+  OBSTRUCTS_VISION = 512,
+  OBSTRUCTS_MOVEMENT = 1024,
   OBSTRUCTS = OBSTRUCTS_VISION | OBSTRUCTS_MOVEMENT,
 
-  DISABLES_ACTIONS = 1024,
+  DISABLES_ACTIONS = 2048,
 } TileFlag;
 
 typedef enum TileLayer {
@@ -236,6 +238,7 @@ typedef struct G_Tile {
 
 typedef struct G_TileCell {
   Tile layers[TILE_LAYER_COUNT];
+  G_Color *fg, *bg;
 } G_TileCell;
 
 typedef struct G_TileInformation {
@@ -334,6 +337,7 @@ void G_GenerateFOV(int x, int y, void *light, void (*func)(int*, int*, void*));
 void G_CastShadow(int distance, int x, int y, int invert, int dx, int dy,
 	float start, float end, void *light, void (*func)(int*, int*, void*));
 void G_AddLight(int *x, int *y, void *data);
+void G_AddPointLight(int x, int y, int r, int g, int b, int intensity);
 void G_MakeVisible(int *x, int *y, void *data);
 void G_FocusView(G_Scene **view);
 boolean G_CellChanged(int x, int y, int a, int b);
@@ -387,6 +391,7 @@ void G_TestScene(G_Scene **scene);
 
 TileFlag G_TileFlags(Tile tile);
 SDL_Rect G_TileSource(Tile tile);
+boolean G_TileFlagCompare(Tile tile, TileFlag flag);
 
 /* tree.c */
 G_Tree* G_TreeCreate(void);
