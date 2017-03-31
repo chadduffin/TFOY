@@ -6,13 +6,15 @@ G_TileInformation tile_info[TILE_COUNT] = {
 
   {"Ground", "", 14, 2, &brown, &dblue, 0},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
-  {"Grass", "", 2, 2, &dgreen, &green, FLAMMABLE},
-  {"Burnt Grass", "", 2, 2, &dbrown, &brown, 0},
+  {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE},
+  {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
   {"Water", "", 14, 7, &dblue, &blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
+
+  {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS},
 
   {"Fire", "", 14, 1, &red, &orange, FLICKERS_QUICK | DISABLES_ACTIONS},
 
-  {"Human", "", 1, 0, &white, &black, OBSTRUCTS_MOVEMENT},
+  {"Human", "", 0, 4, &white, &black, OBSTRUCTS_MOVEMENT},
 };
 
 TileFlag G_TileFlags(Tile tile) {

@@ -154,19 +154,20 @@ void G_TestScene(G_Scene **scene) {
     G_LightComponent *light = (G_LightComponent*)G_EntityComponentInsert(&player, LIGHT_COMPONENT);
     G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentInsert(&player, RENDER_COMPONENT);
 
-    light->light.r = 255;
-    light->light.g = 255;
-    light->light.b = 255;
-    light->light.intensity = 16+rand()%16;
+    light->light.r = 255;// G_RandomNumber(0, 255);
+    light->light.g = 255;// G_RandomNumber(0, 255);
+    light->light.b = 255;// G_RandomNumber(0, 255);
+    light->light.intensity = 16+G_RandomNumber(0, 16);
   
-    render->x = rand()%108;
-    render->y = rand()%64;
-    render->tile = HUMAN;
+    render->x = G_RandomNumber(0, 108);
+    render->y = G_RandomNumber(0, 64);
+    render->tile = NOTHING;
 
     if (s->focus == NULL) {
       s->focus = player;
-      render->x = 1000;
-      render->y = 700;
+      render->x = 2;
+      render->y = 2;
+      render->tile = HUMAN;
       light->light.intensity = 32;
       G_EntityComponentInsert(&player, CONTROLLER_COMPONENT);
     }
@@ -197,15 +198,38 @@ void G_TestScene(G_Scene **scene) {
 
   for (i = 0; i < w*h; i += 1) {
     s->tiles[i].id.value = -1;
-    s->tiles[i].tile = (rand()%100 == 1) ? WALL : GROUND;
+    s->tiles[i].tile = (G_RandomNumber(0, 100) == 1) ? WALL : GROUND;
   }
 
   for (h = 0; h < 48; h += 1) {
     for (w = 0; w < 48; w += 1) {
+      int dist = sqrt(h*h+w*w);
       G_Tile tile;
-      tile.tile = GRASS;
+
+      if ((dist > 8) && (dist < 12)) {
+        tile.tile = WATER;
+      } else if (dist < 36+rand()%12) {
+        tile.tile = GRASS;
+      } else {
+        tile.tile = GROUND;
+      }
+
       tile.id.value = -1;
       G_SceneSetGTile(&active_scene, tile, w, h);
+    }
+  }
+
+  for (h = 16; h < 48; h += 1) {
+    for (w = 64; w < 96; w += 1) {
+      int dist = sqrt((h-32)*(h-32)+(w-80)*(w-80));
+      G_Tile tile;
+      tile.tile = LAVA;
+
+      if (dist < 10+rand()%3) {
+        tile.id.value = -1;
+        G_SceneSetGTile(&active_scene, tile, w, h);
+
+      }
     }
   }
 }

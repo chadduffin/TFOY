@@ -43,7 +43,7 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
     case ELEMENT_COMPONENT:
       {
         G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
-        element->volume = 128+rand()%32;
+        element->volume = 128+G_RandomNumber(0, 32);
         element->spread = 15;
         element->tile_flags = 0;
         element->element_flags = 0;
@@ -151,24 +151,37 @@ void G_ElementComponentUpdate(G_Entity **entity) {
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
 
   if ((render != NULL) && (element != NULL)) {
-    for (y = -1; y < 2; y += 1) {
-      for (x = -1; x < 2; x += 1) {
-        if (!((x == 0) && (y == 0))) {
-          spread = rand()%100;
-
-          if (spread <= element->spread) {
-            G_SceneTileExpose(&active_scene, entity, render->x+x, render->y+y);
-          }
+    switch (element->element_flags) {
+      case SPREADS_DIFFUSE:
+        {
+          // spreads volume outwards
         }
-      }
+        break;
+      case SPREADS_PROPOGATE:
+        {
+          for (y = -1; y < 2; y += 1) {
+            for (x = -1; x < 2; x += 1) {
+              if (!((x == 0) && (y == 0))) {
+                spread = G_RandomNumber(0, 100);
 
-      element->volume -= 1;
+                if (spread <= element->spread) {
+                  G_SceneTileExpose(&active_scene, entity, render->x+x, render->y+y);
+                }
+              }
+            }
+
+            element->volume -= 1;
     
-      if (element->volume == 0) {
-        element->volume = -1;
-        G_SceneEntityDelete(&active_scene, entity);
-      }
-    } 
+            if (element->volume == 0) {
+              element->volume = -1;
+              G_SceneEntityDelete(&active_scene, entity);
+            }
+          } 
+        }
+        break;
+      default:
+        break;
+    }
   } 
 }
 

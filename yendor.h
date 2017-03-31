@@ -8,15 +8,15 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#ifdef __unix__
-	#include <SDL2/SDL.h>
-	#include <SDL2_net/SDL_net.h>
-	#include <SDL2_image/SDL_image.h>
-#elif __linux__
+#ifdef __linux__
 	#include <SDL2/SDL.h>
 	#include <SDL2/SDL_net.h>
 	#include <SDL2/SDL_image.h>
 #elif __APPLE__
+	#include <SDL2/SDL.h>
+	#include <SDL2_net/SDL_net.h>
+	#include <SDL2_image/SDL_image.h>
+#elif __unix__
 	#include <SDL2/SDL.h>
 	#include <SDL2_net/SDL_net.h>
 	#include <SDL2_image/SDL_image.h>
@@ -100,6 +100,8 @@ typedef enum Tile {
   GRASS,
   BURNT_GRASS,
   WATER,
+
+  LAVA,
   
   BASIC_FIRE,
 
@@ -110,27 +112,30 @@ typedef enum Tile {
 } Tile;
 
 typedef enum ElementFlag {
-  SPREADS_DIFFUSE = 1,
-  SPREADS_PROPOGATE = 2,
+  SPREADS_DIFFUSE = 0,
+  SPREADS_PROPOGATE,
+
+  ELEMENT_FLAG_COUNT
 } ElementFlag;
 
 typedef enum TileFlag {
   FLICKERS_REGULAR = 1,
   FLICKERS_QUICK = 2,
-  FLICKERS = FLICKERS_REGULAR | FLICKERS_QUICK,
+  FLICKERS_SLOW = 4,
+  FLICKERS = FLICKERS_REGULAR | FLICKERS_QUICK | FLICKERS_SLOW,
 
-  FLAMMABLE = 4,
-  FREEZABLE = 8,
-  BREAKABLE = 16,
+  FLAMMABLE = 8,
+  FREEZABLE = 16,
+  BREAKABLE = 32,
 
-  IS_BURNING = 32,
-  IS_FREEZING = 64,
+  IS_BURNING = 64,
+  IS_FREEZING = 128,
 
-  OBSTRUCTS_VISION = 128,
-  OBSTRUCTS_MOVEMENT = 256,
+  OBSTRUCTS_VISION = 256,
+  OBSTRUCTS_MOVEMENT = 512,
   OBSTRUCTS = OBSTRUCTS_VISION | OBSTRUCTS_MOVEMENT,
 
-  DISABLES_ACTIONS = 512,
+  DISABLES_ACTIONS = 1024,
 } TileFlag;
 
 typedef enum TileLayer {

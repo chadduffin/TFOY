@@ -164,9 +164,9 @@ void G_EvaluateColor(G_Color color, int *r, int *g, int *b, boolean flicker) {
     g_rand = (color.g_rand == 0) ? 1 : color.g_rand;
     b_rand = (color.b_rand == 0) ? 1 : color.b_rand;
 
-    *r = (*r)+(2*(rand()%r_rand))-r_rand;
-    *g = (*g)+(2*(rand()%g_rand))-g_rand;
-    *b = (*b)+(2*(rand()%b_rand))-b_rand;
+    *r = (*r)+(2*G_RandomNumber(0, r_rand))-r_rand;
+    *g = (*g)+(2*G_RandomNumber(0, g_rand))-g_rand;
+    *b = (*b)+(2*G_RandomNumber(0, b_rand))-b_rand;
   }
 
   *r = (*r > 255) ? (255) : ((*r < 0) ? (0) : (*r));

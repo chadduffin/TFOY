@@ -672,9 +672,16 @@ boolean G_CellChanged(int x, int y, int a, int b) {
     flags = G_TileFlags(G_GetTile(tilemap[x][y].layers));
 
     if (flags & FLICKERS) {
-      range = (flags & FLICKERS_QUICK) ? (FLICKER_RANGE/2) : FLICKER_RANGE;
+      if (flags & FLICKERS_QUICK) {
+        range = FLICKER_RANGE/2;
+      } else if (flags & FLICKERS_SLOW) {
+        range = FLICKER_RANGE*2;
+      } else {
+        range = FLICKER_RANGE;
+      }
 
-      if (rand()%range == 0) {
+
+      if (G_RandomNumber(0, range) == 0) {
         return 1;
       }
     }
