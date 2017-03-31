@@ -35,18 +35,18 @@
 #define TITLE "Yendor"
 #define VERSION "v0.0.1"
 
-#define FPS 30
+#define FPS_LATENCY 250
 #define TEXTURE_COUNT 1
 
-#define COLS 108
-#define ROWS 64
+#define COLS 100
+#define ROWS 70
 #define UI_COLS 0
 #define MESSAGE_ROWS 0
 
-#define DCOLS 108
-#define DROWS 64
-#define DCOLS_OFFSET 0
-#define DROWS_OFFSET 0
+#define DCOLS 98
+#define DROWS 68
+#define DCOLS_OFFSET 1
+#define DROWS_OFFSET 1
 
 #define WORLD_COLS 512
 #define WORLD_ROWS 256
@@ -54,8 +54,8 @@
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
 
-#define TILE_SOURCE_WIDTH 16
-#define TILE_SOURCE_HEIGHT 16
+#define TILE_SOURCE_WIDTH 12
+#define TILE_SOURCE_HEIGHT 12
 
 #define FLICKER_RANGE 128
 #define MAX_VIEW_DISTANCE (DCOLS/2)
@@ -165,6 +165,10 @@ typedef enum Keybinding {
 typedef struct G_Id {
   long int value;
 } G_Id;
+
+typedef struct G_FPS {
+  unsigned int frame_count, last_tick;
+} G_FPS;
 
 typedef struct G_GameInformation {
   int
@@ -308,11 +312,14 @@ int G_Init(void *data);
 int G_Update(void *data);
 int G_PollEvents(void* data);
 int G_CopyBuffer(void *data);
+int G_RenderEntities(void *data);
 int G_UpdateEntities(void *data);
 int G_UpdateLightmap(void *data);
 int G_UpdateTransitions(void *data);
 int G_CheckPhysical(SDL_Scancode key);
 int G_CheckBound(Keybinding keybinding);
+int G_RandomNumber(int lower, int upper);
+unsigned int G_GetFPS(void);
 void G_Quit(void);
 void G_UpdateBegin(void);
 void G_UpdateEnd(void);
@@ -323,6 +330,7 @@ void G_CastShadow(int distance, int x, int y, int invert, int dx, int dy,
 	float start, float end, void *light, void (*func)(int*, int*, void*));
 void G_AddLight(int *x, int *y, void *data);
 void G_MakeVisible(int *x, int *y, void *data);
+void G_FocusView(G_Scene **view);
 boolean G_CellChanged(int x, int y, int a, int b);
 boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 boolean G_PointWithinView(int x, int y);
@@ -348,6 +356,7 @@ void G_EntityComponentDelete(G_Entity **entity, Component component);
 void G_EntitySetLayer(G_Entity **entity, TileLayer layer);
 void G_EntityPos(G_Entity **entity, int *x, int *y);
 void G_EntityDestroy(G_Entity **entity);
+void G_EntityRender(void *entity);
 void G_EntityUpdate(void *entity);
 void G_ElementComponentUpdate(G_Entity **entity);
 void G_ControllerComponentUpdate(G_Entity **entity);

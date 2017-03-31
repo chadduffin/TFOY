@@ -6,6 +6,7 @@ boolean vismap[COLS][ROWS];
 G_TileCell tilemap[COLS][ROWS];
 G_LightNode lightmap[COLS][ROWS];
 
+G_FPS fps;
 G_Console console;
 G_GameInformation game_info;
 

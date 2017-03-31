@@ -10,8 +10,8 @@ G_Scene* G_SceneCreate(int w, int h) {
   scene->step = 0;
   scene->view.x = 0;
   scene->view.y = 0;
-  scene->view.xp = DCOLS;
-  scene->view.yp = DROWS;
+  scene->view.xp = 0;
+  scene->view.yp = 0;
   scene->view.w = DCOLS;
   scene->view.h = DROWS;
   scene->focus = NULL;
@@ -163,12 +163,15 @@ void G_TestScene(G_Scene **scene) {
     render->y = rand()%64;
     render->tile = HUMAN;
 
-    G_SceneEntityInsert(scene, &player);
-    
     if (s->focus == NULL) {
       s->focus = player;
+      render->x = 1000;
+      render->y = 700;
+      light->light.intensity = 32;
       G_EntityComponentInsert(&player, CONTROLLER_COMPONENT);
     }
+
+    G_SceneEntityInsert(scene, &player);
   }
 
   G_Entity *fire = G_EntityCreate();

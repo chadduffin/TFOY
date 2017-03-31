@@ -22,7 +22,7 @@ int G_Init(void *data) {
 	srand(time(NULL) & 2147483647);
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == 0) {
-		game_info.window = SDL_CreateWindow("Roguecraft", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
+		game_info.window = SDL_CreateWindow("TFOY", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     if (game_info.window != NULL) {
 			game_info.renderer = SDL_CreateRenderer(game_info.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -93,11 +93,11 @@ int G_Update(void *data) {
     }
 
     G_UpdateEntities(NULL);
-
+    G_FocusView(&active_scene);
     G_EntityPos(&(active_scene->focus), &x, &y);
-
     G_GenerateFOV(x, y, NULL, &G_MakeVisible);
     G_UpdateLightmap(NULL);
+    G_RenderEntities(NULL);
 
     SDL_WaitThread(threads[WORKER_THREAD_A], &status);
 
@@ -277,6 +277,14 @@ int G_CopyBuffer(void *data) {
   return 0;
 }
 
+int G_RenderEntities(void *data) {
+  G_Tree *tree = active_scene->entities;
+
+  G_TreeNodeIterate(&tree, &(tree->root->left), &G_EntityRender);
+
+  return 0;
+}
+
 int G_UpdateEntities(void *data) {
   G_Tree *tree = active_scene->entities;
 
@@ -323,6 +331,14 @@ int G_CheckBound(Keybinding keybinding) {
 	return game_info.phys[game_info.virt[keybinding]];
 }
 
+int G_RandomNumber(int lower, int upper) {
+  return lower+(rand()%(upper-lower));
+}
+
+unsigned int G_GetFPS(void) {
+  return fps.frame_count/((SDL_GetTicks()-fps.last_tick)/(1000.0));
+}
+
 void G_Quit(void) {
 	int i;
 
@@ -341,10 +357,17 @@ void G_Quit(void) {
 }
 
 void G_UpdateBegin(void) {
+  fps.frame_count += 1;
+
   G_CopyBuffer(NULL);
 }
 
 void G_UpdateEnd(void) {
+  if (SDL_GetTicks()-fps.last_tick > FPS_LATENCY) {
+    fps.frame_count = 0;
+    fps.last_tick = SDL_GetTicks();
+  }
+
   if (active_scene != NULL) {
     G_TreeNode *node = active_scene->del_buffer;
 
@@ -614,6 +637,23 @@ void G_MakeVisible(int *x, int *y, void *data) {
 			(ly >= DROWS_OFFSET) && (ly < DROWS_OFFSET+DROWS)) {
 		vismap[lx][ly] = 1;
 	}	
+}
+
+void G_FocusView(G_Scene **scene) {
+  G_Scene *s = *scene;
+  G_Entity *focus = s->focus;
+
+  if (focus != NULL) {
+    int x, y;
+
+    G_EntityPos(&focus, &x, &y);
+
+    s->view.x = x-s->view.w/2;
+    s->view.y = y-s->view.h/2;
+
+    s->view.x = (s->view.x < 0) ? 0 : ((s->view.x+s->view.w < s->w) ? s->view.x : s->w-s->view.w-1);
+    s->view.y = (s->view.y < 0) ? 0 : ((s->view.y+s->view.h < s->h) ? s->view.y : s->h-s->view.h-1);
+  }
 }
 
 boolean G_CellChanged(int x, int y, int a, int b) {

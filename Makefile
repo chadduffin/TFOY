@@ -14,7 +14,7 @@ WINDOWS = __windows__
 .PHONY: default all clean
 
 all: default
-default: $(linux)
+default: osx
 
 osx: $(OSX)
 linux: $(LINUX)

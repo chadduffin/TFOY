@@ -142,8 +142,8 @@ void G_UpdateRenderingInfo(void) {
 		printf("Initializing graphics .. PENDING.\n");
 		printf("> window width ......... %d.\n", game_info.window_w);
 		printf("> window height ........ %d.\n", game_info.window_h);
-		printf("> dport x .............. %d.\n", game_info.display_y);
-		printf("> dport y .............. %d.\n", game_info.display_x);
+		printf("> dport x .............. %d.\n", game_info.display_x);
+		printf("> dport y .............. %d.\n", game_info.display_y);
 		printf("> dport width .......... %d.\n", game_info.display_w);
 		printf("> dport height ......... %d.\n", game_info.display_h);
 		printf("> tile width ........... %d.\n", game_info.tile_w);

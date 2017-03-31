@@ -33,6 +33,7 @@ extern boolean vismap[COLS][ROWS];
 extern G_TileCell tilemap[COLS][ROWS];
 extern G_LightNode lightmap[COLS][ROWS];
 
+extern G_FPS fps;
 extern G_Console console;
 extern G_GameInformation game_info;
 

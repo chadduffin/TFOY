@@ -56,8 +56,8 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
 				G_RenderComponent *render = (G_RenderComponent*)malloc(sizeof(G_RenderComponent));
 				render->x = 0;
 				render->y = 0;
-				render->xp = -1;
-				render->yp = -1;
+				render->xp = 0;
+				render->yp = 0;
 				render->tile = NOTHING;
         render->layer = CREATURE_LAYER;
 				(*entity)->components[RENDER_COMPONENT] = render;
@@ -120,21 +120,27 @@ void G_EntityDestroy(G_Entity **entity) {
   *entity = NULL;
 }
 
-void G_EntityUpdate(void *entity) {
+void G_EntityRender(void *entity) {
   assert(entity != NULL);
 
   G_Entity *e = *((G_Entity**)entity);
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
 
-  if (game_info.full) {
-    G_ElementComponentUpdate(&e);
-    G_ControllerComponentUpdate(&e);
-  }
-
   if (render != NULL) {
     if (G_PointWithinView(render->x, render->y)) {
       tilemap[render->x-active_scene->view.x+DCOLS_OFFSET][render->y-active_scene->view.y+DROWS_OFFSET].layers[render->layer] = render->tile;
     }
+  }
+}
+
+void G_EntityUpdate(void *entity) {
+  assert(entity != NULL);
+
+  G_Entity *e = *((G_Entity**)entity);
+
+  if (game_info.full) {
+    G_ElementComponentUpdate(&e);
+    G_ControllerComponentUpdate(&e);
   }
 }
 
@@ -173,20 +179,24 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
 
   if (controller != NULL) {
     if (game_info.phys[SDL_SCANCODE_H]) {
-      render->x -= 1;
-      //active_scene->view.x -= 1;
+      if (render->x > 0) {
+        render->x -= 1;
+      }
     }
     if (game_info.phys[SDL_SCANCODE_J]) {
-      render->y -= 1;
-      //active_scene->view.y -= 1;
+      if (render->y > 0) {
+        render->y -= 1;
+      }
     }
     if (game_info.phys[SDL_SCANCODE_K]) {
-      render->y += 1;
-      //active_scene->view.y += 1;
+      if (render->y < active_scene->h-1) {
+        render->y += 1;
+      }
     }
     if (game_info.phys[SDL_SCANCODE_L]) {
-      render->x += 1;
-      //active_scene->view.x += 1;
+      if (render->x < active_scene->w-1) {
+        render->x += 1;
+      }
     }
   }
 }
@@ -199,16 +209,20 @@ void G_EntityLightAdd(void *entity) {
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
 
   if ((light != NULL) && (render != NULL)) {
-		G_LightNode node;
+    int x = render->x-active_scene->view.x, y = render->y-active_scene->view.y, dist = sqrt(x*x+y*y)-light->light.intensity;
 
-		node.x = render->x;
-		node.y = render->y;
-		node.r = light->light.r;
-		node.g = light->light.g;
-		node.b = light->light.b;
-		node.intensity = light->light.intensity;
-		node.id = e->id;
+    if (dist < sqrt((COLS/2)*(COLS/2)+(ROWS/2)*(ROWS/2))) {
+		  G_LightNode node;
 
-		G_GenerateFOV(render->x, render->y, &node, &G_AddLight);
+  		node.x = render->x;
+  		node.y = render->y;
+  		node.r = light->light.r;
+  		node.g = light->light.g;
+  		node.b = light->light.b;
+  		node.intensity = light->light.intensity;
+  		node.id = e->id;
+
+  		G_GenerateFOV(render->x, render->y, &node, &G_AddLight);
+    }
   }
 }
