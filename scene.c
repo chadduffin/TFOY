@@ -120,7 +120,7 @@ void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y) {
 Tile G_SceneGetTile(G_Scene **scene, int x, int y) {
   G_Scene *s = *scene;
 
-  if ((x < 0) || (x > s->w) || (y < 0) || (y > s->h)) {
+  if ((x < 0) || (x >= s->w) || (y < 0) || (y >= s->h)) {
     return NOTHING;
   }
 
@@ -131,7 +131,7 @@ G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y) {
   G_Tile tile;
   G_Scene *s = *scene;
 
-  if ((x < 0) || (x > s->w) || (y < 0) || (y > s->h)) {
+  if ((x < 0) || (x >= s->w) || (y < 0) || (y >= s->h)) {
     tile.id.value = -1;
     tile.tile = NOTHING;
 

@@ -189,12 +189,12 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
       }
     }
     if (game_info.phys[SDL_SCANCODE_K]) {
-      if (render->y < active_scene->h-1) {
+      if (render->y < active_scene->h-2) {
         render->y += 1;
       }
     }
     if (game_info.phys[SDL_SCANCODE_L]) {
-      if (render->x < active_scene->w-1) {
+      if (render->x < active_scene->w-2) {
         render->x += 1;
       }
     }
@@ -209,9 +209,11 @@ void G_EntityLightAdd(void *entity) {
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
 
   if ((light != NULL) && (render != NULL)) {
-    int x = render->x-active_scene->view.x, y = render->y-active_scene->view.y, dist = sqrt(x*x+y*y)-light->light.intensity;
+    int x = render->x-(active_scene->view.x+active_scene->view.w/2),
+        y = render->y-(active_scene->view.y+active_scene->view.h/2),
+        dist = sqrt(x*x+y*y)-light->light.intensity;
 
-    if (dist < sqrt((COLS/2)*(COLS/2)+(ROWS/2)*(ROWS/2))) {
+    if (dist < sqrt((DCOLS/2)*(DCOLS/2)+(DROWS/2)*(DROWS/2))) {
 		  G_LightNode node;
 
   		node.x = render->x;
