@@ -180,10 +180,10 @@ void G_TestScene(G_Scene **scene) {
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentInsert(&fire, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentInsert(&fire, ELEMENT_COMPONENT);
 
-  light->light.r = 127;
-  light->light.g = 64;
-  light->light.b = 0;
-  light->light.intensity = 2;
+  light->light.r = 255;
+  light->light.g = 255;
+  light->light.b = 255;
+  light->light.intensity = 3;
   
   render->x = 24;
   render->y = 24;
@@ -257,12 +257,10 @@ boolean G_SceneTileExpose(G_Scene **scene, G_Entity **entity, int x, int y) {
   Tile tile = G_SceneGetTile(scene, x, y);
 
   if ((element != NULL) && (tile != NOTHING)) {
-    TileFlag flags = G_TileFlags(tile);
-
     switch (element->tile_flags) {
       case IS_BURNING:
         {
-          if (flags & FLAMMABLE) {
+          if (G_TileFlagCompare(tile, FLAMMABLE)) {
             G_TileTransitionCreate(x, y, s->step+512, tile+1);
 
             G_Entity *child = G_EntityCreate();

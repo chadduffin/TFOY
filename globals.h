@@ -27,6 +27,13 @@
 
 /* globals.c */
 
+extern int DCOLS;
+extern int DROWS;
+extern int DCOLS_OFFSET;
+extern int DROWS_OFFSET;
+extern int TILE_SOURCE_WIDTH;
+extern int TILE_SOURCE_HEIGHT;
+
 extern SDL_Thread *threads[GAME_THREAD_COUNT];
 
 extern boolean vismap[COLS][ROWS];

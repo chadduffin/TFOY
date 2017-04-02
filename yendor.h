@@ -40,22 +40,12 @@
 
 #define COLS 100
 #define ROWS 70
-#define UI_COLS 0
-#define MESSAGE_ROWS 0
-
-#define DCOLS 98
-#define DROWS 68
-#define DCOLS_OFFSET 1
-#define DROWS_OFFSET 1
 
 #define WORLD_COLS 512
 #define WORLD_ROWS 256
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
-
-#define TILE_SOURCE_WIDTH 12
-#define TILE_SOURCE_HEIGHT 12
 
 #define FLICKER_RANGE 128
 #define MAX_VIEW_DISTANCE (DCOLS/2)
@@ -98,13 +88,14 @@ typedef enum Tile {
   GROUND,
   WALL,
   GRASS,
-  FUNGUS,
   BURNT_GRASS,
+  FUNGUS,
   WATER,
 
   LAVA,
   
   BASIC_FIRE,
+  GREEN_FIRE,
 
   HUMAN,
 
@@ -129,15 +120,16 @@ typedef enum TileFlag {
   FREEZABLE = 16,
   BREAKABLE = 32,
   LUMINESCENT = 64,
+  ILLUMINATING = 128,
 
-  IS_BURNING = 128,
-  IS_FREEZING = 256,
+  IS_BURNING = 256,
+  IS_FREEZING = 512,
 
-  OBSTRUCTS_VISION = 512,
-  OBSTRUCTS_MOVEMENT = 1024,
+  OBSTRUCTS_VISION = 1024,
+  OBSTRUCTS_MOVEMENT = 2048,
   OBSTRUCTS = OBSTRUCTS_VISION | OBSTRUCTS_MOVEMENT,
 
-  DISABLES_ACTIONS = 2048,
+  DISABLES_ACTIONS = 4096,
 } TileFlag;
 
 typedef enum TileLayer {
@@ -389,6 +381,7 @@ void G_TestScene(G_Scene **scene);
 
 /* tiles.c */
 
+void G_TileUpdate(Tile tile, int x, int y);
 TileFlag G_TileFlags(Tile tile);
 SDL_Rect G_TileSource(Tile tile);
 boolean G_TileFlagCompare(Tile tile, TileFlag flag);

@@ -1,5 +1,12 @@
 #include "yendor.h"
 
+int DCOLS = 98;
+int DROWS = 68;
+int DCOLS_OFFSET = 1;
+int DROWS_OFFSET = 1;
+int TILE_SOURCE_WIDTH = 12;
+int TILE_SOURCE_HEIGHT = 12;
+
 SDL_Thread *threads[GAME_THREAD_COUNT];
 
 boolean vismap[COLS][ROWS];

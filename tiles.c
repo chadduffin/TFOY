@@ -7,16 +7,28 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Ground", "", 14, 2, &brown, &dblue, 0},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
   {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE},
-  {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
   {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
+  {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
   {"Water", "", 14, 7, &dblue, &blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
 
-  {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | LUMINESCENT},
+  {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | ILLUMINATING},
 
   {"Fire", "", 14, 1, &red, &orange, FLICKERS_QUICK | DISABLES_ACTIONS},
+  {"Green Fire", "", 14, 1, &dgreen, &green, FLICKERS_QUICK | DISABLES_ACTIONS},
 
   {"Human", "", 0, 4, &white, &black, OBSTRUCTS_MOVEMENT},
 };
+
+void G_TileUpdate(Tile tile, int x, int y) {
+  int scene_x = x+active_scene->view.x, scene_y = y+active_scene->view.y;
+  G_TileInformation info = tile_info[tile-NOTHING];
+
+  if (G_TileFlagCompare(tile, LUMINESCENT)) {
+    G_AddPointLight(scene_x, scene_y, (info.fg->r)/2, (info.fg->g)/2, (info.fg->b)/2, 3);
+  } else if (G_TileFlagCompare(tile, ILLUMINATING)) {
+    G_AddPointLight(scene_x, scene_y, 255, 255, 255, 3);
+  }
+}
 
 TileFlag G_TileFlags(Tile tile) {
   if ((tile >= NOTHING) && (tile < END_TILE)) {

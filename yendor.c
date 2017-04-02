@@ -105,10 +105,7 @@ int G_Update(void *data) {
       for (x = 0; x < DCOLS; x += 1) {
         Tile tile = G_SceneGetTile(&active_scene, x+active_scene->view.x, y+active_scene->view.y);
         tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = tile;
-
-        if (G_TileFlagCompare(tile, LUMINESCENT)) {
-          G_AddPointLight(x+active_scene->view.x, y+active_scene->view.y, tile_info[tile-NOTHING].fg->r, tile_info[tile-NOTHING].fg->g, tile_info[tile-NOTHING].fg->b, 2);
-        }
+        G_TileUpdate(tile, x, y);
       }
     }
 
@@ -642,9 +639,9 @@ void G_AddPointLight(int x, int y, int r, int g, int b, int intensity) {
 
   node.x = x;
   node.y = y;
-  node.r = r;
- 	node.g = g;
- 	node.b = b;
+  node.r = r/2;
+ 	node.g = g/2;
+ 	node.b = b/2;
   node.intensity = intensity;
  	node.id.value = game_info.id.value+x+y*active_scene->w;
 
