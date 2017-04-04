@@ -105,12 +105,15 @@ void G_EntitySetLayer(G_Entity **entity, TileLayer layer) {
 }
 
 void G_EntityPos(G_Entity **entity, int *x, int *y) {
-  assert((entity != NULL) && (*entity != NULL));
+  if ((entity != NULL) && (*entity != NULL)) {
+    G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
 
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
-
-  *x = render->x;
-  *y = render->y;
+    *x = render->x;
+    *y = render->y;
+  } else {
+    *x = 0;
+    *y = 0;
+  }
 }
 
 void G_EntityDestroy(G_Entity **entity) {
@@ -145,7 +148,6 @@ void G_EntityUpdate(void *entity) {
 }
 
 void G_ElementComponentUpdate(G_Entity **entity) {
-  int x, y, spread;
   G_Entity *e = *((G_Entity**)entity);
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
@@ -159,24 +161,28 @@ void G_ElementComponentUpdate(G_Entity **entity) {
         break;
       case SPREADS_PROPOGATE:
         {
-          for (y = -1; y < 2; y += 1) {
-            for (x = -1; x < 2; x += 1) {
-              if (!((x == 0) && (y == 0))) {
-                spread = G_RandomNumber(0, 100);
+          boolean
+            n = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x, render->y-1), OBSTRUCTS_MOVEMENT),
+            s = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x, render->y+1), OBSTRUCTS_MOVEMENT),
+            e = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x+1, render->y), OBSTRUCTS_MOVEMENT),
+            w = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x-1, render->y), OBSTRUCTS_MOVEMENT);
 
-                if (spread <= element->spread) {
-                  G_SceneTileExpose(&active_scene, entity, render->x+x, render->y+y);
-                }
-              }
-            }
+          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y, (G_RandomNumber(0, 100) < element->spread));
+          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y, (G_RandomNumber(0, 100) < element->spread));
+          G_SceneTilePropogate(&active_scene, entity, render->x, render->y+1, (G_RandomNumber(0, 100) < element->spread));
+          G_SceneTilePropogate(&active_scene, entity, render->x, render->y-1, (G_RandomNumber(0, 100) < element->spread));
 
-            element->volume -= 1;
+          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y-1, ((n && e) && (G_RandomNumber(0, 100) < element->spread)));
+          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y-1, ((n && w) && (G_RandomNumber(0, 100) < element->spread)));
+          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y+1, ((s && e) && (G_RandomNumber(0, 100) < element->spread)));
+          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y+1, ((s && w) && (G_RandomNumber(0, 100) < element->spread)));
+
+          element->volume -= 1;
     
-            if (element->volume == 0) {
-              element->volume = -1;
-              G_SceneEntityDelete(&active_scene, entity);
-            }
-          } 
+          if (element->volume == 0) {
+            element->volume = -1;
+            G_SceneEntityDelete(&active_scene, entity);
+          }
         }
         break;
       default:

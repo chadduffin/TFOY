@@ -39,7 +39,7 @@
 #define TEXTURE_COUNT 1
 
 #define COLS 100
-#define ROWS 70
+#define ROWS 60
 
 #define WORLD_COLS 512
 #define WORLD_ROWS 256
@@ -98,6 +98,13 @@ typedef enum Tile {
   GREEN_FIRE,
 
   HUMAN,
+
+  SOLID_WHITE,
+  SOLID_BLACK,
+  SOLID_RED,
+  SOLID_GREEN,
+  SOLID_BLUE,
+  SOLID_MAGENTA,
 
   END_TILE,
   TILE_COUNT = (END_TILE-NOTHING)
@@ -290,9 +297,10 @@ typedef struct G_Scene {
   G_Id id;
   G_View view;
   G_Tile *tiles;
+  G_Entity *focus;
   G_Tree *entities, *transitions;
   G_TreeNode *ins_buffer, *del_buffer;
-  G_Entity *focus;
+  G_Light ambient;
 } G_Scene;
 
 typedef struct G_Console {
@@ -332,6 +340,7 @@ void G_AddLight(int *x, int *y, void *data);
 void G_AddPointLight(int x, int y, int r, int g, int b, int intensity);
 void G_MakeVisible(int *x, int *y, void *data);
 void G_FocusView(G_Scene **view);
+void G_ResizeDPort(int x, int y, int w, int h);
 boolean G_CellChanged(int x, int y, int a, int b);
 boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 boolean G_PointWithinView(int x, int y);
@@ -375,8 +384,9 @@ void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y);
 Tile G_SceneGetTile(G_Scene **scene, int x, int y);
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);
-boolean G_SceneTileExpose(G_Scene **scene, G_Entity **entity, int x, int y);
+boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel);
 
+void G_InitMenu(G_Scene **scene);
 void G_TestScene(G_Scene **scene);
 
 /* tiles.c */

@@ -47,6 +47,8 @@ extern G_GameInformation game_info;
 extern G_Tree *scenes;
 extern G_Scene *active_scene;
 
+extern char title[ROWS][COLS];
+
 /* tiles.c */
 
 extern G_TileInformation tile_info[TILE_COUNT];

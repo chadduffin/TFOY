@@ -13,10 +13,17 @@ G_TileInformation tile_info[TILE_COUNT] = {
 
   {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | ILLUMINATING},
 
-  {"Fire", "", 14, 1, &red, &orange, FLICKERS_QUICK | DISABLES_ACTIONS},
-  {"Green Fire", "", 14, 1, &dgreen, &green, FLICKERS_QUICK | DISABLES_ACTIONS},
+  {"Fire", "", 14, 1, &orange, &bad_color, FLICKERS_QUICK | DISABLES_ACTIONS},
+  {"Green Fire", "", 14, 1, &dgreen, &bad_color, FLICKERS_QUICK | DISABLES_ACTIONS},
 
-  {"Human", "", 0, 4, &white, &black, OBSTRUCTS_MOVEMENT},
+  {"Human", "", 0, 4, &white, &bad_color, OBSTRUCTS_MOVEMENT},
+
+  {"white", "", 0, 0, &white, &white, 0},
+  {"black", "", 0, 0, &black, &black, 0},
+  {"red", "", 0, 0, &red, &red, 0},
+  {"green", "", 0, 0, &green, &green, 0},
+  {"blue", "", 0, 0, &blue, &blue, 0},
+  {"magenta", "", 0, 0, &magenta, &magenta, 0},
 };
 
 void G_TileUpdate(Tile tile, int x, int y) {

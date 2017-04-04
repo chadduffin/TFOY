@@ -37,14 +37,26 @@ void G_RenderChanges(void) {
         tile = G_GetTile(console.tilemap[x][y].layers);
 				dst.x = game_info.display_x+(x*game_info.tile_w);
 				dst.y = game_info.display_y+(y*game_info.tile_h);
+
         if ((console.vismap[x][y]) && (tile != NOTHING)) {
   				if (console.tilemap[x][y].fg == &bad_color) {
-            fg = (tile < 256) ? white : *(tile_info[tile-256].fg);
+            fg = (tile < NOTHING) ? white : *(tile_info[tile-NOTHING].fg);
           } else {
             fg = *(console.tilemap[x][y].fg);
           }
+
   				if (console.tilemap[x][y].bg == &bad_color) {
-            bg = (tile < 256) ? black : *(tile_info[tile-256].bg);
+            bg = (tile < NOTHING) ? black : *(tile_info[tile-NOTHING].bg);
+
+            if (tile < NOTHING) {
+              bg = black;
+            } else {
+              if (tile_info[tile-NOTHING].bg == &bad_color) {
+                bg = *(tile_info[console.tilemap[x][y].layers[BASE_LAYER]-NOTHING].bg);
+              } else {
+                bg = *(tile_info[tile-NOTHING].bg);
+              }
+            }
           } else {
             bg = *(console.tilemap[x][y].bg);
           }

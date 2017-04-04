@@ -17,7 +17,9 @@ int main(int argc, char **argv) {
     G_UpdateBegin();
 
     threads[UPDATE_THREAD] = SDL_CreateThread(G_Update, "game-updating", NULL);
+
     G_Render(NULL);
+
     SDL_WaitThread(threads[UPDATE_THREAD], &status);
 
     G_UpdateEnd();

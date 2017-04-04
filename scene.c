@@ -27,6 +27,10 @@ G_Scene* G_SceneCreate(int w, int h) {
   node->key = scene->id.value;
   G_TreeNodeInsert(&scenes, &node);
 
+  scene->ambient.r = 0;
+  scene->ambient.g = 0;
+  scene->ambient.b = 0;
+
   return scene;
 }
 
@@ -50,7 +54,11 @@ G_TileTransition* G_TileTransitionCreate(int x, int y, long long when, Tile is) 
 }
 
 void G_SceneChange(G_Scene **scene) {
-  active_scene = *scene;
+  assert((scene != NULL) && (*scene != NULL));
+
+  if (*scene != active_scene) {
+    active_scene = *scene;
+  }  
 }
 
 void G_SceneDestroy(G_Scene **scene) {
@@ -145,6 +153,88 @@ boolean G_SceneTileObstructs(G_Scene **scene, int x, int y) {
   return ((G_TileFlags(G_SceneGetTile(scene, x, y)) & OBSTRUCTS_VISION) == OBSTRUCTS_VISION);
 }
 
+boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel) {
+  if (!sentinel) {
+    return 0;
+  }
+
+  G_Scene *s = *scene;
+  G_Entity *e = *entity;
+  G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(entity, LIGHT_COMPONENT);
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT);
+  Tile tile = G_SceneGetTile(scene, x, y);
+
+  if ((element != NULL) && (tile != NOTHING)) {
+    switch (element->tile_flags) {
+      case IS_BURNING:
+        {
+          if (G_TileFlagCompare(tile, FLAMMABLE)) {
+            G_TileTransitionCreate(x, y, s->step+512, tile+1);
+
+            G_Entity *child = G_EntityCreate();
+            G_LightComponent *n_light = (G_LightComponent*)G_EntityComponentInsert(&child, LIGHT_COMPONENT);
+            G_RenderComponent *n_render = (G_RenderComponent*)G_EntityComponentInsert(&child, RENDER_COMPONENT);
+            G_ElementComponent *n_element = (G_ElementComponent*)G_EntityComponentInsert(&child, ELEMENT_COMPONENT);
+
+            child->parent = e->id;
+            
+            *n_light = *light;
+            *n_render = *render;
+
+            n_element->tile_flags = element->tile_flags;
+            n_element->element_flags = element->element_flags;
+
+            n_render->x = x;
+            n_render->y = y;
+
+            G_SceneEntityInsert(&active_scene, &child);
+
+            return 1;
+          }
+        }
+        break;
+      default:
+        {
+          //empty
+        }
+        break;
+    }
+  }
+
+  return 0;
+}
+
+void G_InitMenu(G_Scene **scene) {
+  assert((scene != NULL) && (*scene != NULL));
+
+  int x, y;
+  G_Tile tile;
+  G_Scene *s = *scene;
+
+  tile.id.value = -1;
+
+  s->ambient.r = 255;
+  s->ambient.g = 255;
+  s->ambient.b = 255;
+
+  for (y = 0; y < ROWS; y += 1) {
+    for (x = 0; x < COLS; x += 1) {
+      if (title[y][x] == 'B') {
+        tile.tile = SOLID_BLACK;
+      } else if ((y > 0) && (title[y-1][x] == 'B')) {
+        tile.tile = SOLID_WHITE;
+      } else if (title[y][x] == ' ') {
+        tile.tile = SOLID_MAGENTA;
+      } else {
+        tile.tile = title[y][x];
+      }
+
+      G_SceneSetGTile(scene, tile, x, y);
+    }
+  }
+}
+
 void G_TestScene(G_Scene **scene) {
   int q;
   G_Scene *s = *scene;
@@ -154,10 +244,10 @@ void G_TestScene(G_Scene **scene) {
     G_LightComponent *light = (G_LightComponent*)G_EntityComponentInsert(&player, LIGHT_COMPONENT);
     G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentInsert(&player, RENDER_COMPONENT);
 
-    light->light.r = 255;// G_RandomNumber(0, 255);
-    light->light.g = 255;// G_RandomNumber(0, 255);
-    light->light.b = 255;// G_RandomNumber(0, 255);
-    light->light.intensity = 9;
+    light->light.r = G_RandomNumber(0, 255);
+    light->light.g = G_RandomNumber(0, 255);
+    light->light.b = G_RandomNumber(0, 255);
+    light->light.intensity = 16+rand()%24;
   
     render->x = G_RandomNumber(0, 108);
     render->y = G_RandomNumber(0, 64);
@@ -188,6 +278,7 @@ void G_TestScene(G_Scene **scene) {
   render->x = 24;
   render->y = 24;
   render->tile = BASIC_FIRE;
+  render->layer = EFFECT_LAYER;
 
   element->tile_flags = IS_BURNING;
   element->element_flags = SPREADS_PROPOGATE;
@@ -248,50 +339,3 @@ void G_TestScene(G_Scene **scene) {
   }
 }
 
-boolean G_SceneTileExpose(G_Scene **scene, G_Entity **entity, int x, int y) {
-  G_Scene *s = *scene;
-  G_Entity *e = *entity;
-  G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(entity, LIGHT_COMPONENT);
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT);
-  Tile tile = G_SceneGetTile(scene, x, y);
-
-  if ((element != NULL) && (tile != NOTHING)) {
-    switch (element->tile_flags) {
-      case IS_BURNING:
-        {
-          if (G_TileFlagCompare(tile, FLAMMABLE)) {
-            G_TileTransitionCreate(x, y, s->step+512, tile+1);
-
-            G_Entity *child = G_EntityCreate();
-            G_LightComponent *n_light = (G_LightComponent*)G_EntityComponentInsert(&child, LIGHT_COMPONENT);
-            G_RenderComponent *n_render = (G_RenderComponent*)G_EntityComponentInsert(&child, RENDER_COMPONENT);
-            G_ElementComponent *n_element = (G_ElementComponent*)G_EntityComponentInsert(&child, ELEMENT_COMPONENT);
-
-            child->parent = e->id;
-            
-            *n_light = *light;
-            *n_render = *render;
-
-            n_element->tile_flags = element->tile_flags;
-            n_element->element_flags = element->element_flags;
-
-            n_render->x = x;
-            n_render->y = y;
-
-            G_SceneEntityInsert(&active_scene, &child);
-
-            return 1;
-          }
-        }
-        break;
-      default:
-        {
-          //empty
-        }
-        break;
-    }
-  }
-
-  return 0;
-}

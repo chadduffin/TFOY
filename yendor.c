@@ -68,9 +68,11 @@ int G_Init(void *data) {
     G_InitializeKeybindings();
     
     scenes = G_TreeCreate();
-    active_scene = G_SceneCreate(1024, 768);
-    
-    G_TestScene(&active_scene);
+
+    //active_scene = G_SceneCreate(1024, 768);
+    //G_TestScene(&active_scene);
+    active_scene = G_SceneCreate(COLS, ROWS);
+    G_InitMenu(&active_scene);
   }
 
   return 0;
@@ -96,10 +98,13 @@ int G_Update(void *data) {
     G_FocusView(&active_scene);
     G_EntityPos(&(active_scene->focus), &x, &y);
     G_GenerateFOV(x, y, NULL, &G_MakeVisible);
-    G_UpdateLightmap(NULL);
-    G_RenderEntities(NULL);
+
+    threads[WORKER_THREAD_B] = SDL_CreateThread(G_UpdateLightmap, "game-lightmap-updating", NULL);
+    threads[WORKER_THREAD_C] = SDL_CreateThread(G_RenderEntities, "game-entity-render-updating", NULL);
 
     SDL_WaitThread(threads[WORKER_THREAD_A], &status);
+    SDL_WaitThread(threads[WORKER_THREAD_B], &status);
+    SDL_WaitThread(threads[WORKER_THREAD_C], &status);
 
     for (y = 0; y < DROWS; y += 1) {
       for (x = 0; x < DCOLS; x += 1) {
@@ -130,7 +135,6 @@ int G_PollEvents(void* data) {
 							game_info.phys[game_info.event.key.keysym.scancode] = SDL_GetTicks();
 						}
 					}
-          return 6;
 				}
 				break;
 			case SDL_KEYUP:
@@ -249,9 +253,9 @@ int G_CopyBuffer(void *data) {
       console.tilemap[x][y] = tilemap[x][y];
 
       vismap[x][y] = 0;
-      lightmap[x][y].r = 0;
-      lightmap[x][y].g = 0;
-      lightmap[x][y].b = 0;
+      lightmap[x][y].r = (active_scene == NULL) ? 0 : (active_scene->ambient.r);
+      lightmap[x][y].g = (active_scene == NULL) ? 0 : (active_scene->ambient.g);
+      lightmap[x][y].b = (active_scene == NULL) ? 0 : (active_scene->ambient.b);
       lightmap[x][y].count = 1;
       lightmap[x][y].id.value = -1;
       lightmap[x][y].intensity = 255;
@@ -364,11 +368,17 @@ void G_Quit(void) {
 void G_UpdateBegin(void) {
   fps.frame_count += 1;
 
+  if (game_info.phys[SDL_SCANCODE_T]) {
+    G_ResizeDPort(10, 10, 30, 30);
+  }
+
   G_CopyBuffer(NULL);
 }
 
 void G_UpdateEnd(void) {
   if (SDL_GetTicks()-fps.last_tick > FPS_LATENCY) {
+    printf("%u fps.\n", G_GetFPS());
+
     fps.frame_count = 0;
     fps.last_tick = SDL_GetTicks();
   }
@@ -409,9 +419,9 @@ void G_ClearBuffers(void) {
   for (y = 0; y < ROWS; y += 1) {
     for (x = 0; x < COLS; x += 1) {
       vismap[x][y] = 0;
-      lightmap[x][y].r = 0;
-      lightmap[x][y].g = 0;
-      lightmap[x][y].b = 0;
+      lightmap[x][y].r = (active_scene == NULL) ? 0 : (active_scene->ambient.r);
+      lightmap[x][y].g = (active_scene == NULL) ? 0 : (active_scene->ambient.g);
+      lightmap[x][y].b = (active_scene == NULL) ? 0 : (active_scene->ambient.b);
       lightmap[x][y].count = 1;
       lightmap[x][y].id.value = -1;
       lightmap[x][y].intensity = 255;
@@ -678,6 +688,22 @@ void G_FocusView(G_Scene **scene) {
   }
 }
 
+void G_ResizeDPort(int x, int y, int w, int h) {
+  if ((x+w < COLS) && (y+h < ROWS)) {
+    DCOLS_OFFSET = x;
+    DCOLS = w;
+    DROWS_OFFSET = y;
+    DROWS = h;
+
+    if (active_scene != NULL) {
+      active_scene->view.w = DCOLS;
+      active_scene->view.h = DROWS;
+    }
+
+    G_ClearBuffers();
+  }
+}
+
 boolean G_CellChanged(int x, int y, int a, int b) {
   int range;
   TileFlag flags;
@@ -750,6 +776,8 @@ Tile G_GetTile(Tile *layers) {
     return layers[ITEM_LAYER];
   } else if (layers[ORNAMENT_LAYER] != NOTHING) {
     return layers[ORNAMENT_LAYER];
+  } else if (layers[EFFECT_LAYER] != NOTHING) {
+    return layers[EFFECT_LAYER];
   }
 
   return layers[BASE_LAYER];
