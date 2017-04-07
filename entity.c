@@ -199,22 +199,48 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
   if (controller != NULL) {
     if (game_info.phys[SDL_SCANCODE_H]) {
       if (render->x > 0) {
-        render->x -= 1;
+        if (!G_SceneTileObstructs(&active_scene, render->x-1, render->y)) {
+          render->x -= 1;
+          game_info.phys[SDL_SCANCODE_H] = 0;
+        }
       }
     }
     if (game_info.phys[SDL_SCANCODE_J]) {
       if (render->y > 0) {
-        render->y -= 1;
+        if (!G_SceneTileObstructs(&active_scene, render->x, render->y-1)) {
+          render->y -= 1;
+          game_info.phys[SDL_SCANCODE_J] = 0;
+        }
       }
     }
     if (game_info.phys[SDL_SCANCODE_K]) {
       if (render->y < active_scene->h-2) {
-        render->y += 1;
+        if (!G_SceneTileObstructs(&active_scene, render->x, render->y+1)) {
+          render->y += 1;
+          game_info.phys[SDL_SCANCODE_K] = 0;
+        }
       }
     }
     if (game_info.phys[SDL_SCANCODE_L]) {
       if (render->x < active_scene->w-2) {
-        render->x += 1;
+        if (!G_SceneTileObstructs(&active_scene, render->x+1, render->y)) {
+          render->x += 1;
+          game_info.phys[SDL_SCANCODE_L] = 0;
+        }
+      }
+    }
+    if (game_info.phys[SDL_SCANCODE_P]) {
+      G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(&e, LIGHT_COMPONENT);
+
+      if (light->light.intensity < 32) {
+        light->light.intensity += 1;
+      }
+    }
+    if (game_info.phys[SDL_SCANCODE_O]) {
+      G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(&e, LIGHT_COMPONENT);
+
+      if (light->light.intensity > 1) {
+        light->light.intensity -= 1;
       }
     }
   }
@@ -243,7 +269,7 @@ void G_EntityLightAdd(void *entity) {
   		node.intensity = light->light.intensity;
   		node.id = e->id;
 
-  		G_GenerateFOV(render->x, render->y, &node, &G_AddLight);
+  		G_GenerateFOV(render->x, render->y, node.intensity, &node, &G_AddLight);
     }
   }
 }

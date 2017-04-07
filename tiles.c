@@ -31,7 +31,7 @@ void G_TileUpdate(Tile tile, int x, int y) {
   G_TileInformation info = tile_info[tile-NOTHING];
 
   if (G_TileFlagCompare(tile, LUMINESCENT)) {
-    G_AddPointLight(scene_x, scene_y, (info.fg->r)/2, (info.fg->g)/2, (info.fg->b)/2, 3);
+    G_AddPointLight(scene_x, scene_y, (info.fg->r)/4, (info.fg->g)/4, (info.fg->b)/4, 3);
   } else if (G_TileFlagCompare(tile, ILLUMINATING)) {
     G_AddPointLight(scene_x, scene_y, 255, 255, 255, 3);
   }
@@ -67,4 +67,3 @@ SDL_Rect G_TileSource(Tile tile) {
 boolean G_TileFlagCompare(Tile tile, TileFlag flag) {
   return (G_TileFlags(tile) & flag) == flag;
 }
-

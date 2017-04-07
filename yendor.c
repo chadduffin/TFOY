@@ -25,7 +25,7 @@ int G_Init(void *data) {
 		game_info.window = SDL_CreateWindow("TFOY", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     if (game_info.window != NULL) {
-			game_info.renderer = SDL_CreateRenderer(game_info.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+			game_info.renderer = SDL_CreateRenderer(game_info.window, -1, SDL_RENDERER_ACCELERATED);
       
 			if (SDL_GetRendererOutputSize(game_info.renderer, &(game_info.window_w), &(game_info.window_h)) == 0) {
 				G_UpdateRenderingInfo();
@@ -69,10 +69,15 @@ int G_Init(void *data) {
     
     scenes = G_TreeCreate();
 
-    //active_scene = G_SceneCreate(1024, 768);
-    //G_TestScene(&active_scene);
-    active_scene = G_SceneCreate(COLS, ROWS);
-    G_InitMenu(&active_scene);
+    G_Scene *scene = G_SceneCreate(WORLD_COLS, WORLD_ROWS);
+    overworld_id = scene->id;
+    G_TestScene(&scene);
+
+    scene = G_SceneCreate(COLS, ROWS);
+    menu_id = scene->id;
+    G_InitMenu(&scene);
+
+    G_SceneChange(&scene);
   }
 
   return 0;
@@ -88,16 +93,35 @@ int G_Update(void *data) {
     threads[WORKER_THREAD_A] = SDL_CreateThread(G_UpdateTransitions, "game-transition-updating", NULL);
 
     if ((game_info.phys[SDL_SCANCODE_Z]) ||
+        (game_info.phys[SDL_SCANCODE_O]) || (game_info.phys[SDL_SCANCODE_P]) ||
         (game_info.phys[SDL_SCANCODE_L]) || (game_info.phys[SDL_SCANCODE_K]) ||
         (game_info.phys[SDL_SCANCODE_H]) || (game_info.phys[SDL_SCANCODE_J])) {
       game_info.phys[SDL_SCANCODE_Z] = 0;
       game_info.full = 1;
     }
+    if (game_info.phys[SDL_SCANCODE_SPACE]) {
+      game_info.phys[SDL_SCANCODE_SPACE] = 0;
+      if (active_scene->ambient.r == 0) {
+        active_scene->ambient.r = 255;
+        active_scene->ambient.g = 255;
+        active_scene->ambient.b = 255;
+      } else {
+        active_scene->ambient.r = 0;
+        active_scene->ambient.g = 0;
+        active_scene->ambient.b = 0;
+      }
+    }
+    if (game_info.phys[SDL_SCANCODE_Q]) {
+      game_info.phys[SDL_SCANCODE_Q] = 0;
+      int x = active_scene->view.x+((game_info.mouse_x-game_info.display_x)/game_info.tile_w)-DCOLS_OFFSET;
+      int y = active_scene->view.y+((game_info.mouse_y-game_info.display_y)/game_info.tile_h)-DROWS_OFFSET;
+      G_CreateLight(x, y);
+    }
 
     G_UpdateEntities(NULL);
     G_FocusView(&active_scene);
     G_EntityPos(&(active_scene->focus), &x, &y);
-    G_GenerateFOV(x, y, NULL, &G_MakeVisible);
+    G_GenerateFOV(x, y, COLS*2, NULL, &G_MakeVisible);
 
     threads[WORKER_THREAD_B] = SDL_CreateThread(G_UpdateLightmap, "game-lightmap-updating", NULL);
     threads[WORKER_THREAD_C] = SDL_CreateThread(G_RenderEntities, "game-entity-render-updating", NULL);
@@ -151,6 +175,9 @@ int G_PollEvents(void* data) {
 			case SDL_MOUSEBUTTONDOWN:
 				{
 					if (game_info.event.button.button == SDL_BUTTON_LEFT) {
+            int x = active_scene->view.x+((game_info.mouse_x-game_info.display_x)/game_info.tile_w)-DCOLS_OFFSET;
+            int y = active_scene->view.y+((game_info.mouse_y-game_info.display_y)/game_info.tile_h)-DROWS_OFFSET;
+            G_CreateFire(x, y);
 						game_info.mouse_lb = (game_info.mouse_lb == 0) ? SDL_GetTicks() : game_info.mouse_lb;
 					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
 						game_info.mouse_rb = (game_info.mouse_rb == 0) ? SDL_GetTicks() : game_info.mouse_rb;
@@ -350,7 +377,7 @@ unsigned int G_GetFPS(void) {
 
 void G_Quit(void) {
 	int i;
-
+  
   G_TreeDestroy(&scenes);
 
 	for (i = 0; i < TEXTURE_COUNT; i += 1) {
@@ -369,7 +396,26 @@ void G_UpdateBegin(void) {
   fps.frame_count += 1;
 
   if (game_info.phys[SDL_SCANCODE_T]) {
-    G_ResizeDPort(10, 10, 30, 30);
+    G_Scene *scene;
+    G_TreeNode *node;
+
+    if (active_scene->id.value == menu_id.value) {
+      node = G_TreeNodeFind(&scenes, overworld_id.value);
+      
+      if (node != NULL) {
+        scene = (G_Scene*)(node->data);
+        G_SceneChange(&scene);
+      }
+    } else {
+      node = G_TreeNodeFind(&scenes, menu_id.value);
+
+      if (node != NULL) {
+        scene = (G_Scene*)(node->data);
+        G_SceneChange(&scene);
+      }
+    }
+
+    game_info.phys[SDL_SCANCODE_T] = 0;
   }
 
   G_CopyBuffer(NULL);
@@ -453,21 +499,21 @@ void G_InitializeKeybindings(void) {
 	game_info.virt[WAIT] = SDL_SCANCODE_Z;
 }
 
-void G_GenerateFOV(int x, int y, void *light, void (*func)(int*, int*, void*)) {
+void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*)) {
 	if ((x < 0) || (x >= active_scene->w) ||
 			(y < 0) || (y >= active_scene->h)) {
 		return;
 	}
 
 	if (!G_SceneTileObstructs(&active_scene, x, y)) {
-		G_CastShadow(1, x, y, 0, 1, 1, 1, 0, light, func);
-		G_CastShadow(1, x, y, 1, 1, 1, 1, 0, light, func);
-		G_CastShadow(1, x, y, 0, -1, 1, 1, 0, light, func);
-		G_CastShadow(1, x, y, 1, -1, 1, 1, 0, light, func);
-		G_CastShadow(1, x, y, 0, 1, -1, 1, 0, light, func);
-		G_CastShadow(1, x, y, 1, 1, -1, 1, 0, light, func);
-		G_CastShadow(1, x, y, 0, -1, -1, 1, 0, light, func);
-		G_CastShadow(1, x, y, 1, -1, -1, 1, 0, light, func);
+		G_Sightcast(x, y, 1, 1, 1, range, 0, 0.0, 1.0, light, func);
+		G_Sightcast(x, y, 1, 1, 1, range, 1, 0.0, 1.0, light, func);
+		G_Sightcast(x, y, -1, 1, 1, range, 0, 0.0, 1.0, light, func);
+		G_Sightcast(x, y, -1, 1, 1, range, 1, 0.0, 1.0, light, func);
+		G_Sightcast(x, y, 1, -1, 1, range, 0, 0.0, 1.0, light, func);
+		G_Sightcast(x, y, 1, -1, 1, range, 1, 0.0, 1.0, light, func);
+		G_Sightcast(x, y, -1, -1, 1, range, 0, 0.0, 1.0, light, func);
+		G_Sightcast(x, y, -1, -1, 1, range, 1, 0.0, 1.0, light, func);
 	}
 
 	x -= active_scene->view.x;
@@ -538,7 +584,7 @@ void G_CastShadow(
 
 	for (i = distance; i < x_bound; i += 1) {
 		started = 0;
-		for (j = (distance > y_bound) ? y_bound : distance; j >= 0; j -= 1) {
+		for (j = ((distance > y_bound) ? y_bound : distance)-(1-invert); j >= 0; j -= 1) {
 			current = ((float)j)/((float)i);
 			if (invert) {
 				x_adj = x+(j*dx);
@@ -562,7 +608,7 @@ void G_CastShadow(
 				if (G_SceneTileObstructs(&active_scene, x_adj, y_adj)) {
 					if ((was_blocked == 0) && (started != 1)) {
 						G_CastShadow(distance+1, x, y, invert, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), light, func);
-						start = ((float)(j-0.5))/((float)(i+0.5));
+            start = ((float)(j-0.5))/((float)(i+0.5));
 					}
 					if ((j > 0) && (G_SceneTileObstructs(&active_scene, nx_adj, ny_adj))) {
             if (G_SceneTileObstructs(&active_scene, imm_nx_adj, imm_ny_adj)) {
@@ -570,9 +616,11 @@ void G_CastShadow(
             } else {
               start = ((float)(j))/((float)(i+0.5));
             }
+              start = ((float)(j))/((float)(i+0.5));
 					} else {
-						start = ((float)(j-0.5))/((float)(i+0.5));
+            start = ((float)(j-0.5))/((float)(i+0.5));
 					}
+
 					was_blocked = 1;
 				} else {
 					was_blocked = 0;
@@ -631,7 +679,7 @@ void G_AddLight(int *x, int *y, void *data) {
 	if ((lx >= DCOLS_OFFSET) && (lx < DCOLS_OFFSET+DCOLS) &&
 			(ly >= DROWS_OFFSET) && (ly < DROWS_OFFSET+DROWS)) {
 		if ((vismap[lx][ly]) && (lightmap[lx][ly].id.value != light->id.value)) {
-			if (!(G_TileFlags(tilemap[lx][ly].layers[BASE_LAYER]) & OBSTRUCTS_VISION) ||
+			if (!(G_SceneTileObstructs(&active_scene, lx_adj, ly_adj)) ||
 					(G_LightCanShine(fx, fy, light->x, light->y, lx_adj, ly_adj))) {
 				lightmap[lx][ly].r += light->r*intensity;
 				lightmap[lx][ly].g += light->g*intensity;
@@ -655,7 +703,7 @@ void G_AddPointLight(int x, int y, int r, int g, int b, int intensity) {
   node.intensity = intensity;
  	node.id.value = game_info.id.value+x+y*active_scene->w;
 
-  G_GenerateFOV(x, y, &node, &G_AddLight);
+  G_GenerateFOV(x, y, node.intensity, &node, &G_AddLight);
 }
 
 void G_MakeVisible(int *x, int *y, void *data) {
@@ -689,7 +737,7 @@ void G_FocusView(G_Scene **scene) {
 }
 
 void G_ResizeDPort(int x, int y, int w, int h) {
-  if ((x+w < COLS) && (y+h < ROWS)) {
+  if ((x+w <= COLS) && (y+h <= ROWS)) {
     DCOLS_OFFSET = x;
     DCOLS = w;
     DROWS_OFFSET = y;
@@ -781,4 +829,93 @@ Tile G_GetTile(Tile *layers) {
   }
 
   return layers[BASE_LAYER];
+}
+
+float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int invert, boolean top) {
+  boolean above = 0, right = 0;
+
+  if (top) {
+    if (invert) {
+      right = G_SceneTileObstructs(&active_scene, scene_x+y*dx, scene_y+(x+1)*dy);
+    } else {
+      right = G_SceneTileObstructs(&active_scene, scene_x+(x+1)*dx, scene_y+y*dy);
+    }
+  
+    return ((right) ? (float)(y)/(x+1.0) : (float)(y)/(x+0.95));
+  } else {
+    if (invert) {
+      right = G_SceneTileObstructs(&active_scene, scene_x+y*dx, scene_y+(x+1)*dy);
+      above = G_SceneTileObstructs(&active_scene, scene_x+(y-1)*dx, scene_y+x*dy);
+    } else {
+      above = G_SceneTileObstructs(&active_scene, scene_x+x*dx, scene_y+(y-1)*dy);
+      right = G_SceneTileObstructs(&active_scene, scene_x+(x+1)*dx, scene_y+y*dy);
+    }
+
+    return ((right || above) ? (float)(y+0.95)/(x) : (float)(y+1.0)/(x));
+  }
+}
+
+void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
+  int x, y, x_adj, y_adj, x_adj_prev, y_adj_prev;
+  float current;
+  boolean good, is_solid, was_solid = 0;
+
+  while (dist <= range) {
+    good = 0;
+    x = dist;
+    y = 0;
+
+    while (y <= dist) {
+      if (invert) {
+        x_adj = scene_x+(y*dx);
+        y_adj = scene_y+(x*dy);
+        x_adj_prev = scene_x+((y-1)*dx);
+        y_adj_prev = scene_y+(x*dy);
+      } else {
+        x_adj = scene_x+(x*dx);
+        y_adj = scene_y+(y*dy);
+        x_adj_prev = scene_x+(x*dx);
+        y_adj_prev = scene_y+((y-1)*dy);
+      }
+
+      current = (float)(y)/(x);
+      is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
+      was_solid = (y == 0) ? 0 : (G_SceneTileObstructs(&active_scene, x_adj_prev, y_adj_prev));
+
+      if ((current <= end) && (current >= start)) {
+        good = 1;
+
+        if (is_solid) {
+          if (y == dist) {
+            end = (float)(y)/(x+0.95);
+            end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
+          } else {
+            if ((was_solid == 0) && (y > 0)) {
+              float other_end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
+              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, other_end, data, func);
+            }
+
+            start = (float)(y+0.95)/(x);
+            start = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 0);
+          }
+        }
+
+        x_adj -= active_scene->view.x;
+        y_adj -= active_scene->view.y;
+
+        func(&x_adj, &y_adj, data);
+      } else if (current > end) {
+        y = dist;
+      }
+
+      x -= 1;
+      y += 1;
+    }
+
+    if (!good) {
+      return;
+    }
+    
+    dist = (start < end) ? dist+1 : range+1;
+  }
 }

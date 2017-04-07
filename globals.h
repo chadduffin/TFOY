@@ -40,6 +40,9 @@ extern boolean vismap[COLS][ROWS];
 extern G_TileCell tilemap[COLS][ROWS];
 extern G_LightNode lightmap[COLS][ROWS];
 
+extern G_Id menu_id;
+extern G_Id overworld_id;
+
 extern G_FPS fps;
 extern G_Console console;
 extern G_GameInformation game_info;
@@ -48,6 +51,7 @@ extern G_Tree *scenes;
 extern G_Scene *active_scene;
 
 extern char title[ROWS][COLS];
+extern char test_scene[WORLD_ROWS][WORLD_COLS];
 
 /* tiles.c */
 

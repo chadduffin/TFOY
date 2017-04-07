@@ -41,8 +41,8 @@
 #define COLS 100
 #define ROWS 60
 
-#define WORLD_COLS 512
-#define WORLD_ROWS 256
+#define WORLD_COLS 160
+#define WORLD_ROWS 96
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
@@ -333,7 +333,7 @@ void G_UpdateBegin(void);
 void G_UpdateEnd(void);
 void G_ClearBuffers(void);
 void G_InitializeKeybindings(void);
-void G_GenerateFOV(int x, int y, void *light, void (*func)(int*, int*, void*));
+void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*));
 void G_CastShadow(int distance, int x, int y, int invert, int dx, int dy,
 	float start, float end, void *light, void (*func)(int*, int*, void*));
 void G_AddLight(int *x, int *y, void *data);
@@ -346,6 +346,8 @@ boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 boolean G_PointWithinView(int x, int y);
 G_Id G_GetId(void);
 Tile G_GetTile(Tile layers[TILE_LAYER_COUNT]);
+
+void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
 
 /* rendering.c */
 int G_Render(void *data);
@@ -385,6 +387,8 @@ Tile G_SceneGetTile(G_Scene **scene, int x, int y);
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);
 boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel);
+void G_CreateFire(int x, int y);
+void G_CreateLight(int x, int y);
 
 void G_InitMenu(G_Scene **scene);
 void G_TestScene(G_Scene **scene);
