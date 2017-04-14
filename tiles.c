@@ -27,14 +27,17 @@ G_TileInformation tile_info[TILE_COUNT] = {
 };
 
 void G_TileUpdate(Tile tile, int x, int y) {
-  int scene_x = x+active_scene->view.x, scene_y = y+active_scene->view.y;
-  G_TileInformation info = tile_info[tile-NOTHING];
+	if (tile > 255) {
+	  int scene_x = x+active_scene->view.x, scene_y = y+active_scene->view.y;
 
-  if (G_TileFlagCompare(tile, LUMINESCENT)) {
-    G_AddPointLight(scene_x, scene_y, (info.fg->r)/3, (info.fg->g)/3, (info.fg->b)/3, 3);
-  } else if (G_TileFlagCompare(tile, ILLUMINATING)) {
-    G_AddPointLight(scene_x, scene_y, 255, 255, 255, 3);
-  }
+	  G_TileInformation info = tile_info[tile-NOTHING];
+
+	  if (G_TileFlagCompare(tile, LUMINESCENT)) {
+	    G_AddPointLight(scene_x, scene_y, (info.fg->r)/3, (info.fg->g)/3, (info.fg->b)/3, 3);
+	  } else if (G_TileFlagCompare(tile, ILLUMINATING)) {
+	    G_AddPointLight(scene_x, scene_y, 255, 255, 255, 3);
+	  }
+	}
 }
 
 TileFlag G_TileFlags(Tile tile) {

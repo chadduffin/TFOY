@@ -116,6 +116,9 @@ int G_Update(void *data) {
       for (x = 0; x < DCOLS; x += 1) {
         Tile tile = G_SceneGetTile(&active_scene, x+active_scene->view.x, y+active_scene->view.y);
         tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = tile;
+
+				printf("%i, %i, %i.\n", tile, x, y);
+
         G_TileUpdate(tile, x, y);
       }
     }

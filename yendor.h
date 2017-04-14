@@ -41,8 +41,8 @@
 #define COLS 100
 #define ROWS 60
 
-#define WORLD_COLS 512
-#define WORLD_ROWS 512
+#define WORLD_COLS 160
+#define WORLD_ROWS 96
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
