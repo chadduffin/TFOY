@@ -99,24 +99,6 @@ int G_Update(void *data) {
       game_info.phys[SDL_SCANCODE_Z] = 0;
       game_info.full = 1;
     }
-    if (game_info.phys[SDL_SCANCODE_SPACE]) {
-      game_info.phys[SDL_SCANCODE_SPACE] = 0;
-      if (active_scene->ambient.r == 0) {
-        active_scene->ambient.r = 255;
-        active_scene->ambient.g = 255;
-        active_scene->ambient.b = 255;
-      } else {
-        active_scene->ambient.r = 0;
-        active_scene->ambient.g = 0;
-        active_scene->ambient.b = 0;
-      }
-    }
-    if (game_info.phys[SDL_SCANCODE_Q]) {
-      game_info.phys[SDL_SCANCODE_Q] = 0;
-      int x = active_scene->view.x+((game_info.mouse_x-game_info.display_x)/game_info.tile_w)-DCOLS_OFFSET;
-      int y = active_scene->view.y+((game_info.mouse_y-game_info.display_y)/game_info.tile_h)-DROWS_OFFSET;
-      G_CreateLight(x, y);
-    }
 
     G_UpdateEntities(NULL);
     G_FocusView(&active_scene);
@@ -175,9 +157,6 @@ int G_PollEvents(void* data) {
 			case SDL_MOUSEBUTTONDOWN:
 				{
 					if (game_info.event.button.button == SDL_BUTTON_LEFT) {
-            int x = active_scene->view.x+((game_info.mouse_x-game_info.display_x)/game_info.tile_w)-DCOLS_OFFSET;
-            int y = active_scene->view.y+((game_info.mouse_y-game_info.display_y)/game_info.tile_h)-DROWS_OFFSET;
-            G_CreateFire(x, y);
 						game_info.mouse_lb = (game_info.mouse_lb == 0) ? SDL_GetTicks() : game_info.mouse_lb;
 					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
 						game_info.mouse_rb = (game_info.mouse_rb == 0) ? SDL_GetTicks() : game_info.mouse_rb;
@@ -375,6 +354,30 @@ unsigned int G_GetFPS(void) {
   return fps.frame_count/((SDL_GetTicks()-fps.last_tick)/(1000.0));
 }
 
+float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int invert, boolean top) {
+  boolean above = 0, right = 0;
+
+  if (top) {
+    if (invert) {
+      right = G_SceneTileObstructs(&active_scene, scene_x+y*dx, scene_y+(x+1)*dy);
+    } else {
+      right = G_SceneTileObstructs(&active_scene, scene_x+(x+1)*dx, scene_y+y*dy);
+    }
+  
+    return (!(right) ? (float)(y)/(x+0.9) : (float)(y)/(x+1.0));
+  } else {
+    if (invert) {
+      right = G_SceneTileObstructs(&active_scene, scene_x+y*dx, scene_y+(x+1)*dy);
+      above = G_SceneTileObstructs(&active_scene, scene_x+(y-1)*dx, scene_y+x*dy);
+    } else {
+      above = G_SceneTileObstructs(&active_scene, scene_x+x*dx, scene_y+(y-1)*dy);
+      right = G_SceneTileObstructs(&active_scene, scene_x+(x+1)*dx, scene_y+y*dy);
+    }
+
+    return (!(right || above) ? (float)(y+0.9)/(x) : (float)(y+1.0)/(x));
+  }
+}
+
 void G_Quit(void) {
 	int i;
   
@@ -525,121 +528,69 @@ void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*
 	}
 }
 
-void G_CastShadow(
-	int distance, int x, int y, int invert, int dx, int dy,
-	float start, float end, void *light, void (*func)(int*, int*, void*)) {
-	int
-		i,
-		j,
-		x_adj,
-		y_adj,
-		nx_adj,	
-		ny_adj,
-		imm_nx_adj,	
-		imm_ny_adj,
-		x_bound,
-		y_bound,
-		started,
-		was_blocked = 0,
-    max = MAX_LIGHT_DISTANCE;
-	float current;
+void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
+  int x, y, x_adj, y_adj, x_adj_prev, y_adj_prev;
+  float current;
+  boolean good, is_solid, was_solid = 0;
 
-  if (light != NULL) {
-    max = ((G_LightNode*)light)->intensity;
-    max = (max < MAX_LIGHT_DISTANCE) ? max : MAX_LIGHT_DISTANCE;
-  }
+  while (dist <= range) {
+    good = 0;
+    x = dist;
+    y = 0;
 
-	if (dx > 0) {
-		if (x+max >= active_scene->w) {
-			x_bound = active_scene->w-x;
-		} else {
-			x_bound = max;
-		}
-	} else {
-		if (x-max < 0) {
-			x_bound = x+1;
-		} else {
-			x_bound = max;
-		}
-	}
-	if (dy > 0) {
-		if (y+max >= active_scene->h) {
-			y_bound = active_scene->h-y;
-		} else {
-			y_bound = max;
-		}
-	} else {
-		if (y-max < 0) {
-			y_bound = y+1;
-		} else {
-			y_bound = max;
-		}
-	}
-
-	if (invert) {
-		i = x_bound;
-		x_bound = y_bound;
-		y_bound = i;
-	}
-
-	for (i = distance; i < x_bound; i += 1) {
-		started = 0;
-		for (j = ((distance > y_bound) ? y_bound : distance)-(1-invert); j >= 0; j -= 1) {
-			current = ((float)j)/((float)i);
-			if (invert) {
-				x_adj = x+(j*dx);
-				y_adj = y+(i*dy);
-				nx_adj = x+(j*dx);
-				ny_adj = (i < x_bound-1) ? y+((i+1)*dy) : y_adj;
-				imm_nx_adj = x+((j-1.0)*dx);
-				imm_ny_adj = y+(i*dy);
-			} else {
-				x_adj = x+(i*dx);
-				y_adj = y+(j*dy);
-				nx_adj = (i < x_bound-1) ? x+((i+1)*dx) : x_adj;
-				ny_adj = y+(j*dy);
-				imm_nx_adj = x+(i*dx);
-				imm_ny_adj = y+((j-1)*dy);
-			}
-
-			started = (started == 0) ? 1 : started;
-
-			if ((current <= start) && (current >= end)) {
-				if (G_SceneTileObstructs(&active_scene, x_adj, y_adj)) {
-					if ((was_blocked == 0) && (started != 1)) {
-						G_CastShadow(distance+1, x, y, invert, dx, dy, start, ((float)(j+0.5))/(float)(i-0.5), light, func);
-            start = ((float)(j-0.5))/((float)(i+0.5));
-					}
-					if ((j > 0) && (G_SceneTileObstructs(&active_scene, nx_adj, ny_adj))) {
-            if (G_SceneTileObstructs(&active_scene, imm_nx_adj, imm_ny_adj)) {
-              start = ((float)(j-1.0))/((float)(i));
-            } else {
-              start = ((float)(j))/((float)(i+0.5));
-            }
-              start = ((float)(j))/((float)(i+0.5));
-					} else {
-            start = ((float)(j-0.5))/((float)(i+0.5));
-					}
-
-					was_blocked = 1;
-				} else {
-					was_blocked = 0;
-				}
-
-				started = 2;
-			
-				x_adj -= active_scene->view.x;
-				y_adj -= active_scene->view.y;
-
-				func(&x_adj, &y_adj, light);
-			} else if ((started == 1) && (current < end)) {
-				return;
+    while (y <= dist) {
+      if (invert) {
+        x_adj = scene_x+(y*dx);
+        y_adj = scene_y+(x*dy);
+        x_adj_prev = scene_x+((y-1)*dx);
+        y_adj_prev = scene_y+(x*dy);
+      } else {
+        x_adj = scene_x+(x*dx);
+        y_adj = scene_y+(y*dy);
+        x_adj_prev = scene_x+(x*dx);
+        y_adj_prev = scene_y+((y-1)*dy);
       }
-		}
 
-		was_blocked = 0;
-		distance += 1;
-	}
+      current = (float)(y)/(x);
+      is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
+      was_solid = (y == 0) ? 0 : (G_SceneTileObstructs(&active_scene, x_adj_prev, y_adj_prev));
+
+      if ((current <= end) && (current >= start)) {
+        good = 1;
+
+        if (is_solid) {
+          if (y == dist) {
+            end = (float)(y)/(x+0.95);
+            end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
+          } else {
+            if ((was_solid == 0) && (y > 0)) {
+              float other_end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
+              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, other_end, data, func);
+            }
+
+            start = (float)(y+0.95)/(x);
+            start = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 0);
+          }
+        }
+
+        x_adj -= active_scene->view.x;
+        y_adj -= active_scene->view.y;
+
+        func(&x_adj, &y_adj, data);
+      } else if (current > end) {
+        y = dist;
+      }
+
+      x -= 1;
+      y += 1;
+    }
+
+    if (!good) {
+      return;
+    }
+    
+    dist = (start < end) ? dist+1 : range+1;
+  }
 }
 
 void G_AddLight(int *x, int *y, void *data) {
@@ -816,106 +767,14 @@ G_Id G_GetId(void) {
 }
 
 Tile G_GetTile(Tile *layers) {
-  if (layers[UI_LAYER] != NOTHING) {
-    return layers[UI_LAYER];
-  } else if (layers[CREATURE_LAYER] != NOTHING) {
-    return layers[CREATURE_LAYER];
-  } else if (layers[ITEM_LAYER] != NOTHING) {
-    return layers[ITEM_LAYER];
-  } else if (layers[ORNAMENT_LAYER] != NOTHING) {
-    return layers[ORNAMENT_LAYER];
-  } else if (layers[EFFECT_LAYER] != NOTHING) {
-    return layers[EFFECT_LAYER];
+  TileLayer layer = UI_LAYER;
+
+  for (; layer != BASE_LAYER; layer += 1) {
+    if (layers[layer] != NOTHING) {
+      return layers[layer];
+    }
   }
 
   return layers[BASE_LAYER];
 }
 
-float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int invert, boolean top) {
-  boolean above = 0, right = 0;
-
-  if (top) {
-    if (invert) {
-      right = G_SceneTileObstructs(&active_scene, scene_x+y*dx, scene_y+(x+1)*dy);
-    } else {
-      right = G_SceneTileObstructs(&active_scene, scene_x+(x+1)*dx, scene_y+y*dy);
-    }
-  
-    return ((right) ? (float)(y)/(x+1.0) : (float)(y)/(x+0.95));
-  } else {
-    if (invert) {
-      right = G_SceneTileObstructs(&active_scene, scene_x+y*dx, scene_y+(x+1)*dy);
-      above = G_SceneTileObstructs(&active_scene, scene_x+(y-1)*dx, scene_y+x*dy);
-    } else {
-      above = G_SceneTileObstructs(&active_scene, scene_x+x*dx, scene_y+(y-1)*dy);
-      right = G_SceneTileObstructs(&active_scene, scene_x+(x+1)*dx, scene_y+y*dy);
-    }
-
-    return ((right || above) ? (float)(y+0.95)/(x) : (float)(y+1.0)/(x));
-  }
-}
-
-void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
-  int x, y, x_adj, y_adj, x_adj_prev, y_adj_prev;
-  float current;
-  boolean good, is_solid, was_solid = 0;
-
-  while (dist <= range) {
-    good = 0;
-    x = dist;
-    y = 0;
-
-    while (y <= dist) {
-      if (invert) {
-        x_adj = scene_x+(y*dx);
-        y_adj = scene_y+(x*dy);
-        x_adj_prev = scene_x+((y-1)*dx);
-        y_adj_prev = scene_y+(x*dy);
-      } else {
-        x_adj = scene_x+(x*dx);
-        y_adj = scene_y+(y*dy);
-        x_adj_prev = scene_x+(x*dx);
-        y_adj_prev = scene_y+((y-1)*dy);
-      }
-
-      current = (float)(y)/(x);
-      is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
-      was_solid = (y == 0) ? 0 : (G_SceneTileObstructs(&active_scene, x_adj_prev, y_adj_prev));
-
-      if ((current <= end) && (current >= start)) {
-        good = 1;
-
-        if (is_solid) {
-          if (y == dist) {
-            end = (float)(y)/(x+0.95);
-            end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
-          } else {
-            if ((was_solid == 0) && (y > 0)) {
-              float other_end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
-              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, other_end, data, func);
-            }
-
-            start = (float)(y+0.95)/(x);
-            start = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 0);
-          }
-        }
-
-        x_adj -= active_scene->view.x;
-        y_adj -= active_scene->view.y;
-
-        func(&x_adj, &y_adj, data);
-      } else if (current > end) {
-        y = dist;
-      }
-
-      x -= 1;
-      y += 1;
-    }
-
-    if (!good) {
-      return;
-    }
-    
-    dist = (start < end) ? dist+1 : range+1;
-  }
-}

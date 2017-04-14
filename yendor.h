@@ -41,13 +41,14 @@
 #define COLS 100
 #define ROWS 60
 
-#define WORLD_COLS 160
-#define WORLD_ROWS 96
+#define WORLD_COLS 512
+#define WORLD_ROWS 512
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
 
 #define FLICKER_RANGE 128
+#define QTREE_SECTOR_SIZE 256
 #define MAX_VIEW_DISTANCE (DCOLS/2)
 #define MAX_LIGHT_DISTANCE 128
 
@@ -278,7 +279,7 @@ typedef struct G_RenderComponent {
 } G_RenderComponent;
 
 typedef struct G_ElementComponent {
-  int volume, spread;
+  int volume, spread_chance;
   TileFlag tile_flags;
   ElementFlag element_flags;
 } G_ElementComponent;
@@ -328,14 +329,14 @@ int G_CheckPhysical(SDL_Scancode key);
 int G_CheckBound(Keybinding keybinding);
 int G_RandomNumber(int lower, int upper);
 unsigned int G_GetFPS(void);
+float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int invert, boolean top);
 void G_Quit(void);
 void G_UpdateBegin(void);
 void G_UpdateEnd(void);
 void G_ClearBuffers(void);
 void G_InitializeKeybindings(void);
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*));
-void G_CastShadow(int distance, int x, int y, int invert, int dx, int dy,
-	float start, float end, void *light, void (*func)(int*, int*, void*));
+void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
 void G_AddLight(int *x, int *y, void *data);
 void G_AddPointLight(int x, int y, int r, int g, int b, int intensity);
 void G_MakeVisible(int *x, int *y, void *data);
@@ -346,8 +347,6 @@ boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 boolean G_PointWithinView(int x, int y);
 G_Id G_GetId(void);
 Tile G_GetTile(Tile layers[TILE_LAYER_COUNT]);
-
-void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
 
 /* rendering.c */
 int G_Render(void *data);
@@ -387,8 +386,6 @@ Tile G_SceneGetTile(G_Scene **scene, int x, int y);
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);
 boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel);
-void G_CreateFire(int x, int y);
-void G_CreateLight(int x, int y);
 
 void G_InitMenu(G_Scene **scene);
 void G_TestScene(G_Scene **scene);
@@ -412,7 +409,6 @@ void G_TreeNodeRotateRight(G_Tree **tree, G_TreeNode **node);
 void G_TreeDeleteFix(G_Tree **tree, G_TreeNode **node);
 void G_TreeNodeIterate(G_Tree **tree, G_TreeNode **node, void (*func)(void*));
 int G_TreeSize(G_Tree **tree);
-G_TreeNode* G_TreeNodeRoot(G_Tree **tree);
 G_TreeNode* G_TreeNodeFind(G_Tree **tree, long int key);
 G_TreeNode* G_TreeNodeMinimum(G_Tree **tree);
 G_TreeNode* G_TreeNodeSuccessor(G_Tree **tree, G_TreeNode **node);

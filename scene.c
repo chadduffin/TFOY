@@ -259,7 +259,7 @@ void G_TestScene(G_Scene **scene) {
   light->light.r = 255;
   light->light.g = 255;
   light->light.b = 255;
-  light->light.intensity = 12;
+  light->light.intensity = 48;
   
   render->x = 100;
   render->y = 8;
@@ -393,44 +393,4 @@ void G_TestScene(G_Scene **scene) {
       }
     }
   }
-}
-
-void G_CreateFire(int x, int y) {
-  G_Entity *entity = G_EntityCreate();
-  G_LightComponent *light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
-
-  light->light.r = 255;
-  light->light.g = 200;
-  light->light.b = 200;
-  light->light.intensity = 3;
-  
-  render->x = x;
-  render->y = y;
-  render->tile = BASIC_FIRE;
-  render->layer = EFFECT_LAYER;
-
-  element->tile_flags = IS_BURNING;
-  element->element_flags = SPREADS_PROPOGATE;
-
-  G_SceneEntityInsert(&active_scene, &entity);
-}
-
-void G_CreateLight(int x, int y) {
-  G_Entity *entity = G_EntityCreate();
-  G_LightComponent *light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-  light->light.r = rand()%255;
-  light->light.g = rand()%255;
-  light->light.b = rand()%255;
-  light->light.intensity = 16+rand()%8;
-  
-  render->x = x;
-  render->y = y;
-  render->tile = NOTHING;
-  render->layer = EFFECT_LAYER;
-
-  G_SceneEntityInsert(&active_scene, &entity);
 }

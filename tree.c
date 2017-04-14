@@ -324,10 +324,6 @@ int G_TreeSize(G_Tree **tree) {
   return (*tree)->size;
 }
 
-G_TreeNode* G_TreeNodeRoot(G_Tree **tree) {
-  return (*tree)->root->left;
-}
-
 G_TreeNode* G_TreeNodeFind(G_Tree **tree, long int key) {
   assert((tree != NULL) && (*tree != NULL));
 

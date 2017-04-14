@@ -44,7 +44,7 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
       {
         G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
         element->volume = 128+G_RandomNumber(0, 32);
-        element->spread = 15;
+        element->spread_chance = 15;
         element->tile_flags = 0;
         element->element_flags = 0;
         (*entity)->components[ELEMENT_COMPONENT] = element;
@@ -167,15 +167,15 @@ void G_ElementComponentUpdate(G_Entity **entity) {
             e = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x+1, render->y), OBSTRUCTS_MOVEMENT),
             w = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x-1, render->y), OBSTRUCTS_MOVEMENT);
 
-          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y, (G_RandomNumber(0, 100) < element->spread));
-          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y, (G_RandomNumber(0, 100) < element->spread));
-          G_SceneTilePropogate(&active_scene, entity, render->x, render->y+1, (G_RandomNumber(0, 100) < element->spread));
-          G_SceneTilePropogate(&active_scene, entity, render->x, render->y-1, (G_RandomNumber(0, 100) < element->spread));
+          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y, (G_RandomNumber(0, 100) < element->spread_chance));
+          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y, (G_RandomNumber(0, 100) < element->spread_chance));
+          G_SceneTilePropogate(&active_scene, entity, render->x, render->y+1, (G_RandomNumber(0, 100) < element->spread_chance));
+          G_SceneTilePropogate(&active_scene, entity, render->x, render->y-1, (G_RandomNumber(0, 100) < element->spread_chance));
 
-          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y-1, ((n && e) && (G_RandomNumber(0, 100) < element->spread)));
-          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y-1, ((n && w) && (G_RandomNumber(0, 100) < element->spread)));
-          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y+1, ((s && e) && (G_RandomNumber(0, 100) < element->spread)));
-          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y+1, ((s && w) && (G_RandomNumber(0, 100) < element->spread)));
+          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y-1, ((n && e) && (G_RandomNumber(0, 100) < element->spread_chance)));
+          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y-1, ((n && w) && (G_RandomNumber(0, 100) < element->spread_chance)));
+          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y+1, ((s && e) && (G_RandomNumber(0, 100) < element->spread_chance)));
+          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y+1, ((s && w) && (G_RandomNumber(0, 100) < element->spread_chance)));
 
           element->volume -= 1;
     
@@ -227,20 +227,6 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
           render->x += 1;
           game_info.phys[SDL_SCANCODE_L] = 0;
         }
-      }
-    }
-    if (game_info.phys[SDL_SCANCODE_P]) {
-      G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(&e, LIGHT_COMPONENT);
-
-      if (light->light.intensity < 32) {
-        light->light.intensity += 1;
-      }
-    }
-    if (game_info.phys[SDL_SCANCODE_O]) {
-      G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(&e, LIGHT_COMPONENT);
-
-      if (light->light.intensity > 1) {
-        light->light.intensity -= 1;
       }
     }
   }

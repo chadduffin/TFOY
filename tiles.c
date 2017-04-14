@@ -31,7 +31,7 @@ void G_TileUpdate(Tile tile, int x, int y) {
   G_TileInformation info = tile_info[tile-NOTHING];
 
   if (G_TileFlagCompare(tile, LUMINESCENT)) {
-    G_AddPointLight(scene_x, scene_y, (info.fg->r)/4, (info.fg->g)/4, (info.fg->b)/4, 3);
+    G_AddPointLight(scene_x, scene_y, (info.fg->r)/3, (info.fg->g)/3, (info.fg->b)/3, 3);
   } else if (G_TileFlagCompare(tile, ILLUMINATING)) {
     G_AddPointLight(scene_x, scene_y, 255, 255, 255, 3);
   }
