@@ -362,10 +362,10 @@ void G_TestScene(G_Scene **scene) {
   light->light.b = 200;
   light->light.intensity = 3;
   
-  render->x = 24;
-  render->y = 24;
+  render->x = 150;
+  render->y = 90;
   render->tile = BASIC_FIRE;
-  render->layer = EFFECT_LAYER;
+  render->layer = ORNAMENT_LAYER;
 
   element->tile_flags = IS_BURNING;
   element->element_flags = SPREADS_PROPOGATE;

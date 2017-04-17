@@ -4,6 +4,7 @@
 int main(int argc, char **argv) {
   int status = 0;
 
+  G_LoadSettings(NULL);
   G_Init(NULL);
 
   threads[INITIALIZE_THREAD] = SDL_CreateThread(G_NetworkingInit, "networking-initialization", NULL);
@@ -26,5 +27,7 @@ int main(int argc, char **argv) {
   };
 
   G_Quit();
+  G_WriteSettings(NULL);
+
   return 0;
 }

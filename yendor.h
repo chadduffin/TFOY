@@ -43,6 +43,7 @@
 
 #define WORLD_COLS 160
 #define WORLD_ROWS 96
+#define CHUNK_SIZE 256
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
@@ -71,6 +72,13 @@ typedef enum Thread {
 
   GAME_THREAD_COUNT,
 } Thread;
+
+typedef enum Setting {
+  WORLD_WIDTH = 0,
+  WORLD_HEIGHT,
+  
+  SETTING_COUNT
+} Setting;
 
 typedef enum Component {
 	UI_COMPONENT = 0,
@@ -177,6 +185,11 @@ typedef struct G_FPS {
   unsigned int frame_count, last_tick;
 } G_FPS;
 
+typedef struct G_Setting {
+  char key[32];
+  int value;
+} G_Setting;
+
 typedef struct G_GameInformation {
   int
     tile_w, tile_h,
@@ -193,6 +206,7 @@ typedef struct G_GameInformation {
   SDL_Renderer *renderer;
   SDL_Texture *buffers[2], *textures[TEXTURE_COUNT];
   SDL_Scancode virt[KEYBINDING_COUNT];
+  G_Setting settings[SETTING_COUNT];
   boolean running, full;
 } G_GameInformation;
 
@@ -304,6 +318,10 @@ typedef struct G_Scene {
   G_Light ambient;
 } G_Scene;
 
+typedef struct G_SceneChunk {
+  G_Tile tiles[CHUNK_SIZE*CHUNK_SIZE];
+} G_SceneChunk;
+
 typedef struct G_Console {
   SDL_Rect src, dst;
   G_View view;
@@ -347,6 +365,13 @@ boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 boolean G_PointWithinView(int x, int y);
 G_Id G_GetId(void);
 Tile G_GetTile(Tile layers[TILE_LAYER_COUNT]);
+
+/* filehandler.c */
+
+int G_LoadSettings(void *data);
+int G_WriteSettings(void *data);
+char* G_EncodeChunk(G_SceneChunk *chunk, int *size);
+G_SceneChunk* G_DecodeChunk(char *buf, int len);
 
 /* rendering.c */
 int G_Render(void *data);
