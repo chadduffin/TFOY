@@ -1,7 +1,8 @@
 #include "yendor.h"
 #include "globals.h"
 
-G_Scene* G_SceneCreate(int w, int h) {
+G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
+  int i;
   G_Scene *scene = (G_Scene*)malloc(sizeof(G_Scene));
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
 
@@ -14,11 +15,10 @@ G_Scene* G_SceneCreate(int w, int h) {
   scene->view.yp = 0;
   scene->view.w = DCOLS;
   scene->view.h = DROWS;
+  scene->view.follows = 0;
   scene->focus = NULL;
 
   scene->id = G_GetId();
-
-  scene->tiles = (G_Tile*)malloc(sizeof(G_Tile)*w*h);
 
   scene->entities = G_TreeCreate();
   scene->transitions = G_TreeCreate();
@@ -28,9 +28,17 @@ G_Scene* G_SceneCreate(int w, int h) {
   node->data = (void*)scene;
   G_TreeNodeInsert(&scenes, &node);
 
-  scene->ambient.r = 0;
-  scene->ambient.g = 0;
-  scene->ambient.b = 0;
+  scene->ambient.r = 127;
+  scene->ambient.g = 127;
+  scene->ambient.b = 127;
+
+  scene->persistent = persistent;
+
+  scene->chunks = (G_SceneChunk**)malloc(sizeof(G_SceneChunk*)*w*h);
+
+  for (i = 0; i < w*h; i += 1) {
+    scene->chunks[i] = NULL;
+  }
 
   return scene;
 }
@@ -72,13 +80,8 @@ void G_SceneDestroy(G_Scene **scene) {
   G_Scene *s = *scene;
   G_TreeNode *node = G_TreeNodeFind(&scenes, s->id.value);
 
-  if (s->entities == NULL) {
-    printf("must be here\n");
-  }
-  if (s->transitions == NULL) {
-    printf("or here\n");
-  }
-
+  free(s->chunks);
+  
   G_TreeDestroy(&(s->entities));
   G_TreeDestroy(&(s->transitions));
   G_TreeNodeDelete(&scenes, &node);
@@ -132,35 +135,76 @@ void G_SceneTransitionInsert(G_Scene **scene, G_TileTransition **transition) {
 }
 
 void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y) {
+  int
+    chunk_x = x/CHUNK_SIZE,
+    chunk_y = y/CHUNK_SIZE,
+    offset_x = x%CHUNK_SIZE,
+    offset_y = y%CHUNK_SIZE;
   G_Scene *s = *scene;
 
-  if ((x >= 0) || (x < s->w) || (y >= 0) || (y < s->h)) {
-    s->tiles[x+(y*s->w)] = tile;
+  if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
+    G_SceneChunk *chunk = s->chunks[chunk_x+chunk_y*(s->w)];
+
+    if ((chunk != NULL) && (offset_x >= 0) && (offset_x < CHUNK_SIZE) && (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
+      chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)] = tile;
+    }
   }
 }
 
 Tile G_SceneGetTile(G_Scene **scene, int x, int y) {
+  int
+    chunk_x = x/CHUNK_SIZE,
+    chunk_y = y/CHUNK_SIZE,
+    offset_x = x%CHUNK_SIZE,
+    offset_y = y%CHUNK_SIZE;
   G_Scene *s = *scene;
 
-  if ((x < 0) || (x >= s->w) || (y < 0) || (y >= s->h)) {
-    return NOTHING;
-  }
+  if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
+    G_SceneChunk *chunk = s->chunks[chunk_x+chunk_y*(s->w)];
 
-  return s->tiles[x+(y*s->w)].tile;
+    if ((chunk != NULL) && (offset_x >= 0) && (offset_x < CHUNK_SIZE) && (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
+      return chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
+    }
+  }
+  
+  return ERROR_TILE;
 }
 
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y) {
+  int
+    chunk_x = x/CHUNK_SIZE,
+    chunk_y = y/CHUNK_SIZE,
+    offset_x = x%CHUNK_SIZE,
+    offset_y = y%CHUNK_SIZE;
   G_Tile tile;
   G_Scene *s = *scene;
 
-  if ((x < 0) || (x >= s->w) || (y < 0) || (y >= s->h)) {
-    tile.id.value = -1;
-    tile.tile = NOTHING;
+  tile.id.value = -1;
+  tile.tile = ERROR_TILE;
 
-    return tile;
+  if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
+    G_SceneChunk *chunk = s->chunks[chunk_x+chunk_y*(s->w)];
+
+    if ((chunk != NULL) && (offset_x >= 0) && (offset_x < CHUNK_SIZE) && (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
+      tile.tile = chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
+    }
   }
 
-  return s->tiles[x+(y*s->w)];
+  return tile;
+}
+
+G_SceneChunk* G_SceneChunkCreate(ChunkStatus status) {
+  G_SceneChunk *chunk = (G_SceneChunk*)malloc(sizeof(G_SceneChunk));
+
+  chunk->status = status;
+
+  if ((status == IS_LOADING) || (status == IS_LOADED)) {
+    chunk->tiles = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
+  } else {
+    chunk->tiles = NULL;
+  }
+
+  return chunk;
 }
 
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y) {
@@ -226,6 +270,8 @@ void G_InitMenu(G_Scene **scene) {
   G_Tile tile;
   G_Scene *s = *scene;
 
+  s->chunks[0] = G_SceneChunkCreate(IS_LOADED);
+
   tile.id.value = -1;
 
   s->ambient.r = 255;
@@ -245,152 +291,6 @@ void G_InitMenu(G_Scene **scene) {
       }
 
       G_SceneSetGTile(scene, tile, x, y);
-    }
-  }
-}
-
-void G_TestScene(G_Scene **scene) {
-  G_Scene *s = *scene;
-
-  G_Entity *entity = G_EntityCreate();
-  G_LightComponent *light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-  light->light.r = 255;
-  light->light.g = 255;
-  light->light.b = 255;
-  light->light.intensity = 48;
-  
-  render->x = 100;
-  render->y = 8;
-  render->tile = HUMAN;
-  render->layer = CREATURE_LAYER;
-
-  s->focus = entity;
-
-  G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
-  G_SceneEntityInsert(scene, &entity);
-
-  entity = G_EntityCreate();
-  light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-  light->light.r = 255;
-  light->light.g = 51;
-  light->light.b = 51;
-  light->light.intensity = 28;
-  
-  render->x = 46;
-  render->y = 11;
-  render->tile = NOTHING;
-  render->layer = ORNAMENT_LAYER;
-
-  G_SceneEntityInsert(scene, &entity);
-
-  entity = G_EntityCreate();
-  light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-  light->light.r = 51;
-  light->light.g = 150;
-  light->light.b = 255;
-  light->light.intensity = 28;
-  
-  render->x = 51;
-  render->y = 27;
-  render->tile = NOTHING;
-  render->layer = ORNAMENT_LAYER;
-
-  G_SceneEntityInsert(scene, &entity);
-
-  entity = G_EntityCreate();
-  light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-  light->light.r = 153;
-  light->light.g = 255;
-  light->light.b = 51;
-  light->light.intensity = 28;
-  
-  render->x = 60;
-  render->y = 20;
-  render->tile = NOTHING;
-  render->layer = ORNAMENT_LAYER;
-
-  G_SceneEntityInsert(scene, &entity);
-
-  entity = G_EntityCreate();
-  light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-  light->light.r = 255;
-  light->light.g = 255;
-  light->light.b = 255;
-  light->light.intensity = 24;
-  
-  render->x = WORLD_COLS-42;
-  render->y = WORLD_ROWS-12;
-  render->tile = NOTHING;
-  render->layer = ORNAMENT_LAYER;
-
-  G_SceneEntityInsert(scene, &entity);
-
-
-  entity = G_EntityCreate();
-  light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-  light->light.r = 255;
-  light->light.g = 255;
-  light->light.b = 255;
-  light->light.intensity = 12;
-  
-  render->x = 136;
-  render->y = 10;
-  render->tile = NOTHING;
-  render->layer = ORNAMENT_LAYER;
-
-  G_SceneEntityInsert(scene, &entity);
-
-  entity = G_EntityCreate();
-  light = (G_LightComponent*)G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = (G_RenderComponent*)G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
-
-  light->light.r = 255;
-  light->light.g = 200;
-  light->light.b = 200;
-  light->light.intensity = 3;
-  
-  render->x = 150;
-  render->y = 90;
-  render->tile = BASIC_FIRE;
-  render->layer = ORNAMENT_LAYER;
-
-  element->tile_flags = IS_BURNING;
-  element->element_flags = SPREADS_PROPOGATE;
-
-  G_SceneEntityInsert(scene, &entity);
-
-  int x, y;
-
-  for (y = 0; y < s->h; y += 1) {
-    for (x = 0; x < s->w; x += 1) {
-      s->tiles[x+y*s->w].id.value = -1;
-
-      if (test_scene[y][x] == '.') {
-        s->tiles[x+y*s->w].tile = GROUND;
-      } else if (test_scene[y][x] == '#') {
-        s->tiles[x+y*s->w].tile = WALL;
-      } else if (test_scene[y][x] == 'f') {
-        s->tiles[x+y*s->w].tile = FUNGUS;
-      } else if (test_scene[y][x] == 'l') {
-        s->tiles[x+y*s->w].tile = LAVA;
-      } else if (test_scene[y][x] == 'w') {
-        s->tiles[x+y*s->w].tile = WATER;
-      } else if (test_scene[y][x] == 'g') {
-        s->tiles[x+y*s->w].tile = GRASS;
-      }
     }
   }
 }

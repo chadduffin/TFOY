@@ -14,6 +14,8 @@ int G_Init(void *data) {
 	game_info.display_y = 0;
 	game_info.display_w = 320;
 	game_info.display_h = 240;
+	game_info.frame_count = 0;
+	game_info.timer = 0;
 	game_info.target_buffer = 0;
   game_info.id.value = 0;
 	game_info.running = 0;
@@ -66,18 +68,23 @@ int G_Init(void *data) {
 
     G_ClearBuffers();
     G_InitializeKeybindings();
-    
+
     scenes = G_TreeCreate();
+    chunks = G_TreeCreate();
 
-    G_Scene *scene = G_SceneCreate(WORLD_COLS, WORLD_ROWS);
+    /* creates overworld */
+    G_Scene *scene = G_SceneCreate(WORLD_WIDTH, WORLD_HEIGHT, 1);
+    scene->view.follows = 1;
     overworld_id = scene->id;
-    G_TestScene(&scene);
 
-    scene = G_SceneCreate(COLS, ROWS);
+    /* creates menu */
+    scene = G_SceneCreate(1, 1, 0);
     menu_id = scene->id;
     G_InitMenu(&scene);
 
     G_SceneChange(&scene);
+
+    fmutex = SDL_CreateMutex();
   }
 
   return 0;
@@ -85,6 +92,9 @@ int G_Init(void *data) {
 
 int G_Update(void *data) {
   int status, x, y;
+  if (SDL_GetTicks()-game_info.timer > UPDATE_DELAY) {
+    G_UpdateInfrequent();
+  }
 
   if (active_scene != NULL) {
     active_scene->view.xp = active_scene->view.x;
@@ -92,10 +102,7 @@ int G_Update(void *data) {
 
     threads[WORKER_THREAD_A] = SDL_CreateThread(G_UpdateTransitions, "game-transition-updating", NULL);
 
-    if ((game_info.phys[SDL_SCANCODE_Z]) ||
-        (game_info.phys[SDL_SCANCODE_O]) || (game_info.phys[SDL_SCANCODE_P]) ||
-        (game_info.phys[SDL_SCANCODE_L]) || (game_info.phys[SDL_SCANCODE_K]) ||
-        (game_info.phys[SDL_SCANCODE_H]) || (game_info.phys[SDL_SCANCODE_J])) {
+    if (game_info.phys[SDL_SCANCODE_Z]) {
       game_info.phys[SDL_SCANCODE_Z] = 0;
       game_info.full = 1;
     }
@@ -352,7 +359,7 @@ int G_RandomNumber(int lower, int upper) {
 }
 
 unsigned int G_GetFPS(void) {
-  return fps.frame_count/((SDL_GetTicks()-fps.last_tick)/(1000.0));
+  return game_info.frame_count/((SDL_GetTicks()-game_info.timer)/(1000.0));
 }
 
 float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int invert, boolean top) {
@@ -382,12 +389,14 @@ float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int inv
 void G_Quit(void) {
 	int i;
   
+  G_TreeDestroy(&chunks);
   G_TreeDestroy(&scenes);
 
 	for (i = 0; i < TEXTURE_COUNT; i += 1) {
 		SDL_DestroyTexture(game_info.textures[i]);
 	}
 
+  SDL_DestroyMutex(fmutex);
 	SDL_DestroyTexture(game_info.buffers[0]);
 	SDL_DestroyTexture(game_info.buffers[1]);
 	SDL_DestroyRenderer(game_info.renderer);
@@ -397,7 +406,7 @@ void G_Quit(void) {
 }
 
 void G_UpdateBegin(void) {
-  fps.frame_count += 1;
+  game_info.frame_count += 1;
 
   if (game_info.phys[SDL_SCANCODE_T]) {
     G_Scene *scene;
@@ -426,13 +435,6 @@ void G_UpdateBegin(void) {
 }
 
 void G_UpdateEnd(void) {
-  if (SDL_GetTicks()-fps.last_tick > FPS_LATENCY) {
-    printf("%u fps.\n", G_GetFPS());
-
-    fps.frame_count = 0;
-    fps.last_tick = SDL_GetTicks();
-  }
-
   if (active_scene != NULL) {
     G_TreeNode *node = active_scene->del_buffer;
 
@@ -459,6 +461,29 @@ void G_UpdateEnd(void) {
       G_TreeNodeInsert(&(active_scene->entities), &node);
       
       node = active_scene->ins_buffer;
+    }
+  }
+}
+
+void G_UpdateInfrequent(void) {
+  /* output frames per second */
+  printf("%u fps.\n", G_GetFPS());
+
+  game_info.frame_count = 0;
+  game_info.timer = SDL_GetTicks();
+
+  if ((active_scene != NULL) && (active_scene->persistent)) {
+    int
+      i, j, 
+      x = (active_scene->view.x+(active_scene->view.w/2))/CHUNK_SIZE,
+      y = (active_scene->view.y+(active_scene->view.h/2))/CHUNK_SIZE;
+
+    for (i = -2; i < 3; i += 1) {
+      for (j = -2; j < 3; j += 1) {
+        if ((x+j >= 0) && (x+j < active_scene->w) && (y+i >= 0) && (y+i < active_scene->h)) {
+          
+        }
+      }
     }
   }
 }
@@ -675,7 +700,7 @@ void G_FocusView(G_Scene **scene) {
   G_Scene *s = *scene;
   G_Entity *focus = s->focus;
 
-  if (focus != NULL) {
+  if ((focus != NULL) && (s->view.follows)) {
     int x, y;
 
     G_EntityPos(&focus, &x, &y);

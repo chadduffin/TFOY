@@ -35,21 +35,22 @@
 #define TITLE "Yendor"
 #define VERSION "v0.0.1"
 
-#define FPS_LATENCY 250
 #define TEXTURE_COUNT 1
 
 #define COLS 100
 #define ROWS 60
 
-#define WORLD_COLS 160
-#define WORLD_ROWS 96
 #define CHUNK_SIZE 256
+#define CHUNKS_PER_FILE 256
+
+#define WORLD_WIDTH 256
+#define WORLD_HEIGHT 256
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
 
+#define UPDATE_DELAY 1014
 #define FLICKER_RANGE 128
-#define QTREE_SECTOR_SIZE 256
 #define MAX_VIEW_DISTANCE (DCOLS/2)
 #define MAX_LIGHT_DISTANCE 128
 
@@ -72,13 +73,6 @@ typedef enum Thread {
 
   GAME_THREAD_COUNT,
 } Thread;
-
-typedef enum Setting {
-  WORLD_WIDTH = 0,
-  WORLD_HEIGHT,
-  
-  SETTING_COUNT
-} Setting;
 
 typedef enum Component {
 	UI_COMPONENT = 0,
@@ -115,6 +109,7 @@ typedef enum Tile {
   SOLID_BLUE,
   SOLID_MAGENTA,
 
+  ERROR_TILE,
   END_TILE,
   TILE_COUNT = (END_TILE-NOTHING)
 } Tile;
@@ -173,6 +168,14 @@ typedef enum Keybinding {
 	KEYBINDING_COUNT
 } Keybinding;
 
+typedef enum ChunkStatus {
+  NOT_LOADED = 0,
+  IS_MISSING,
+  IS_LOADING,
+
+  IS_LOADED,
+} ChunkStatus;
+
 /*************
 ** TYPEDEFS **
 *************/
@@ -180,10 +183,6 @@ typedef enum Keybinding {
 typedef struct G_Id {
   long int value;
 } G_Id;
-
-typedef struct G_FPS {
-  unsigned int frame_count, last_tick;
-} G_FPS;
 
 typedef struct G_Setting {
   char key[32];
@@ -200,13 +199,13 @@ typedef struct G_GameInformation {
     window_w, window_h,
     target_buffer,
     phys[SDL_NUM_SCANCODES];
+  unsigned int frame_count, timer;
   G_Id id;
   SDL_Event event;
   SDL_Window *window;
   SDL_Renderer *renderer;
   SDL_Texture *buffers[2], *textures[TEXTURE_COUNT];
   SDL_Scancode virt[KEYBINDING_COUNT];
-  G_Setting settings[SETTING_COUNT];
   boolean running, full;
 } G_GameInformation;
 
@@ -271,6 +270,7 @@ typedef struct G_TileTransition {
 
 typedef struct G_View {
   int x, y, xp, yp, w, h;
+  boolean follows;
 } G_View;
 
 typedef struct G_Entity {
@@ -306,21 +306,23 @@ typedef struct G_ControllerComponent {
   G_Entity *entity;
 } G_ControllerComponent;
 
+typedef struct G_SceneChunk {
+  G_Tile *tiles;
+  ChunkStatus status;
+} G_SceneChunk;
+
 typedef struct G_Scene {
   int w, h;
   long int step;
   G_Id id;
   G_View view;
-  G_Tile *tiles;
   G_Entity *focus;
+  G_SceneChunk **chunks;
   G_Tree *entities, *transitions;
   G_TreeNode *ins_buffer, *del_buffer;
   G_Light ambient;
+  boolean persistent;
 } G_Scene;
-
-typedef struct G_SceneChunk {
-  G_Tile tiles[CHUNK_SIZE*CHUNK_SIZE];
-} G_SceneChunk;
 
 typedef struct G_Console {
   SDL_Rect src, dst;
@@ -351,6 +353,7 @@ float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int inv
 void G_Quit(void);
 void G_UpdateBegin(void);
 void G_UpdateEnd(void);
+void G_UpdateInfrequent(void);
 void G_ClearBuffers(void);
 void G_InitializeKeybindings(void);
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*));
@@ -366,19 +369,17 @@ boolean G_PointWithinView(int x, int y);
 G_Id G_GetId(void);
 Tile G_GetTile(Tile layers[TILE_LAYER_COUNT]);
 
-/* filehandler.c */
-
-int G_LoadSettings(void *data);
-int G_WriteSettings(void *data);
-char* G_EncodeChunk(G_SceneChunk *chunk, int *size);
-G_SceneChunk* G_DecodeChunk(char *buf, int len);
-
 /* rendering.c */
 int G_Render(void *data);
 void G_RenderChanges(void);
 void G_RenderLightmap(void);
 void G_UpdateRenderingInfo(void);
 void G_EvaluateColor(G_Color color, int *r, int *g, int *b, boolean flicker);
+
+/* filehandler.c */
+int G_LoadChunks(void *data);
+int G_CharToInt(char input[2]);
+void G_IntToChar(int input, char output[2]);
 
 /* networking.c */
 int G_NetworkingInit(void *data);
@@ -399,7 +400,7 @@ void G_ControllerComponentUpdate(G_Entity **entity);
 void G_EntityLightAdd(void *entity);
 
 /* scene.c */
-G_Scene* G_SceneCreate(int w, int h);
+G_Scene* G_SceneCreate(int w, int h, boolean persistent);
 G_TileTransition* G_TileTransitionCreate(int x, int y, long long when, Tile to);
 void G_SceneChange(G_Scene **scene);
 void G_SceneDestroy(G_Scene **scene);
@@ -409,11 +410,11 @@ void G_SceneTransitionInsert(G_Scene **scene, G_TileTransition **transition);
 void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y);
 Tile G_SceneGetTile(G_Scene **scene, int x, int y);
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
+G_SceneChunk* G_SceneChunkCreate(ChunkStatus status);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);
 boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel);
 
 void G_InitMenu(G_Scene **scene);
-void G_TestScene(G_Scene **scene);
 
 /* tiles.c */
 

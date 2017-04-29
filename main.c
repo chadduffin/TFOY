@@ -4,10 +4,12 @@
 int main(int argc, char **argv) {
   int status = 0;
 
-  G_LoadSettings(NULL);
   G_Init(NULL);
 
+  threads[FILE_THREAD] = SDL_CreateThread(G_LoadChunks, "filehandler", NULL);
   threads[INITIALIZE_THREAD] = SDL_CreateThread(G_NetworkingInit, "networking-initialization", NULL);
+
+  SDL_DetachThread(threads[FILE_THREAD]);
   SDL_DetachThread(threads[INITIALIZE_THREAD]);
 
   while (game_info.running) {
@@ -27,7 +29,6 @@ int main(int argc, char **argv) {
   };
 
   G_Quit();
-  G_WriteSettings(NULL);
 
   return 0;
 }

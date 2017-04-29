@@ -2,7 +2,7 @@ CC = gcc
 FK = -framework
 OSX_LIBS = -I /Library/Frameworks/ $(FK) SDL2 $(FK) SDL2_net $(FK) SDL2_image
 LINUX_LIBS = -lSDL2 -lSDL2_image -lSDL2_net -lm
-WINDOWS_LIBS = -lSDL2 -lSDL2_image -lSDL2_net -lm
+WINDOWS_LIBS = -lSDL2main -lSDL2 -lSDL2_image -lSDL2_net -lm
 CFLAGS = -g -Wall -pedantic -std=c11 -O3
 
 TARGET = TFOY

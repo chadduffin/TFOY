@@ -83,6 +83,7 @@ void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
   }
 
   t->root->left->color = 'b';
+  t->size += 1;
 }
 
 void G_TreeNodeInsertInner(G_Tree **tree, G_TreeNode **node) {
@@ -159,6 +160,7 @@ void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
     }
 
     free(y);
+    (*tree)->size -= 1;
   }
 }
 

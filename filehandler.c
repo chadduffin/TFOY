@@ -1,86 +1,46 @@
 #include "yendor.h"
 #include "globals.h"
 
-int G_LoadSettings(void *data) {
-  int val, i;
-  char buf[32];
-  FILE *config = fopen("config.tfoy", "r");
+int G_LoadChunks(void *data) {
+  while (game_info.running) {
+    SDL_LockMutex(fmutex);
 
-  if (config != NULL) {
-    i = 0;
+    if (G_TreeSize(&chunks) > 0) {
+      int i = 0, *chunk_list = (int*)malloc(sizeof(int)*G_TreeSize(&chunks));
+      G_TreeNode *min = G_TreeNodeMinimum(&chunks);
 
-    while (fscanf(config, "%s %i\n", buf, &val) == 2) {
-      memcpy(game_info.settings[i].key, buf, 32);
-      game_info.settings[i].value = val;
-      i += 1;
+      while (min != chunks->nil) {
+        chunk_list[i] = (int)(min->key);
+
+        printf("%i added to list. 'chunks' size is now %i.\n", (int)(min->key), G_TreeSize(&chunks));
+
+        G_TreeNodeDelete(&chunks, &min);
+        min = G_TreeNodeMinimum(&chunks);
+        i += 1;
+      }
+      
+      SDL_UnlockMutex(fmutex);
+
+      /* load chunks here */
+
+      free(chunk_list);
+    } else {
+      SDL_UnlockMutex(fmutex);
     }
+
+    SDL_Delay(250);
   }
-  
-  fclose(config);
-  
+
   return 0;
 }
 
-int G_WriteSettings(void *data) {
-  Setting setting = WORLD_WIDTH;
-  FILE *config = fopen("config.tfoy", "w");
-
-  while (setting != SETTING_COUNT) {
-    fprintf(config, "%s %i\n", game_info.settings[setting].key, game_info.settings[setting].value);
-    setting += 1;
-  }
-
-  return 0;
+int G_CharToInt(char input[2]) {
+  return ((input[0] << 8) | input[1]);
 }
 
-char* G_EncodeChunk(G_SceneChunk *chunk, int *size) {
-  int i, j, num, len = 0;
-  char container[CHUNK_SIZE*CHUNK_SIZE*3], *encoded = NULL;
+void G_IntToChar(int input, char output[2]) {
+  assert(input >= 0);
 
-  for (i = 0, j = 0; i < CHUNK_SIZE*CHUNK_SIZE*3; i += 3) {
-    num = 1;
-
-    while ((j < CHUNK_SIZE*CHUNK_SIZE) && (chunk->tiles[j].tile == chunk->tiles[j+1].tile)) {
-      j += 1;
-      num += 1;
-    }
-
-    container[i] = (char)(num);
-    container[i+1] = (chunk->tiles[j].tile)/256;
-    container[i+2] = (chunk->tiles[j].tile)%256;
-
-    j += 1;
-    len += 3
-
-    if (j == CHUNK_SIZE*CHUNK_SIZE) {
-      break;
-    }
-  }
-
-  encoded = (char*)malloc(sizeof(char)*len);
-
-  for (i = 0; i < len; i += 1) {
-    encoded[i] = container[i];
-  }
-
-  *size = len;
-
-  return encoded;
-}
-
-G_SceneChunk* G_DecodeChunk(char *buf, int len) {
-  int i, j, lim;
-  G_SceneChunk *decoded = NULL;
-
-  decoded = (G_SceneChunk*)malloc(sizeof(G_SceneChunk));
-
-  for (i = 0, j = 0; i < len; i += 3) {
-    lim = j+(int)(buf[i]);
-
-    for (; j < lim; j += 1) {
-      decoded->tiles[j].tile = (*(buf+i+1) << 8)+*(buf+i+2);
-    }
-  }
-
-  return decoded;
+  output[0] = (input & 0xFF00) >> 8;
+  output[1] = input & 0x00FF;
 }
