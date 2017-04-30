@@ -85,6 +85,12 @@ int G_Init(void *data) {
     G_SceneChange(&scene);
 
     fmutex = SDL_CreateMutex();
+
+    /* TEST WORLD CHUNK */
+    G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+    node->key = 1;
+    G_TreeNodeInsert(&chunks, &node);
+    /********************/
   }
 
   return 0;

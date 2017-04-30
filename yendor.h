@@ -380,6 +380,7 @@ void G_EvaluateColor(G_Color color, int *r, int *g, int *b, boolean flicker);
 int G_LoadChunks(void *data);
 int G_CharToInt(char input[2]);
 void G_IntToChar(int input, char output[2]);
+void G_LoadChunksInner(int *list, int length);
 
 /* networking.c */
 int G_NetworkingInit(void *data);
