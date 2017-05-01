@@ -317,7 +317,7 @@ typedef struct G_Scene {
   G_Id id;
   G_View view;
   G_Entity *focus;
-  G_SceneChunk **chunks;
+  G_SceneChunk *chunks;
   G_Tree *entities, *transitions;
   G_TreeNode *ins_buffer, *del_buffer;
   G_Light ambient;
@@ -383,8 +383,8 @@ unsigned int G_CharToFullInt(unsigned char input[4]);
 void G_IntToChar(unsigned int input, unsigned char output[2]);
 void G_FullIntToChar(unsigned int input, unsigned char output[4]);
 void G_LoadChunksInner(long int *list, unsigned int length);
-unsigned char* G_EncodeChunk(G_SceneChunk *chunk, unsigned int *length);
-G_SceneChunk* G_DecodeChunk(unsigned char *chunk, unsigned int length);
+unsigned char* G_EncodeChunk(G_Tile *chunk, unsigned int *length);
+G_Tile* G_DecodeChunk(unsigned char *chunk, unsigned int length);
 
 /* networking.c */
 int G_NetworkingInit(void *data);
@@ -415,7 +415,6 @@ void G_SceneTransitionInsert(G_Scene **scene, G_TileTransition **transition);
 void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y);
 Tile G_SceneGetTile(G_Scene **scene, int x, int y);
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
-G_SceneChunk* G_SceneChunkCreate(ChunkStatus status);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);
 boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel);
 

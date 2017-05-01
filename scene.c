@@ -34,10 +34,11 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 
   scene->persistent = persistent;
 
-  scene->chunks = (G_SceneChunk**)malloc(sizeof(G_SceneChunk*)*w*h);
+  scene->chunks = (G_SceneChunk*)malloc(sizeof(G_SceneChunk)*w*h);;
 
   for (i = 0; i < w*h; i += 1) {
-    scene->chunks[i] = NULL;
+    scene->chunks[i].tiles = NULL;
+    scene->chunks[i].status = NOT_LOADED;
   }
 
   return scene;
@@ -143,9 +144,11 @@ void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y) {
   G_Scene *s = *scene;
 
   if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
-    G_SceneChunk *chunk = s->chunks[chunk_x+chunk_y*(s->w)];
+    G_SceneChunk *chunk = &(s->chunks[chunk_x+chunk_y*(s->w)]);
 
-    if ((chunk != NULL) && (offset_x >= 0) && (offset_x < CHUNK_SIZE) && (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
+    if ((chunk->status == IS_LOADED) &&
+        (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
+        (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
       chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)] = tile;
     }
   }
@@ -160,9 +163,11 @@ Tile G_SceneGetTile(G_Scene **scene, int x, int y) {
   G_Scene *s = *scene;
 
   if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
-    G_SceneChunk *chunk = s->chunks[chunk_x+chunk_y*(s->w)];
+    G_SceneChunk *chunk = &(s->chunks[chunk_x+chunk_y*(s->w)]);
 
-    if ((chunk != NULL) && (offset_x >= 0) && (offset_x < CHUNK_SIZE) && (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
+    if ((chunk->status == IS_LOADED) &&
+        (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
+        (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
       return chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
     }
   }
@@ -183,28 +188,16 @@ G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y) {
   tile.tile = ERROR_TILE;
 
   if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
-    G_SceneChunk *chunk = s->chunks[chunk_x+chunk_y*(s->w)];
+    G_SceneChunk *chunk = &(s->chunks[chunk_x+chunk_y*(s->w)]);
 
-    if ((chunk != NULL) && (offset_x >= 0) && (offset_x < CHUNK_SIZE) && (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
+    if ((chunk->status == IS_LOADED) &&
+        (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
+        (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
       tile.tile = chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
     }
   }
 
   return tile;
-}
-
-G_SceneChunk* G_SceneChunkCreate(ChunkStatus status) {
-  G_SceneChunk *chunk = (G_SceneChunk*)malloc(sizeof(G_SceneChunk));
-
-  chunk->status = status;
-
-  if ((status == IS_LOADING) || (status == IS_LOADED)) {
-    chunk->tiles = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
-  } else {
-    chunk->tiles = NULL;
-  }
-
-  return chunk;
 }
 
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y) {
@@ -270,7 +263,8 @@ void G_InitMenu(G_Scene **scene) {
   G_Tile tile;
   G_Scene *s = *scene;
 
-  s->chunks[0] = G_SceneChunkCreate(IS_LOADED);
+  s->chunks[0].tiles = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
+  s->chunks[0].status = IS_LOADED;
 
   tile.id.value = -1;
 

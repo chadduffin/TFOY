@@ -66,10 +66,21 @@ void G_LoadChunksInner(long int *list, unsigned int length) {
   for (i = 0, j = 0; i < length; i += 1) {
     id = list[i];
     id_offset = id-(id%256);
-    sprintf(filename, "data/c.%3i.tfoy", id/256);
-    filename[7] = ((id/256) > 99) ? filename[2] : '0';
-    filename[8] = ((id/256) > 9) ? filename[3] : '0';
-    file = fopen(filename, "rb");
+    
+    if (file == NULL) {
+      sprintf(filename, "data/c.%3i.tfoy", id/256);
+      filename[7] = ((id/256) > 99) ? filename[2] : '0';
+      filename[8] = ((id/256) > 9) ? filename[3] : '0';
+      file = fopen(filename, "rb");
+    } else {
+      if (id != list[i-1]/256) {
+        sprintf(filename, "data/c.%3i.tfoy", id/256);
+        filename[7] = ((id/256) > 99) ? filename[2] : '0';
+        filename[8] = ((id/256) > 9) ? filename[3] : '0';
+        file = fopen(filename, "rb");
+        j = 0;
+      }
+    }
 
     if (file != NULL) {
       fread(c, sizeof(unsigned char), 4, file);
@@ -86,7 +97,10 @@ void G_LoadChunksInner(long int *list, unsigned int length) {
         chunk = (unsigned char*)malloc(sizeof(unsigned char)*chunk_length);
         
         fread(chunk, sizeof(unsigned char), chunk_length, file);
-        G_SceneChunk *test = G_DecodeChunk(chunk, chunk_length);
+        G_Tile *tiles = G_DecodeChunk(chunk, chunk_length);
+
+        active_scene->chunks[id].tiles = tiles;
+        active_scene->chunks[id].status = IS_LOADED;
 
         free(chunk);
       } else {
@@ -95,12 +109,12 @@ void G_LoadChunksInner(long int *list, unsigned int length) {
     } else {
       printf("'%s' could not be opened.\n", filename);
     }
-
-    fclose(file);
   }
+
+  fclose(file);
 }
 
-unsigned char* G_EncodeChunk(G_SceneChunk *chunk, unsigned int *length) {
+unsigned char* G_EncodeChunk(G_Tile *chunk, unsigned int *length) {
   int i, j, num;
   unsigned int len = 0;
   unsigned char container[CHUNK_SIZE*CHUNK_SIZE*3], *encoded = NULL;
@@ -108,15 +122,13 @@ unsigned char* G_EncodeChunk(G_SceneChunk *chunk, unsigned int *length) {
   for (i = 0, j = 0; i < CHUNK_SIZE*CHUNK_SIZE*3; i += 3) {
     num = 1;
 
-    while ((j < CHUNK_SIZE*CHUNK_SIZE-1) && (chunk->tiles[j].tile == chunk->tiles[j+1].tile)) {
+    while ((j < CHUNK_SIZE*CHUNK_SIZE-1) && (chunk[j].tile == chunk[j+1].tile)) {
       j += 1;
       num += 1;
     }
 
     container[i] = (unsigned char)(num);
-    G_IntToChar(chunk->tiles[j].tile, container+i+1);
-    //container[i+1] = (chunk->tiles[j].tile & 0xFF00) >> 8;
-    //container[i+2] = (chunk->tiles[j].tile * 0x00FF);
+    G_IntToChar(chunk[j].tile, container+i+1);
 
     j += 1;
     len += 3;
@@ -133,22 +145,20 @@ unsigned char* G_EncodeChunk(G_SceneChunk *chunk, unsigned int *length) {
   }
 
   *length = len;
-
   return encoded;
 }
 
-G_SceneChunk* G_DecodeChunk(unsigned char *chunk, unsigned int length) {
+G_Tile* G_DecodeChunk(unsigned char *chunk, unsigned int length) {
   unsigned int i, j, lim;
-  G_SceneChunk *decoded = NULL;
+  G_Tile *decoded = NULL;
 
-  decoded = (G_SceneChunk*)malloc(sizeof(G_SceneChunk));
-  decoded->tiles = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
+  decoded = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
 
   for (i = 0, j = 0; i < length; i += 3) {
     lim = j+(unsigned int)(chunk[i]);
 
     for (; j < lim; j += 1) {
-      decoded->tiles[j].tile = G_CharToInt(chunk+i+1);
+      decoded[j].tile = G_CharToInt(chunk+i+1);
     }
   }
 

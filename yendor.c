@@ -77,18 +77,18 @@ int G_Init(void *data) {
     scene->view.follows = 1;
     overworld_id = scene->id;
 
+    G_SceneChange(&scene);
+
     /* creates menu */
     scene = G_SceneCreate(1, 1, 0);
     menu_id = scene->id;
     G_InitMenu(&scene);
 
-    G_SceneChange(&scene);
-
     fmutex = SDL_CreateMutex();
 
     /* TEST WORLD CHUNK */
     G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
-    node->key = 1;
+    node->key = 0;
     G_TreeNodeInsert(&chunks, &node);
     /********************/
   }
