@@ -8,6 +8,8 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 
   scene->w = w;
   scene->h = h;
+  scene->tw = w*CHUNK_SIZE;
+  scene->th = h*CHUNK_SIZE;
   scene->step = 0;
   scene->view.x = 0;
   scene->view.y = 0;
@@ -40,6 +42,60 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     scene->chunks[i].tiles = NULL;
     scene->chunks[i].status = NOT_LOADED;
   }
+
+  /* TEST CODE */
+
+  G_Entity *entity = G_EntityCreate();
+  G_LightComponent *light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+  G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+  G_ControllerComponent *controller = G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
+
+  light->light.r = 255;
+  light->light.g = 255;
+  light->light.b = 255;
+  light->light.intensity = 32;
+
+  render->x = 0;
+  render->y = 0;
+  render->tile = HUMAN;
+  render->layer = CREATURE_LAYER;
+
+  scene->focus = entity;
+  G_SceneEntityInsert(&scene, &entity);
+
+  entity = G_EntityCreate();
+  light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+  render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+
+  light->light.r = 0;
+  light->light.g = 127;
+  light->light.b = 255;
+  light->light.intensity = 32;
+
+  render->x = 64;
+  render->y = 32;
+  render->tile = NOTHING;
+  render->layer = ORNAMENT_LAYER;
+
+  G_SceneEntityInsert(&scene, &entity);
+
+  entity = G_EntityCreate();
+  light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+  render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+
+  light->light.r = 255;
+  light->light.g = 127;
+  light->light.b = 0;
+  light->light.intensity = 32;
+
+  render->x = 32;
+  render->y = 32;
+  render->tile = NOTHING;
+  render->layer = ORNAMENT_LAYER;
+
+  G_SceneEntityInsert(&scene, &entity);
+
+  /*************/
 
   return scene;
 }
@@ -162,40 +218,30 @@ Tile G_SceneGetTile(G_Scene **scene, int x, int y) {
     offset_y = y%CHUNK_SIZE;
   G_Scene *s = *scene;
 
+  Tile tile = ERROR_TILE;
+
   if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
     G_SceneChunk *chunk = &(s->chunks[chunk_x+chunk_y*(s->w)]);
 
     if ((chunk->status == IS_LOADED) &&
         (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
         (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
-      return chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
+      tile = chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
     }
   }
   
-  return ERROR_TILE;
+  if ((tile < NOTHING) || (tile >= END_TILE)) {
+    tile = ERROR_TILE;
+  }
+
+  return tile;
 }
 
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y) {
-  int
-    chunk_x = x/CHUNK_SIZE,
-    chunk_y = y/CHUNK_SIZE,
-    offset_x = x%CHUNK_SIZE,
-    offset_y = y%CHUNK_SIZE;
   G_Tile tile;
-  G_Scene *s = *scene;
 
   tile.id.value = -1;
-  tile.tile = ERROR_TILE;
-
-  if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
-    G_SceneChunk *chunk = &(s->chunks[chunk_x+chunk_y*(s->w)]);
-
-    if ((chunk->status == IS_LOADED) &&
-        (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
-        (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
-      tile.tile = chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
-    }
-  }
+  tile.tile = G_SceneGetTile(scene, x, y);
 
   return tile;
 }

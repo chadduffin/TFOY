@@ -86,11 +86,73 @@ int G_Init(void *data) {
 
     fmutex = SDL_CreateMutex();
 
-    /* TEST WORLD CHUNK */
-    G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
-    node->key = 0;
-    G_TreeNodeInsert(&chunks, &node);
-    /********************/
+    /* TEMPORARY */
+    unsigned char *encoded = NULL, elen[4];
+    unsigned int len, q;
+    G_SceneChunk chunk;
+    chunk.tiles = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
+    FILE *file = fopen("data/c.000.tfoy", "wb");
+
+    for (i = 0; i < 256; i += 1) {
+      permutations[i] = permutations[i+255] = i;
+    }
+    
+    for (i = 0; i < 1024; i += 1) {
+      int ii = G_RandomNumber(0, 511);
+      permutations[i%512] += permutations[ii];
+      permutations[ii] = permutations[i%512]-permutations[ii];
+      permutations[i%512] -= permutations[ii];	
+    }
+
+    for (q = 0; q < 256; q += 1) {
+      for (i = 0; i < CHUNK_SIZE*CHUNK_SIZE; i += 1) {
+        double e = G_NoiseOctaveSum(i%CHUNK_SIZE+(q%16)*CHUNK_SIZE, i/CHUNK_SIZE+(q/16)*CHUNK_SIZE);
+
+        if (e > 0.9) {
+          chunk.tiles[i].tile = LAVA;
+        } else if (e > 0.7) {
+          if (e > 0.87) {
+            chunk.tiles[i].tile = WALL;
+          } else if (e > 0.83) {
+            chunk.tiles[i].tile = FUNGUS;
+          } else {
+            chunk.tiles[i].tile = STONE;
+          }
+        } else if (e > 0.5) {
+          if (e > 0.65) {
+            if (G_RandomNumber(0, 7) < 10*e) {
+              chunk.tiles[i].tile = TALL_GRASS;
+            } else {
+              chunk.tiles[i].tile = GRASS;
+            }
+          } else {
+            if (G_RandomNumber(0, 7) < 10*e) {
+              chunk.tiles[i].tile = GRASS;
+            } else {
+              chunk.tiles[i].tile = GROUND;
+            }
+          }
+        } else if (e > 0.4) {
+          chunk.tiles[i].tile = GROUND;
+        } else if (e > 0.37) {
+          chunk.tiles[i].tile = SAND;
+        } else {
+          chunk.tiles[i].tile = WATER;
+        }
+          chunk.tiles[i].tile = WATER;
+        
+        chunk.tiles[i].id.value = -1;
+      }
+
+      encoded = G_EncodeChunk(chunk.tiles, &len);
+      G_IntToChar(len, elen, 1);
+      
+      fwrite(elen, 1, 4, file);
+      fwrite(encoded, 1, len, file);
+    }
+
+    fclose(file);
+    /*************/
   }
 
   return 0;
@@ -98,6 +160,7 @@ int G_Init(void *data) {
 
 int G_Update(void *data) {
   int status, x, y;
+
   if (SDL_GetTicks()-game_info.timer > UPDATE_DELAY) {
     G_UpdateInfrequent();
   }
@@ -108,7 +171,11 @@ int G_Update(void *data) {
 
     threads[WORKER_THREAD_A] = SDL_CreateThread(G_UpdateTransitions, "game-transition-updating", NULL);
 
-    if (game_info.phys[SDL_SCANCODE_Z]) {
+    if (game_info.phys[SDL_SCANCODE_Z] ||
+        game_info.phys[SDL_SCANCODE_H] ||
+        game_info.phys[SDL_SCANCODE_J] ||
+        game_info.phys[SDL_SCANCODE_K] ||
+        game_info.phys[SDL_SCANCODE_L]) {
       game_info.phys[SDL_SCANCODE_Z] = 0;
       game_info.full = 1;
     }
@@ -480,17 +547,28 @@ void G_UpdateInfrequent(void) {
 
   if ((active_scene != NULL) && (active_scene->persistent)) {
     int
-      i, j, 
+      i, j, id,
       x = (active_scene->view.x+(active_scene->view.w/2))/CHUNK_SIZE,
       y = (active_scene->view.y+(active_scene->view.h/2))/CHUNK_SIZE;
+    G_TreeNode *node = NULL;
+
+    SDL_LockMutex(fmutex);
 
     for (i = -2; i < 3; i += 1) {
       for (j = -2; j < 3; j += 1) {
         if ((x+j >= 0) && (x+j < active_scene->w) && (y+i >= 0) && (y+i < active_scene->h)) {
-          
+          id = x+j+(y+i)*active_scene->w;
+          if (active_scene->chunks[id].status == NOT_LOADED) {
+            active_scene->chunks[id].status = IS_LOADING;
+            node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+            node->key = id;
+            G_TreeNodeInsert(&chunks, &node);
+          }
         }
       }
     }
+
+    SDL_UnlockMutex(fmutex);
   }
 }
 
@@ -535,8 +613,8 @@ void G_InitializeKeybindings(void) {
 }
 
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*)) {
-	if ((x < 0) || (x >= active_scene->w) ||
-			(y < 0) || (y >= active_scene->h)) {
+	if ((x < 0) || (x >= active_scene->tw) ||
+			(y < 0) || (y >= active_scene->th)) {
 		return;
 	}
 
@@ -714,8 +792,8 @@ void G_FocusView(G_Scene **scene) {
     s->view.x = x-s->view.w/2;
     s->view.y = y-s->view.h/2;
 
-    s->view.x = (s->view.x < 0) ? 0 : ((s->view.x+s->view.w < s->w) ? s->view.x : s->w-s->view.w-1);
-    s->view.y = (s->view.y < 0) ? 0 : ((s->view.y+s->view.h < s->h) ? s->view.y : s->h-s->view.h-1);
+    s->view.x = (s->view.x < 0) ? 0 : ((s->view.x+s->view.w < s->tw) ? s->view.x : s->tw-s->view.w-1);
+    s->view.y = (s->view.y < 0) ? 0 : ((s->view.y+s->view.h < s->th) ? s->view.y : s->th-s->view.h-1);
   }
 }
 

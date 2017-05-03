@@ -214,7 +214,7 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
       }
     }
     if (game_info.phys[SDL_SCANCODE_K]) {
-      if (render->y < active_scene->h-2) {
+      if (render->y < active_scene->th-2) {
         if (!G_SceneTileObstructs(&active_scene, render->x, render->y+1)) {
           render->y += 1;
           game_info.phys[SDL_SCANCODE_K] = 0;
@@ -222,7 +222,7 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
       }
     }
     if (game_info.phys[SDL_SCANCODE_L]) {
-      if (render->x < active_scene->w-2) {
+      if (render->x < active_scene->tw-2) {
         if (!G_SceneTileObstructs(&active_scene, render->x+1, render->y)) {
           render->x += 1;
           game_info.phys[SDL_SCANCODE_L] = 0;

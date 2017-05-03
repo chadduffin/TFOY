@@ -35,16 +35,18 @@
 #define TITLE "Yendor"
 #define VERSION "v0.0.1"
 
+/* #define NDEBUG */
+
 #define TEXTURE_COUNT 1
 
 #define COLS 100
 #define ROWS 60
 
 #define CHUNK_SIZE 256
-#define CHUNKS_PER_FILE 256
+#define FILE_CHUNK_SIZE 16
 
-#define WORLD_WIDTH 256
-#define WORLD_HEIGHT 256
+#define WORLD_WIDTH 512
+#define WORLD_HEIGHT 512
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
@@ -89,8 +91,11 @@ typedef enum Tile {
   NOTHING = 256,
 
   GROUND,
+  STONE,
+  SAND,
   WALL,
   GRASS,
+  TALL_GRASS,
   BURNT_GRASS,
   FUNGUS,
   WATER,
@@ -312,7 +317,7 @@ typedef struct G_SceneChunk {
 } G_SceneChunk;
 
 typedef struct G_Scene {
-  int w, h;
+  int w, h, tw, th;
   long int step;
   G_Id id;
   G_View view;
@@ -335,6 +340,12 @@ typedef struct G_Console {
 /**************
 ** FUNCTIONS **
 **************/
+
+/* TEMPORARY */
+void G_FillChunk(G_SceneChunk* chunk, int id);
+double G_Noise(double X, double Y);
+double G_NoiseOctaveSum(int X, int Y);
+/*************/
 
 /* roguecraft.c */
 int G_Init(void *data);
@@ -378,12 +389,10 @@ void G_EvaluateColor(G_Color color, int *r, int *g, int *b, boolean flicker);
 
 /* filehandler.c */
 int G_LoadChunks(void *data);
-unsigned int G_CharToInt(unsigned char input[2]);
-unsigned int G_CharToFullInt(unsigned char input[4]);
-void G_IntToChar(unsigned int input, unsigned char output[2]);
-void G_FullIntToChar(unsigned int input, unsigned char output[4]);
-void G_LoadChunksInner(long int *list, unsigned int length);
+unsigned int G_CharToInt(unsigned char *input, boolean full);
 unsigned char* G_EncodeChunk(G_Tile *chunk, unsigned int *length);
+void G_IntToChar(unsigned int input, unsigned char *output, boolean full);
+void G_LoadChunksInner(long int *list, unsigned int length);
 G_Tile* G_DecodeChunk(unsigned char *chunk, unsigned int length);
 
 /* networking.c */

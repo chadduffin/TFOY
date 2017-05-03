@@ -7,6 +7,8 @@ int DROWS_OFFSET = 1;
 int TILE_SOURCE_WIDTH = 12;
 int TILE_SOURCE_HEIGHT = 12;
 
+int permutations[512];
+
 SDL_mutex *fmutex;
 SDL_Thread *threads[GAME_THREAD_COUNT];
 

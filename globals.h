@@ -34,6 +34,8 @@ extern int DROWS_OFFSET;
 extern int TILE_SOURCE_WIDTH;
 extern int TILE_SOURCE_HEIGHT;
 
+extern int permutations[512];
+
 extern SDL_mutex *fmutex;
 extern SDL_Thread *threads[GAME_THREAD_COUNT];
 

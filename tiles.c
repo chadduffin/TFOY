@@ -5,8 +5,11 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Nothing", "", 0, 0, &white, &black, 0},
 
   {"Ground", "", 14, 2, &brown, &dblue, 0},
+  {"Stone", "", 14, 2, &dgrey, &grey, 0},
+  {"Sand", "", 14, 2, &dyellow, &yellow, 0},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
   {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE},
+  {"Tall Grass", "", 2, 14, &green, &dblue, FLAMMABLE},
   {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
   {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
   {"Water", "", 14, 7, &dblue, &blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
@@ -25,7 +28,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"blue", "", 0, 0, &blue, &blue, 0},
   {"magenta", "", 0, 0, &magenta, &magenta, 0},
 
-  {"error", "", 1, 11, &magenta, &black, 0},
+  {"error", "", 1, 11, &magenta, &black, OBSTRUCTS_MOVEMENT},
 };
 
 void G_TileUpdate(Tile tile, int x, int y) {
