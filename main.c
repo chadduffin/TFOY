@@ -1,15 +1,18 @@
 #include "yendor.h"
 #include "globals.h"
 
+#include <sys/time.h>
+#include <sys/resource.h>
+
 int main(int argc, char **argv) {
   int status = 0;
-
+  
   G_Init(NULL);
 
   threads[FILE_THREAD] = SDL_CreateThread(G_LoadChunks, "filehandler", NULL);
-  threads[INITIALIZE_THREAD] = SDL_CreateThread(G_NetworkingInit, "networking-initialization", NULL);
-
   SDL_DetachThread(threads[FILE_THREAD]);
+
+  threads[INITIALIZE_THREAD] = SDL_CreateThread(G_NetworkingInit, "networking-initialization", NULL);
   SDL_DetachThread(threads[INITIALIZE_THREAD]);
 
   while (game_info.running) {

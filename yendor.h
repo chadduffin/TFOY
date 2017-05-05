@@ -45,8 +45,8 @@
 #define CHUNK_SIZE 256
 #define FILE_CHUNK_SIZE 16
 
-#define WORLD_WIDTH 512
-#define WORLD_HEIGHT 512
+#define WORLD_WIDTH 256
+#define WORLD_HEIGHT 256
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
@@ -153,9 +153,9 @@ typedef enum TileLayer {
   CREATURE_LAYER,
   ITEM_LAYER,
   ORNAMENT_LAYER,
-  BASE_LAYER,
   EFFECT_LAYER,
   GAS_LAYER,
+  BASE_LAYER,
 
   TILE_LAYER_COUNT
 } TileLayer;
@@ -211,7 +211,7 @@ typedef struct G_GameInformation {
   SDL_Renderer *renderer;
   SDL_Texture *buffers[2], *textures[TEXTURE_COUNT];
   SDL_Scancode virt[KEYBINDING_COUNT];
-  boolean running, full;
+  boolean running, redraw, full;
 } G_GameInformation;
 
 typedef struct G_Position {
@@ -250,8 +250,7 @@ typedef struct G_LightNode {
 } G_LightNode;
 
 typedef struct G_Tile {
-  G_Id id;
-  Tile tile;
+  unsigned short tile;
 } G_Tile;
 
 typedef struct G_TileCell {
@@ -269,7 +268,6 @@ typedef struct G_TileInformation {
 typedef struct G_TileTransition {
   int x, y;
   long int when;
-  G_Id id;
   Tile is, to;
 } G_TileTransition;
 

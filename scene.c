@@ -55,8 +55,8 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light->light.b = 255;
   light->light.intensity = 32;
 
-  render->x = 0;
-  render->y = 0;
+  render->x = 30;
+  render->y = 80;
   render->tile = HUMAN;
   render->layer = CREATURE_LAYER;
 
@@ -109,7 +109,6 @@ G_TileTransition* G_TileTransitionCreate(int x, int y, long long when, Tile is) 
   transition->x = x;
   transition->y = y;
   transition->when = when;
-  transition->id = tile.id = G_GetId();
   transition->is = tile.tile = is;
   transition->to = G_SceneGetTile(&active_scene, x, y);
 
@@ -123,6 +122,7 @@ void G_SceneChange(G_Scene **scene) {
   assert((scene != NULL) && (*scene != NULL));
 
   if (*scene != active_scene) {
+	  game_info.redraw = 1;
     active_scene = *scene;
 
     if (active_scene->id.value == menu_id.value) {
@@ -193,44 +193,45 @@ void G_SceneTransitionInsert(G_Scene **scene, G_TileTransition **transition) {
 
 void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y) {
   int
+    id,
     chunk_x = x/CHUNK_SIZE,
     chunk_y = y/CHUNK_SIZE,
     offset_x = x%CHUNK_SIZE,
     offset_y = y%CHUNK_SIZE;
   G_Scene *s = *scene;
 
-  if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
-    G_SceneChunk *chunk = &(s->chunks[chunk_x+chunk_y*(s->w)]);
+  id = chunk_x+chunk_y*(s->w);
 
-    if ((chunk->status == IS_LOADED) &&
+  if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
+    if ((s->chunks[id].status == IS_LOADED) &&
         (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
         (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
-      chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)] = tile;
+      s->chunks[id].tiles[offset_x+(offset_y*CHUNK_SIZE)] = tile;
     }
   }
 }
 
 Tile G_SceneGetTile(G_Scene **scene, int x, int y) {
   int
+    id,
     chunk_x = x/CHUNK_SIZE,
     chunk_y = y/CHUNK_SIZE,
     offset_x = x%CHUNK_SIZE,
     offset_y = y%CHUNK_SIZE;
+  Tile tile = ERROR_TILE;
   G_Scene *s = *scene;
 
-  Tile tile = ERROR_TILE;
+  id = chunk_x+chunk_y*(s->w);
 
   if ((chunk_x >= 0) && (chunk_x < s->w) && (chunk_y >= 0) && (chunk_y < s->h)) {
-    G_SceneChunk *chunk = &(s->chunks[chunk_x+chunk_y*(s->w)]);
-
-    if ((chunk->status == IS_LOADED) &&
+    if ((s->chunks[id].status == IS_LOADED) &&
         (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
         (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
-      tile = chunk->tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
+      tile = s->chunks[id].tiles[offset_x+(offset_y*CHUNK_SIZE)].tile;
     }
   }
   
-  if ((tile < NOTHING) || (tile >= END_TILE)) {
+  if (tile >= END_TILE) {
     tile = ERROR_TILE;
   }
 
@@ -240,7 +241,6 @@ Tile G_SceneGetTile(G_Scene **scene, int x, int y) {
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y) {
   G_Tile tile;
 
-  tile.id.value = -1;
   tile.tile = G_SceneGetTile(scene, x, y);
 
   return tile;
@@ -311,8 +311,6 @@ void G_InitMenu(G_Scene **scene) {
 
   s->chunks[0].tiles = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
   s->chunks[0].status = IS_LOADED;
-
-  tile.id.value = -1;
 
   s->ambient.r = 255;
   s->ambient.g = 255;

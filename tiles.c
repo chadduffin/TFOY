@@ -6,7 +6,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
 
   {"Ground", "", 14, 2, &brown, &dblue, 0},
   {"Stone", "", 14, 2, &dgrey, &grey, 0},
-  {"Sand", "", 14, 2, &dyellow, &yellow, 0},
+  {"Sand", "", 14, 2, &dyellow, &yellow, FLICKERS_SLOW},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
   {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE},
   {"Tall Grass", "", 2, 14, &green, &dblue, FLAMMABLE},
@@ -38,9 +38,9 @@ void G_TileUpdate(Tile tile, int x, int y) {
 	  G_TileInformation info = tile_info[tile-NOTHING];
 
 	  if (G_TileFlagCompare(tile, LUMINESCENT)) {
-	    G_AddPointLight(scene_x, scene_y, (info.fg->r)/3, (info.fg->g)/3, (info.fg->b)/3, 3);
+	    G_AddPointLight(scene_x, scene_y, (info.fg->r)/3, (info.fg->g)/3, (info.fg->b)/3, 2);
 	  } else if (G_TileFlagCompare(tile, ILLUMINATING)) {
-	    G_AddPointLight(scene_x, scene_y, 255, 255, 255, 3);
+	    G_AddPointLight(scene_x, scene_y, 255, 255, 255, 2);
 	  }
 	}
 }

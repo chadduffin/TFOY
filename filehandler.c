@@ -26,7 +26,7 @@ int G_LoadChunks(void *data) {
       SDL_UnlockMutex(fmutex);
     }
 
-    SDL_Delay(50);
+    SDL_Delay(100);
   }
 
   return 0;
@@ -89,12 +89,10 @@ void G_IntToChar(unsigned int input, unsigned char *output, boolean full) {
 }
 
 void G_LoadChunksInner(long int *list, unsigned int length) {
-  char *filename = NULL;
+  char filename[16];
   unsigned char c[4], *chunk = NULL;
   unsigned int i, j, x, y, file_id, file_id_prev, file_id_offset, chunk_id, chunk_length;
   FILE *file = NULL;
-
-  filename = (char*)malloc(sizeof(char)*16);
 
   for (i = 0, j = 0; i < length; i += 1) {
     chunk_id = list[i];
@@ -102,7 +100,7 @@ void G_LoadChunksInner(long int *list, unsigned int length) {
     x = list[i]%WORLD_WIDTH;
     y = list[i]/WORLD_WIDTH;
 
-    file_id = (x/FILE_CHUNK_SIZE)+(y/FILE_CHUNK_SIZE)*(WORLD_WIDTH/FILE_CHUNK_SIZE);;
+    file_id = (x/FILE_CHUNK_SIZE)+(y/FILE_CHUNK_SIZE)*(WORLD_WIDTH/FILE_CHUNK_SIZE);
     file_id_offset = (x%FILE_CHUNK_SIZE)+(y%FILE_CHUNK_SIZE)*FILE_CHUNK_SIZE;
     
     if ((file == NULL) || (file_id != file_id_prev)) {
@@ -111,24 +109,23 @@ void G_LoadChunksInner(long int *list, unsigned int length) {
       filename[8] = (file_id > 9) ? filename[8] : '0';
       file = fopen(filename, "rb");
       file_id_prev = file_id;
-
-      printf("Opened file %s.\n", filename);
+      j = 0;
     } else {
       j += 1;
     }
-
+  
     if (file != NULL) {
       fread(c, sizeof(unsigned char), 4, file);
       chunk_length = G_CharToInt(c, 1);
 
-      while ((j+file_id_offset != file_id) && (!feof(file)))  {
+      while ((j != file_id_offset) && (!feof(file)))  {
         fseek(file, chunk_length, SEEK_CUR);
         fread(c, sizeof(unsigned char), 4, file);
         chunk_length = G_CharToInt(c, 1);
         j += 1;
       }
 
-      if ((j+file_id_offset == file_id) && (!feof(file))) {
+      if ((j == file_id_offset) && (!feof(file))) {
         printf("Chunk %i loaded.\n", chunk_id);
         chunk = (unsigned char*)malloc(sizeof(unsigned char)*chunk_length);
         
@@ -140,7 +137,7 @@ void G_LoadChunksInner(long int *list, unsigned int length) {
 
         free(chunk);
       } else {
-        printf("Could not find chunk %u with offset %u.\n", chunk_id, file_id_offset);
+        printf("Could not find chunk %u.\n", chunk_id);
         active_scene->chunks[chunk_id].tiles = NULL;
         active_scene->chunks[chunk_id].status = IS_MISSING;
       }
@@ -168,7 +165,6 @@ G_Tile* G_DecodeChunk(unsigned char *chunk, unsigned int length) {
     }
 
     for (; j < lim; j += 1) {
-      decoded[j].id.value = -1;
       decoded[j].tile = G_CharToInt(chunk+i+2, 0);
     }
   }

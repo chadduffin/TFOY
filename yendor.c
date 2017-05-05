@@ -19,6 +19,7 @@ int G_Init(void *data) {
 	game_info.target_buffer = 0;
   game_info.id.value = 0;
 	game_info.running = 0;
+	game_info.redraw = 1;
 	game_info.full = 0;
   
 	srand(time(NULL) & 2147483647);
@@ -86,7 +87,7 @@ int G_Init(void *data) {
 
     fmutex = SDL_CreateMutex();
 
-    /* TEMPORARY */
+    /* TEMPORARY
     unsigned char *encoded = NULL, elen[4];
     unsigned int len, q;
     G_SceneChunk chunk;
@@ -104,14 +105,24 @@ int G_Init(void *data) {
       permutations[i%512] -= permutations[ii];	
     }
 
-    for (q = 0; q < 256; q += 1) {
+    for (q = 0; q < 257; q += 1) {
+      if (q == 256) {
+        fclose(file);
+        file = fopen("data/c.001.tfoy", "wb");
+      }
       for (i = 0; i < CHUNK_SIZE*CHUNK_SIZE; i += 1) {
         double e = G_NoiseOctaveSum(i%CHUNK_SIZE+(q%16)*CHUNK_SIZE, i/CHUNK_SIZE+(q/16)*CHUNK_SIZE);
+
+        if (q == 256) {
+          e = G_NoiseOctaveSum(CHUNK_SIZE*FILE_CHUNK_SIZE+i%CHUNK_SIZE, i/CHUNK_SIZE);
+        }
+
+        e *= 1.1;
 
         if (e > 0.9) {
           chunk.tiles[i].tile = LAVA;
         } else if (e > 0.7) {
-          if (e > 0.87) {
+          if (e > 0.86) {
             chunk.tiles[i].tile = WALL;
           } else if (e > 0.83) {
             chunk.tiles[i].tile = FUNGUS;
@@ -139,7 +150,6 @@ int G_Init(void *data) {
         } else {
           chunk.tiles[i].tile = WATER;
         }
-          chunk.tiles[i].tile = WATER;
         
         chunk.tiles[i].id.value = -1;
       }
@@ -149,17 +159,18 @@ int G_Init(void *data) {
       
       fwrite(elen, 1, 4, file);
       fwrite(encoded, 1, len, file);
+      free(encoded);
     }
 
     fclose(file);
-    /*************/
+    */
   }
 
   return 0;
 }
 
 int G_Update(void *data) {
-  int status, x, y;
+  int status, x, y, dx, dy;
 
   if (SDL_GetTicks()-game_info.timer > UPDATE_DELAY) {
     G_UpdateInfrequent();
@@ -192,11 +203,22 @@ int G_Update(void *data) {
     SDL_WaitThread(threads[WORKER_THREAD_B], &status);
     SDL_WaitThread(threads[WORKER_THREAD_C], &status);
 
+    dx = active_scene->view.x-active_scene->view.xp;
+    dy = active_scene->view.y-active_scene->view.yp;
+
     for (y = 0; y < DROWS; y += 1) {
       for (x = 0; x < DCOLS; x += 1) {
-        Tile tile = G_SceneGetTile(&active_scene, x+active_scene->view.x, y+active_scene->view.y);
-        tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = tile;
+        Tile tile = ERROR_TILE;
 
+        if (!(game_info.redraw) &&
+            (x+dx >= 0) && (x+dx < DCOLS) &&
+            (y+dy >= 0) && (y+dy < DROWS)) {
+          tile = tilemap[x+dx+DCOLS_OFFSET][y+dy+DROWS_OFFSET].layers[BASE_LAYER];
+        } else {
+          tile = G_SceneGetTile(&active_scene, x+active_scene->view.x, y+active_scene->view.y);
+        }
+
+        tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = tile;
         G_TileUpdate(tile, x, y);
       }
     }
@@ -347,7 +369,7 @@ int G_CopyBuffer(void *data) {
       lightmap[x][y].id.value = -1;
       lightmap[x][y].intensity = 255;
 
-      for (z = 0; z < TILE_LAYER_COUNT; z += 1) {
+      for (z = 0; z < BASE_LAYER; z += 1) {
         tilemap[x][y].layers[z] = NOTHING;
       }
 
@@ -406,8 +428,7 @@ int G_UpdateTransitions(void *data) {
     transition = (G_TileTransition*)(node->data);
     G_Tile tile = G_SceneGetGTile(&active_scene, transition->x, transition->y);
 
-    if (transition->id.value == tile.id.value) {
-      tile.id.value = -1;
+    if (transition->is == tile.tile) {
       tile.tile = transition->to;
       G_SceneSetGTile(&active_scene, tile, transition->x, transition->y);
     }
@@ -649,37 +670,35 @@ void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, 
     y = 0;
 
     while (y <= dist) {
-      if (invert) {
-        x_adj = scene_x+(y*dx);
-        y_adj = scene_y+(x*dy);
-        x_adj_prev = scene_x+((y-1)*dx);
-        y_adj_prev = scene_y+(x*dy);
-      } else {
-        x_adj = scene_x+(x*dx);
-        y_adj = scene_y+(y*dy);
-        x_adj_prev = scene_x+(x*dx);
-        y_adj_prev = scene_y+((y-1)*dy);
-      }
-
       current = (float)(y)/(x);
-      is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
-      was_solid = (y == 0) ? 0 : (G_SceneTileObstructs(&active_scene, x_adj_prev, y_adj_prev));
 
       if ((current <= end) && (current >= start)) {
+        if (invert) {
+          x_adj = scene_x+(y*dx);
+          y_adj = scene_y+(x*dy);
+          x_adj_prev = scene_x+((y-1)*dx);
+          y_adj_prev = scene_y+(x*dy);
+        } else {
+          x_adj = scene_x+(x*dx);
+          y_adj = scene_y+(y*dy);
+          x_adj_prev = scene_x+(x*dx);
+          y_adj_prev = scene_y+((y-1)*dy);
+        }
+
+        was_solid = (y == 0) ? 0 : is_solid;
+        is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
+
         good = 1;
 
         if (is_solid) {
           if (y == dist) {
-            end = (float)(y)/(x+0.95);
-            end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
+            end = (float)(y)/(x+0.75);
           } else {
             if ((was_solid == 0) && (y > 0)) {
-              float other_end = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 1);
-              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, other_end, data, func);
+              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, (float)(y)/(x+0.75), data, func);
             }
 
-            start = (float)(y+0.95)/(x);
-            start = G_GetSlope(scene_x, scene_y, x, y, dx, dy, invert, 0);
+            start = (float)(y+0.75)/(x);
           }
         }
 
