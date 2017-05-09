@@ -416,6 +416,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent);
 G_TileTransition* G_TileTransitionCreate(int x, int y, long long when, Tile to);
 void G_SceneChange(G_Scene **scene);
 void G_SceneDestroy(G_Scene **scene);
+void G_SceneChunkLoad(G_Scene **scene);
 void G_SceneEntityInsert(G_Scene **scene, G_Entity **entity);
 void G_SceneEntityDelete(G_Scene **scene, G_Entity **entity);
 void G_SceneTransitionInsert(G_Scene **scene, G_TileTransition **transition);

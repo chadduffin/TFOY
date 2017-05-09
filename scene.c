@@ -30,9 +30,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   node->data = (void*)scene;
   G_TreeNodeInsert(&scenes, &node);
 
-  scene->ambient.r = 127;
-  scene->ambient.g = 127;
-  scene->ambient.b = 127;
+  scene->ambient.r = 0;
+  scene->ambient.g = 0;
+  scene->ambient.b = 0;
 
   scene->persistent = persistent;
 
@@ -44,6 +44,8 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   }
 
   /* TEST CODE */
+
+  if (scene->id.value == 0) {
 
   G_Entity *entity = G_EntityCreate();
   G_LightComponent *light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
@@ -67,9 +69,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
   render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
 
-  light->light.r = 0;
-  light->light.g = 127;
-  light->light.b = 255;
+  light->light.r = 255;
+  light->light.g = 0;
+  light->light.b = 0;
   light->light.intensity = 32;
 
   render->x = 64;
@@ -83,9 +85,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
   render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
 
-  light->light.r = 255;
+  light->light.r = 0;
   light->light.g = 127;
-  light->light.b = 0;
+  light->light.b = 255;
   light->light.intensity = 32;
 
   render->x = 32;
@@ -94,6 +96,8 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   render->layer = ORNAMENT_LAYER;
 
   G_SceneEntityInsert(&scene, &entity);
+
+  }
 
   /*************/
 
@@ -320,7 +324,7 @@ void G_InitMenu(G_Scene **scene) {
     for (x = 0; x < COLS; x += 1) {
       if (title[y][x] == 'B') {
         tile.tile = SOLID_BLACK;
-      } else if ((y > 0) && (title[y-1][x] == 'B')) {
+      } else if ((x > 0) && (title[y][x-1] == 'B')) {
         tile.tile = SOLID_WHITE;
       } else if (title[y][x] == ' ') {
         tile.tile = SOLID_MAGENTA;

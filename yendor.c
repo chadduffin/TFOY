@@ -206,8 +206,16 @@ int G_Update(void *data) {
     dx = active_scene->view.x-active_scene->view.xp;
     dy = active_scene->view.y-active_scene->view.yp;
 
-    for (y = 0; y < DROWS; y += 1) {
-      for (x = 0; x < DCOLS; x += 1) {
+    int
+      bx = (dx < 0) ? DCOLS : 0,
+      by = (dy < 0) ? DROWS : 0,
+      ix = (dx < 0) ? -1 : 1,
+      iy = (dy < 0) ? -1 : 1;
+    boolean ex = 0, ey = 0;
+
+    for (y = by; ey != 1; y += iy) {
+      ex = 0;
+      for (x = bx; ex != 1; x += ix) {
         Tile tile = ERROR_TILE;
 
         if (!(game_info.redraw) &&
@@ -220,10 +228,31 @@ int G_Update(void *data) {
 
         tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = tile;
         G_TileUpdate(tile, x, y);
+
+        if (dx < 0) {
+          if (x <= 0) {
+            ex = 1;
+          }
+        } else {
+          if (x >= DCOLS-1) {
+            ex = 1;
+          }
+        }
+      }
+
+      if (dy < 0) {
+        if (y <= 0) {
+          ey = 1;
+        }
+      } else {
+        if (y >= DROWS-1) {
+          ey = 1;
+        }
       }
     }
 
     active_scene->step += game_info.full;
+    game_info.redraw = 0;
     game_info.full = 0;
   }
 
@@ -634,7 +663,8 @@ void G_InitializeKeybindings(void) {
 }
 
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*)) {
-	if ((x < 0) || (x >= active_scene->tw) ||
+	if ((active_scene == NULL) ||
+      (x < 0) || (x >= active_scene->tw) ||
 			(y < 0) || (y >= active_scene->th)) {
 		return;
 	}
@@ -692,13 +722,13 @@ void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, 
 
         if (is_solid) {
           if (y == dist) {
-            end = (float)(y)/(x+0.75);
+            end = (float)(y)/(x+0.85);
           } else {
             if ((was_solid == 0) && (y > 0)) {
-              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, (float)(y)/(x+0.75), data, func);
+              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, (float)(y)/(x+0.85), data, func);
             }
 
-            start = (float)(y+0.75)/(x);
+            start = (float)(y+0.85)/(x);
           }
         }
 
