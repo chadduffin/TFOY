@@ -78,12 +78,12 @@ int G_Init(void *data) {
     scene->view.follows = 1;
     overworld_id = scene->id;
 
-    G_SceneChange(&scene);
-
     /* creates menu */
     scene = G_SceneCreate(1, 1, 0);
     menu_id = scene->id;
     G_InitMenu(&scene);
+
+    G_SceneChange(&scene);
 
     fmutex = SDL_CreateMutex();
 
@@ -690,9 +690,9 @@ void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*
 }
 
 void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
-  int x, y, x_adj, y_adj, x_adj_prev, y_adj_prev;
+  int x, y, x_adj, y_adj;
   float current;
-  boolean good, is_solid, was_solid = 0;
+  boolean good = 0, is_solid = 0, was_solid = 0;
 
   while (dist <= range) {
     good = 0;
@@ -706,13 +706,9 @@ void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, 
         if (invert) {
           x_adj = scene_x+(y*dx);
           y_adj = scene_y+(x*dy);
-          x_adj_prev = scene_x+((y-1)*dx);
-          y_adj_prev = scene_y+(x*dy);
         } else {
           x_adj = scene_x+(x*dx);
           y_adj = scene_y+(y*dy);
-          x_adj_prev = scene_x+(x*dx);
-          y_adj_prev = scene_y+((y-1)*dy);
         }
 
         was_solid = (y == 0) ? 0 : is_solid;

@@ -30,9 +30,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   node->data = (void*)scene;
   G_TreeNodeInsert(&scenes, &node);
 
-  scene->ambient.r = 0;
-  scene->ambient.g = 0;
-  scene->ambient.b = 0;
+  scene->ambient.r = 127;
+  scene->ambient.g = 127;
+  scene->ambient.b = 127;
 
   scene->persistent = persistent;
 

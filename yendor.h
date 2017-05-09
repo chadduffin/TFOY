@@ -32,7 +32,7 @@
 * DEFINES
 */
 
-#define TITLE "Yendor"
+#define TITLE "The Fellowships of Yendor"
 #define VERSION "v0.0.1"
 
 /* #define NDEBUG */
