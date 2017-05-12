@@ -171,7 +171,7 @@ int G_Init(void *data) {
 
 int G_Update(void *data) {
   int status, x, y, dx, dy;
-
+ 
   if (SDL_GetTicks()-game_info.timer > UPDATE_DELAY) {
     G_UpdateInfrequent();
   }
@@ -590,7 +590,7 @@ void G_UpdateEnd(void) {
 
 void G_UpdateInfrequent(void) {
   /* output frames per second */
-  printf("%u fps.\n", G_GetFPS());
+  printf("%u fps with %i entities.\n", G_GetFPS(), active_scene->entities->size);
 
   game_info.frame_count = 0;
   game_info.timer = SDL_GetTicks();
@@ -600,6 +600,7 @@ void G_UpdateInfrequent(void) {
       i, j, id,
       x = (active_scene->view.x+(active_scene->view.w/2))/CHUNK_SIZE,
       y = (active_scene->view.y+(active_scene->view.h/2))/CHUNK_SIZE;
+    long int *data = NULL;
     G_TreeNode *node = NULL;
 
     SDL_LockMutex(fmutex);
@@ -610,8 +611,11 @@ void G_UpdateInfrequent(void) {
           id = x+j+(y+i)*active_scene->w;
           if (active_scene->chunks[id].status == NOT_LOADED) {
             active_scene->chunks[id].status = IS_LOADING;
+            data = (long int*)malloc(sizeof(long int));
             node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+            *data = active_scene->id.value;
             node->key = id;
+            node->data = (void*)data;
             G_TreeNodeInsert(&chunks, &node);
           }
         }
@@ -691,7 +695,7 @@ void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*
 
 void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
   int x, y, x_adj, y_adj;
-  float current;
+  float top, mid, bot;
   boolean good = 0, is_solid = 0, was_solid = 0;
 
   while (dist <= range) {
@@ -700,9 +704,12 @@ void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, 
     y = 0;
 
     while (y <= dist) {
-      current = (float)(y)/(x);
+      top = (float)(y)/(x);
+      mid = (float)(y+0.5)/(x);
+      bot = (float)(y+1.0)/(x);
 
-      if ((current <= end) && (current >= start)) {
+      if (((top <= end) || (mid <= end) || (bot <= end)) &&
+          ((top >= start) || (mid >= start) || (bot >= start))) {
         if (invert) {
           x_adj = scene_x+(y*dx);
           y_adj = scene_y+(x*dy);
@@ -714,25 +721,33 @@ void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, 
         was_solid = (y == 0) ? 0 : is_solid;
         is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
 
-        good = 1;
-
-        if (is_solid) {
-          if (y == dist) {
-            end = (float)(y)/(x+0.85);
-          } else {
-            if ((was_solid == 0) && (y > 0)) {
-              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, (float)(y)/(x+0.85), data, func);
-            }
-
-            start = (float)(y+0.85)/(x);
-          }
-        }
-
         x_adj -= active_scene->view.x;
         y_adj -= active_scene->view.y;
 
-        func(&x_adj, &y_adj, data);
-      } else if (current > end) {
+        good = 1;
+
+        if (is_solid) {
+          if ((y == dist) || ((float)(y+1.0)/(x-1.0) > end)) {
+            end = (float)(y)/(x+1.0);
+          } else {
+            if ((was_solid == 0) && (y > 0)) {
+              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, (float)(y)/(x+1.0), data, func);
+            }
+
+            start = bot;
+          }
+
+          func(&x_adj, &y_adj, data);
+        } else {
+          if ((mid >= start) && (mid <= end) &&
+              (((top >= start) && (top <= end)) ||
+              ((bot >= start) && (bot <= end)))) {
+            func(&x_adj, &y_adj, data);
+          } else if ((top <= end) && (y == dist/2)) {
+            func(&x_adj, &y_adj, data);
+          }
+        }
+      } else if (top > end) {
         y = dist;
       }
 

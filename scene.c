@@ -30,9 +30,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   node->data = (void*)scene;
   G_TreeNodeInsert(&scenes, &node);
 
-  scene->ambient.r = 127;
-  scene->ambient.g = 127;
-  scene->ambient.b = 127;
+  scene->ambient.r = 0;
+  scene->ambient.g = 0;
+  scene->ambient.b = 0;
 
   scene->persistent = persistent;
 
@@ -97,6 +97,26 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 
   G_SceneEntityInsert(&scene, &entity);
 
+/*  entity = G_EntityCreate();
+  light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+  render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+  G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+
+  light->light.r = 255;
+  light->light.g = 255;
+  light->light.b = 255;
+  light->light.intensity = 3;
+
+  render->x = 24;
+  render->y = 80;
+  render->tile = BASIC_FIRE;
+  render->layer = ORNAMENT_LAYER;
+
+  element->tile_flags = IS_BURNING;
+  element->element_flags = SPREADS_PROPOGATE;
+
+  G_SceneEntityInsert(&scene, &entity);
+*/
   }
 
   /*************/
@@ -105,7 +125,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 }
 
 G_TileTransition* G_TileTransitionCreate(int x, int y, long long when, Tile is) {
-  assert ((x >= 0) && (x < active_scene->w) && (y >= 0) && (y < active_scene->h));
+  assert ((x >= 0) && (x < active_scene->tw) && (y >= 0) && (y < active_scene->th));
 
   G_Tile tile;
   G_TileTransition *transition = (G_TileTransition*)malloc(sizeof(G_TileTransition));
@@ -211,6 +231,10 @@ void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y) {
         (offset_x >= 0) && (offset_x < CHUNK_SIZE) &&
         (offset_y >= 0) && (offset_y < CHUNK_SIZE)) {
       s->chunks[id].tiles[offset_x+(offset_y*CHUNK_SIZE)] = tile;
+
+      if ((x >= s->view.x) && (x < s->view.x+s->view.w) && (y >= s->view.y) && (y < s->view.y+s->view.h)) {
+        tilemap[x-s->view.x+DCOLS_OFFSET][y-s->view.y+DROWS_OFFSET].layers[BASE_LAYER] = tile.tile;
+      }
     }
   }
 }
@@ -266,7 +290,7 @@ boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, b
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT);
   Tile tile = G_SceneGetTile(scene, x, y);
 
-  if ((element != NULL) && (tile != NOTHING)) {
+  if ((element != NULL) && (tile != NOTHING) && (tile != ERROR_TILE)) {
     switch (element->tile_flags) {
       case IS_BURNING:
         {

@@ -39,8 +39,8 @@
 
 #define TEXTURE_COUNT 1
 
-#define COLS 100
-#define ROWS 60
+#define COLS 80
+#define ROWS 45
 
 #define CHUNK_SIZE 256
 #define FILE_CHUNK_SIZE 16
@@ -72,6 +72,7 @@ typedef enum Thread {
   WORKER_THREAD_A,
   WORKER_THREAD_B,
   WORKER_THREAD_C,
+  WORKER_THREAD_D,
 
   GAME_THREAD_COUNT,
 } Thread;
@@ -390,7 +391,7 @@ int G_LoadChunks(void *data);
 unsigned int G_CharToInt(unsigned char *input, boolean full);
 unsigned char* G_EncodeChunk(G_Tile *chunk, unsigned int *length);
 void G_IntToChar(unsigned int input, unsigned char *output, boolean full);
-void G_LoadChunksInner(long int *list, unsigned int length);
+void G_LoadChunksInner(long int *chunks, long int *scenes, unsigned int length);
 G_Tile* G_DecodeChunk(unsigned char *chunk, unsigned int length);
 
 /* networking.c */

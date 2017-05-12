@@ -7,11 +7,14 @@ int G_LoadChunks(void *data) {
 
     if (G_TreeSize(&chunks) > 0) {
       int i = 0, len = G_TreeSize(&chunks);
-      long int *chunk_list = (long int*)malloc(sizeof(long int)*len);
+      long int
+        *chunk_list = (long int*)malloc(sizeof(long int)*len),
+        *scene_list = (long int*)malloc(sizeof(long int)*len);
       G_TreeNode *min = G_TreeNodeMinimum(&chunks);
 
       while (min != chunks->nil) {
         chunk_list[i] = min->key;
+        scene_list[i] = *(long int*)(min->data);
 
         G_TreeNodeDelete(&chunks, &min);
         min = G_TreeNodeMinimum(&chunks);
@@ -19,8 +22,9 @@ int G_LoadChunks(void *data) {
       }
       
       SDL_UnlockMutex(fmutex);
-      G_LoadChunksInner(chunk_list, len);
+      G_LoadChunksInner(chunk_list, scene_list, len);
       free(chunk_list);
+      free(scene_list);
       len = 0;
     } else {
       SDL_UnlockMutex(fmutex);
@@ -88,17 +92,21 @@ void G_IntToChar(unsigned int input, unsigned char *output, boolean full) {
   }
 }
 
-void G_LoadChunksInner(long int *list, unsigned int length) {
+void G_LoadChunksInner(long int *chunk_list, long int *scene_list, unsigned int length) {
+  assert((chunk_list != NULL) && (scene_list != NULL));
+
   char filename[16];
   unsigned char c[4], *chunk = NULL;
   unsigned int i, j, x, y, file_id, file_id_prev, file_id_offset, chunk_id, chunk_length;
   FILE *file = NULL;
+  G_Scene *scene;
+  G_TreeNode *node;
 
   for (i = 0, j = 0; i < length; i += 1) {
-    chunk_id = list[i];
+    chunk_id = chunk_list[i];
 
-    x = list[i]%WORLD_WIDTH;
-    y = list[i]/WORLD_WIDTH;
+    x = chunk_list[i]%WORLD_WIDTH;
+    y = chunk_list[i]/WORLD_WIDTH;
 
     file_id = (x/FILE_CHUNK_SIZE)+(y/FILE_CHUNK_SIZE)*(WORLD_WIDTH/FILE_CHUNK_SIZE);
     file_id_offset = (x%FILE_CHUNK_SIZE)+(y%FILE_CHUNK_SIZE)*FILE_CHUNK_SIZE;
@@ -126,16 +134,28 @@ void G_LoadChunksInner(long int *list, unsigned int length) {
       }
 
       if ((j == file_id_offset) && (!feof(file))) {
-        printf("Chunk %i loaded.\n", chunk_id);
-        chunk = (unsigned char*)malloc(sizeof(unsigned char)*chunk_length);
-        
-        fread(chunk, sizeof(unsigned char), chunk_length, file);
-        G_Tile *tiles = G_DecodeChunk(chunk, chunk_length);
+        printf("Chunk %i loaded for scene %li.\n", chunk_id, scene_list[i]);
 
-        active_scene->chunks[chunk_id].tiles = tiles;
-        active_scene->chunks[chunk_id].status = IS_LOADED;
+        node = G_TreeNodeFind(&scenes, scene_list[i]);
 
-        free(chunk);
+        if (node != NULL) {
+          scene = (G_Scene*)(node->data);
+
+          chunk = (unsigned char*)malloc(sizeof(unsigned char)*chunk_length);
+          
+          fread(chunk, sizeof(unsigned char), chunk_length, file);
+          G_Tile *tiles = G_DecodeChunk(chunk, chunk_length);
+
+          scene->chunks[chunk_id].tiles = tiles;
+          scene->chunks[chunk_id].status = IS_LOADED;
+
+          free(chunk);
+          node = NULL;
+          chunk = NULL;
+          scene = NULL;
+        } else {
+          fseek(file, chunk_length, SEEK_CUR);
+        }
       } else {
         printf("Could not find chunk %u.\n", chunk_id);
         active_scene->chunks[chunk_id].tiles = NULL;
