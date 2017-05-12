@@ -205,19 +205,19 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
         }
       }
     }
-    if (game_info.phys[SDL_SCANCODE_J]) {
+    if (game_info.phys[SDL_SCANCODE_K]) {
       if (render->y > 0) {
         if (!G_SceneTileObstructs(&active_scene, render->x, render->y-1)) {
           render->y -= 1;
-          game_info.phys[SDL_SCANCODE_J] = 0;
+          game_info.phys[SDL_SCANCODE_K] = 0;
         }
       }
     }
-    if (game_info.phys[SDL_SCANCODE_K]) {
+    if (game_info.phys[SDL_SCANCODE_J]) {
       if (render->y < active_scene->th-2) {
         if (!G_SceneTileObstructs(&active_scene, render->x, render->y+1)) {
           render->y += 1;
-          game_info.phys[SDL_SCANCODE_K] = 0;
+          game_info.phys[SDL_SCANCODE_J] = 0;
         }
       }
     }
