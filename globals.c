@@ -12,6 +12,8 @@ int permutations[512];
 SDL_mutex *fmutex;
 SDL_Thread *threads[GAME_THREAD_COUNT];
 
+boolean redraw_lockable = 0;
+
 boolean vismap[COLS][ROWS];
 G_TileCell tilemap[COLS][ROWS];
 G_LightNode lightmap[COLS][ROWS];
@@ -66,10 +68,10 @@ char title[ROWS][COLS] = {
   {"                                                                                "},
   {"                                                                                "},
   {"                                                                                "},
-  {"                                                                                "},
-  {"                                                                                "},
-  {"                                                                                "},
-  {"                                                                                "},
-  {"                                                                                "},
+  {" B   B                                                                          "},
+  {" BBBBB                                                                          "},
+  {"  B B                                                                           "},
+  {"   B                                                                            "},
+  {"   B                                                                            "},
   {"                                                                                "},
 };

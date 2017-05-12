@@ -605,6 +605,11 @@ void G_UpdateInfrequent(void) {
 
     SDL_LockMutex(fmutex);
 
+    if (redraw_lockable) {
+      redraw_lockable = 0;
+      game_info.redraw = 1;
+    }
+
     for (i = -2; i < 3; i += 1) {
       for (j = -2; j < 3; j += 1) {
         if ((x+j >= 0) && (x+j < active_scene->w) && (y+i >= 0) && (y+i < active_scene->h)) {

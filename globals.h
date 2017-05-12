@@ -39,6 +39,8 @@ extern int permutations[512];
 extern SDL_mutex *fmutex;
 extern SDL_Thread *threads[GAME_THREAD_COUNT];
 
+extern boolean redraw_lockable;
+
 extern boolean vismap[COLS][ROWS];
 extern G_TileCell tilemap[COLS][ROWS];
 extern G_LightNode lightmap[COLS][ROWS];

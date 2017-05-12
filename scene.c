@@ -55,7 +55,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light->light.r = 255;
   light->light.g = 255;
   light->light.b = 255;
-  light->light.intensity = 32;
+  light->light.intensity = 24;
 
   render->x = 30;
   render->y = 80;
@@ -72,7 +72,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light->light.r = 255;
   light->light.g = 0;
   light->light.b = 0;
-  light->light.intensity = 32;
+  light->light.intensity = 16;
 
   render->x = 64;
   render->y = 32;
@@ -88,7 +88,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light->light.r = 0;
   light->light.g = 127;
   light->light.b = 255;
-  light->light.intensity = 32;
+  light->light.intensity = 16;
 
   render->x = 32;
   render->y = 32;

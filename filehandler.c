@@ -149,6 +149,15 @@ void G_LoadChunksInner(long int *chunk_list, long int *scene_list, unsigned int 
           scene->chunks[chunk_id].tiles = tiles;
           scene->chunks[chunk_id].status = IS_LOADED;
 
+          if (scene == active_scene) {
+            if (((scene->view.x+scene->view.w/2)/CHUNK_SIZE == x) &&
+                ((scene->view.y+scene->view.h/2)/CHUNK_SIZE == y)) {
+              SDL_LockMutex(fmutex);
+              redraw_lockable = 1;
+              SDL_UnlockMutex(fmutex);
+            }
+          }
+
           free(chunk);
           node = NULL;
           chunk = NULL;
