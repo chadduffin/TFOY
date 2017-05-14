@@ -20,10 +20,6 @@ int main(int argc, char **argv) {
       game_info.running = 0;
     }
 
-/* TEMPORARY */
-unsigned int a = SDL_GetTicks();
-/*************/
-
     G_UpdateBegin();
 
     threads[UPDATE_THREAD] = SDL_CreateThread(G_Update, "game-updating", NULL);
@@ -33,12 +29,6 @@ unsigned int a = SDL_GetTicks();
     SDL_WaitThread(threads[UPDATE_THREAD], &status);
 
     G_UpdateEnd();
-
-/* TEMPORARY */
-if (SDL_GetTicks()-a < 1000.0/60) {
-  SDL_Delay((1000.0)/60-(SDL_GetTicks()-a));
-}
-/*************/
   };
 
   G_Quit();

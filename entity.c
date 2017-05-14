@@ -255,7 +255,23 @@ void G_EntityLightAdd(void *entity) {
   		node.intensity = light->light.intensity;
   		node.id = e->id;
 
-  		G_GenerateFOV(render->x, render->y, node.intensity, &node, &G_AddLight);
+      if (node.intensity > 2) {
+  		  G_GenerateFOV(render->x, render->y, node.intensity, &node, &G_AddLight);
+      } else {
+        int x, y, adj_x, adj_y;
+
+        for (y = -1; y < 2; y += 1) {
+          for (x = -1; x < 2; x += 1) {
+            adj_x = render->x+x-active_scene->view.x;
+            adj_y = render->y+y-active_scene->view.y;
+
+            if ((adj_x >= 0) && (adj_x < active_scene->view.w) &&
+                (adj_y >= 0) && (adj_y < active_scene->view.h)) {
+              G_AddLight(&adj_x, &adj_y, &node);
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -97,17 +97,17 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 
   G_SceneEntityInsert(&scene, &entity);
 
-/*  entity = G_EntityCreate();
+  entity = G_EntityCreate();
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
   render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
   G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
 
-  light->light.r = 255;
-  light->light.g = 255;
+  light->light.r = 0;
+  light->light.g = 127;
   light->light.b = 255;
-  light->light.intensity = 3;
+  light->light.intensity = 2;
 
-  render->x = 24;
+  render->x = 25;
   render->y = 80;
   render->tile = BASIC_FIRE;
   render->layer = ORNAMENT_LAYER;
@@ -116,7 +116,6 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   element->element_flags = SPREADS_PROPOGATE;
 
   G_SceneEntityInsert(&scene, &entity);
-*/
   }
 
   /*************/
@@ -295,7 +294,7 @@ boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, b
       case IS_BURNING:
         {
           if (G_TileFlagCompare(tile, FLAMMABLE)) {
-            G_TileTransitionCreate(x, y, s->step+512, tile+1);
+            G_TileTransitionCreate(x, y, s->step+512, BURNT_GRASS);
 
             G_Entity *child = G_EntityCreate();
             G_LightComponent *n_light = (G_LightComponent*)G_EntityComponentInsert(&child, LIGHT_COMPONENT);

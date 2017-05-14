@@ -170,6 +170,7 @@ int G_Init(void *data) {
 }
 
 int G_Update(void *data) {
+unsigned int a = SDL_GetTicks();
   int status, x, y, dx, dy;
  
   if (SDL_GetTicks()-game_info.timer > UPDATE_DELAY) {
