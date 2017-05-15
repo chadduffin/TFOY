@@ -9,14 +9,23 @@
 #include <assert.h>
 
 #ifdef __linux__
+  #include <sys/stat.h>
+  #include <sys/types.h>
+
 	#include <SDL2/SDL.h>
 	#include <SDL2/SDL_net.h>
 	#include <SDL2/SDL_image.h>
 #elif __APPLE__
+  #include <sys/stat.h>
+  #include <sys/types.h>
+
 	#include <SDL2/SDL.h>
 	#include <SDL2_net/SDL_net.h>
 	#include <SDL2_image/SDL_image.h>
 #elif __unix__
+  #include <sys/stat.h>
+  #include <sys/types.h>
+
 	#include <SDL2/SDL.h>
 	#include <SDL2_net/SDL_net.h>
 	#include <SDL2_image/SDL_image.h>
@@ -268,7 +277,7 @@ typedef struct G_TileInformation {
 
 typedef struct G_TileTransition {
   int x, y;
-  long int when;
+  unsigned int when;
   Tile is, to;
 } G_TileTransition;
 
@@ -283,7 +292,8 @@ typedef struct G_Entity {
 } G_Entity;
 
 typedef struct G_UIComponent {
-  void *holder;
+  int x, y;
+  Tile *tiles;
 } G_UIComponent;
 
 typedef struct G_LightComponent {
@@ -317,7 +327,7 @@ typedef struct G_SceneChunk {
 
 typedef struct G_Scene {
   int w, h, tw, th;
-  long int step;
+  unsigned int step;
   G_Id id;
   G_View view;
   G_Entity *focus;
@@ -367,6 +377,7 @@ void G_UpdateInfrequent(void);
 void G_ClearBuffers(void);
 void G_InitializeKeybindings(void);
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*));
+void G_GenerateFOVSimple(int x, int y, void *light, void (*func)(int*, int*, void*));
 void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
 void G_AddLight(int *x, int *y, void *data);
 void G_AddPointLight(int x, int y, int r, int g, int b, int intensity);
@@ -414,7 +425,7 @@ void G_EntityLightAdd(void *entity);
 
 /* scene.c */
 G_Scene* G_SceneCreate(int w, int h, boolean persistent);
-G_TileTransition* G_TileTransitionCreate(int x, int y, long long when, Tile to);
+G_TileTransition* G_TileTransitionCreate(int x, int y, unsigned int when, Tile to);
 void G_SceneChange(G_Scene **scene);
 void G_SceneDestroy(G_Scene **scene);
 void G_SceneChunkLoad(G_Scene **scene);

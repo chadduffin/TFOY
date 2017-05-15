@@ -6,14 +6,23 @@
 #include <assert.h>
 
 #ifdef __unix__
+  #include <sys/stat.h>
+  #include <sys/types.h>
+
 	#include <SDL2/SDL.h>
 	#include <SDL2/SDL_net.h>
 	#include <SDL2/SDL_image.h>
 #elif __linux__
+  #include <sys/stat.h>
+  #include <sys/types.h>
+
 	#include <SDL2/SDL.h>
 	#include <SDL2/SDL_net.h>
 	#include <SDL2/SDL_image.h>
 #elif __APPLE__
+  #include <sys/stat.h>
+  #include <sys/types.h>
+
 	#include <SDL2/SDL.h>
 	#include <SDL2_net/SDL_net.h>
 	#include <SDL2_image/SDL_image.h>

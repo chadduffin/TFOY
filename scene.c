@@ -96,14 +96,14 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   render->layer = ORNAMENT_LAYER;
 
   G_SceneEntityInsert(&scene, &entity);
-
+/*
   entity = G_EntityCreate();
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
   render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
   G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
 
-  light->light.r = 0;
-  light->light.g = 127;
+  light->light.r = 255;
+  light->light.g = 255;
   light->light.b = 255;
   light->light.intensity = 2;
 
@@ -112,18 +112,19 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   render->tile = BASIC_FIRE;
   render->layer = ORNAMENT_LAYER;
 
+  element->spread_chance = 5;
   element->tile_flags = IS_BURNING;
   element->element_flags = SPREADS_PROPOGATE;
 
   G_SceneEntityInsert(&scene, &entity);
-  }
+*/  }
 
   /*************/
 
   return scene;
 }
 
-G_TileTransition* G_TileTransitionCreate(int x, int y, long long when, Tile is) {
+G_TileTransition* G_TileTransitionCreate(int x, int y, unsigned int when, Tile is) {
   assert ((x >= 0) && (x < active_scene->tw) && (y >= 0) && (y < active_scene->th));
 
   G_Tile tile;

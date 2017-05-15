@@ -35,13 +35,30 @@ void G_TileUpdate(Tile tile, int x, int y) {
 	if (tile > 255) {
 	  int scene_x = x+active_scene->view.x, scene_y = y+active_scene->view.y;
 
+	  G_LightNode node;
 	  G_TileInformation info = tile_info[tile-NOTHING];
 
 	  if (G_TileFlagCompare(tile, LUMINESCENT)) {
-	    G_AddPointLight(scene_x, scene_y, (info.fg->r)/3, (info.fg->g)/3, (info.fg->b)/3, 2);
+  		node.x = scene_x;
+  		node.y = scene_y;
+  		node.r = (info.fg->r)/3;
+  		node.g = (info.fg->g)/3;
+  		node.b = (info.fg->b)/3;
+  		node.intensity = 2;
+ 	    node.id.value = game_info.id.value+scene_x+scene_y*active_scene->tw;
+
+      G_GenerateFOVSimple(scene_x, scene_y, &node, &G_AddLight);
 	  } else if (G_TileFlagCompare(tile, ILLUMINATING)) {
-	    G_AddPointLight(scene_x, scene_y, 255, 255, 255, 2);
-	  }
+  		node.x = scene_x;
+  		node.y = scene_y;
+  		node.r = 255;
+  		node.g = 255;
+  		node.b = 255;
+  		node.intensity = 2;
+ 	    node.id.value = game_info.id.value+scene_x+scene_y*active_scene->tw;
+
+      G_GenerateFOVSimple(scene_x, scene_y, &node, &G_AddLight);
+    }
 	}
 }
 

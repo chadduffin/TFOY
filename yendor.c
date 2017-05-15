@@ -25,6 +25,8 @@ int G_Init(void *data) {
 	srand(time(NULL) & 2147483647);
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == 0) {
+    SDL_ShowCursor(SDL_DISABLE);
+
 		game_info.window = SDL_CreateWindow("TFOY", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     if (game_info.window != NULL) {
@@ -86,8 +88,7 @@ int G_Init(void *data) {
     G_SceneChange(&scene);
 
     fmutex = SDL_CreateMutex();
-
-    /* TEMPORARY
+/*
     unsigned char *encoded = NULL, elen[4];
     unsigned int len, q;
     G_SceneChunk chunk;
@@ -150,8 +151,6 @@ int G_Init(void *data) {
         } else {
           chunk.tiles[i].tile = WATER;
         }
-        
-        chunk.tiles[i].id.value = -1;
       }
 
       encoded = G_EncodeChunk(chunk.tiles, &len);
@@ -170,7 +169,6 @@ int G_Init(void *data) {
 }
 
 int G_Update(void *data) {
-unsigned int a = SDL_GetTicks();
   int status, x, y, dx, dy;
  
   if (SDL_GetTicks()-game_info.timer > UPDATE_DELAY) {
@@ -285,6 +283,21 @@ int G_PollEvents(void* data) {
 				{
 					game_info.mouse_x = game_info.event.motion.x;
 					game_info.mouse_y = game_info.event.motion.y;
+
+          if (game_info.mouse_x < game_info.display_x) {
+					  game_info.mouse_x = game_info.display_x;
+          } else if (game_info.mouse_x >= game_info.display_x+game_info.display_w) {
+					  game_info.mouse_x = game_info.display_x+game_info.display_w-game_info.tile_w;
+          }
+
+          if (game_info.mouse_y < game_info.display_y) {
+					  game_info.mouse_y = game_info.display_y;
+          } else if (game_info.mouse_y >= game_info.display_y+game_info.display_h) {
+					  game_info.mouse_y = game_info.display_y+game_info.display_h-game_info.tile_h;
+          }
+
+          game_info.mouse_x = game_info.mouse_x-(game_info.mouse_x-game_info.display_x)%game_info.tile_w;
+          game_info.mouse_y = game_info.mouse_y-(game_info.mouse_y-game_info.display_y)%game_info.tile_h;
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
@@ -699,6 +712,22 @@ void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*
 	}
 }
 
+void G_GenerateFOVSimple(int x, int y, void *light, void (*func)(int*, int*, void*)) {
+  int dx, dy, adj_x, adj_y;
+
+  for (dy = -1; dy < 2; dy += 1) {
+    for (dx = -1; dx < 2; dx += 1) {
+      adj_x = x+dx-active_scene->view.x;
+      adj_y = y+dy-active_scene->view.y;
+
+      if ((adj_x >= 0) && (adj_x < active_scene->view.w) &&
+          (adj_y >= 0) && (adj_y < active_scene->view.h)) {
+        G_AddLight(&adj_x, &adj_y, light);
+      }
+    }
+  }
+}
+
 void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
   int x, y, x_adj, y_adj;
   float top, mid, bot;
@@ -828,7 +857,7 @@ void G_AddPointLight(int x, int y, int r, int g, int b, int intensity) {
  	node.g = g/2;
  	node.b = b/2;
   node.intensity = intensity;
- 	node.id.value = game_info.id.value+x+y*active_scene->w;
+ 	node.id.value = game_info.id.value+x+y*active_scene->tw;
 
   G_GenerateFOV(x, y, node.intensity, &node, &G_AddLight);
 }
