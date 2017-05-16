@@ -65,6 +65,11 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   scene->focus = entity;
   G_SceneEntityInsert(&scene, &entity);
 
+  G_QTree *tree = G_QTreeCreate();
+  tree->size = 512*CHUNK_SIZE;
+  G_QTreeNodeInsert(&tree, &entity, CREATURE_LAYER);
+  G_QTreeNodeDelete(&tree, &entity, CREATURE_LAYER);
+
   entity = G_EntityCreate();
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
   render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
@@ -80,6 +85,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   render->layer = ORNAMENT_LAYER;
 
   G_SceneEntityInsert(&scene, &entity);
+
+  G_QTreeNodeDelete(&tree, &entity, CREATURE_LAYER);
+  G_QTreeDestroy(&tree);
 
   entity = G_EntityCreate();
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);

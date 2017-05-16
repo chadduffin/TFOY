@@ -16,18 +16,21 @@ G_QTree* G_QTreeCreate(void) {
 }
 
 int G_QTreeQuadrant(int *x, int *y, int *size) {
-  int z = 0;
+  int a = *x, b = *y, c = *size, z = 0;
 
-  if (*x >= *size/2) {
+  if (a >= c/2) {
     z += 1;
-  } else {
-    *x -= *size/2;
+    a -= c/2;
   }
-  if (*y >= *size/2) {
+
+  if (b >= c/2) {
     z += 2;
-  } else {
-    *y -= *size/2;
+    b -= c/2;
   }
+
+  *x = a;
+  *y = b;
+  *size = c;
 
   return z;
 }
@@ -53,42 +56,68 @@ void G_QTreeDestroy(G_QTree **tree) {
   t = NULL;
 }
 
-void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity) {
+void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity, TileLayer layer) {
+  assert((tree != NULL) && (*tree != NULL) && (entity != NULL) && (*entity != NULL));
+
   int x, y, z, i;
   G_QTree *t = *tree;
   G_QTreeLeaf *leaf = NULL;
   
   G_EntityPos(entity, &x, &y);
 
-  while (t->size > 2) {
-    G_QTreeQuadrant(&x, &y, &z);
+  while (t->size > 1) {
+    z = G_QTreeQuadrant(&x, &y, &(t->size));
 
     if (t->nodes[z] == NULL) {
-      t->nodes[z] = G_TreeCreate();
-      ((G_QTree*)(t->nodes[z]))->size = t->size/2;
-      printf("Created new quadrant of size %i.\n", t->size/2);
+      if (t->size == 2) {
+        t->nodes[z] = (G_QTreeLeaf*)malloc(sizeof(G_QTreeLeaf));
+        
+        for (i = 0; i < TILE_LAYER_COUNT; i += 1) {
+          ((G_QTreeLeaf*)(t->nodes[z]))->entities[i] = NULL;
+        }
+  
+        break;
+      } else {
+        t->nodes[z] = G_QTreeCreate();
+        ((G_QTree*)(t->nodes[z]))->size = t->size/2;
+      }
     }
 
     t = (G_QTree*)(t->nodes[z]);
   }
 
-  G_QTreeQuadrant(&x, &y, &z);
-
-  if (t->nodes[z] == NULL) {
-    t->nodes[z] = (G_QTreeLeaf*)malloc(sizeof(G_QTreeLeaf));
-    
-    for (i = 0; i < TILE_LAYER_COUNT; i += 1) {
-      ((G_QTreeLeaf*)(t->nodes[z]))->entities[i] = NULL;
-    }
-  }
-
   leaf = t->nodes[z];
+  leaf->entities[layer] = *entity;
 }
 
-void G_QTreeNodeDelete(G_QTree **tree, G_Entity **entity) {
+void G_QTreeNodeDelete(G_QTree **tree, G_Entity **entity, TileLayer layer) {
+  assert((tree != NULL) && (*tree != NULL) && (entity != NULL) && (*entity != NULL));
 
+  int x, y;
+  G_QTreeLeaf *leaf = NULL;
+  
+  G_EntityPos(entity, &x, &y);
+
+  leaf = G_QTreeNodeFind(tree, x, y);
+
+  if ((leaf != NULL) && (leaf->entities[layer] != NULL)) {
+    leaf->entities[layer] = NULL;
+  }
 }
 
-G_Entity** G_QTreeNodeFind(G_QTree **tree, int x, int y) {
+G_QTreeLeaf* G_QTreeNodeFind(G_QTree **tree, int x, int y) {
+  int z;
+  G_QTree *t = *tree;
+  
+  while (t->size > 1) {
+    z = G_QTreeQuadrant(&x, &y, &(t->size));
+
+    if ((t->nodes[z] == NULL) || (t->size == 2)) {
+      return t->nodes[z];
+    }
+
+    t = (G_QTree*)(t->nodes[z]);
+  }
+  
   return NULL;
 }
