@@ -76,7 +76,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 
   render->x = 64;
   render->y = 32;
-  render->tile = NOTHING;
+  render->tile = HUMAN;
   render->layer = ORNAMENT_LAYER;
 
   G_SceneEntityInsert(&scene, &entity);
@@ -92,7 +92,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 
   render->x = 32;
   render->y = 32;
-  render->tile = NOTHING;
+  render->tile = HUMAN;
   render->layer = ORNAMENT_LAYER;
 
   G_SceneEntityInsert(&scene, &entity);

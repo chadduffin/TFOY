@@ -228,24 +228,6 @@ typedef struct G_Position {
   int x, y;
 } G_Position;
 
-typedef struct G_TreeNode {
-  char color;
-  void *data;
-  long int key;
-  struct G_TreeNode *left, *right, *parent;
-} G_TreeNode;
-
-typedef struct G_Tree {
-  int size;
-  G_TreeNode *root, *nil;
-} G_Tree;
-
-typedef struct G_TreeNodeContainer {
-  G_Tree **tree;
-  G_TreeNode **node;
-  void (*func)(void*);
-} G_TreeNodeContainer;
-
 typedef struct G_Color {
   int r, g, b, r_rand, g_rand, b_rand;
 } G_Color;
@@ -319,6 +301,27 @@ typedef struct G_CreatureComponent {
 typedef struct G_ControllerComponent {
   G_Entity *entity;
 } G_ControllerComponent;
+
+typedef struct G_TreeNode {
+  char color;
+  void *data;
+  long int key;
+  struct G_TreeNode *left, *right, *parent;
+} G_TreeNode;
+
+typedef struct G_Tree {
+  int size;
+  G_TreeNode *root, *nil;
+} G_Tree;
+
+typedef struct G_QTree {
+  int level;
+  void *nodes[4];
+} G_QTreeNode;
+
+typedef struct G_QTreeLeaf {
+  G_Entity *entities[TILE_LAYER_COUNT];
+} G_QTreeLeaf;
 
 typedef struct G_SceneChunk {
   G_Tile *tiles;
@@ -462,5 +465,13 @@ int G_TreeSize(G_Tree **tree);
 G_TreeNode* G_TreeNodeFind(G_Tree **tree, long int key);
 G_TreeNode* G_TreeNodeMinimum(G_Tree **tree);
 G_TreeNode* G_TreeNodeSuccessor(G_Tree **tree, G_TreeNode **node);
+
+/* qtree.c */
+
+G_QTree* G_QTreeCreate(void);
+void G_QTreeDestroy(G_QTree **tree);
+void G_QTreeNodeInsert(G_Tree **tree, G_Entity **entity);
+void G_QTreeNodeDelete(G_Tree **tree, G_Entity **entity);
+G_Entity** G_QTreeNodeFind(G_Tree **tree, int x, int y);
 
 #endif /* YENDOR */

@@ -80,12 +80,12 @@ int G_Init(void *data) {
     scene->view.follows = 1;
     overworld_id = scene->id;
 
+    G_SceneChange(&scene);
+
     /* creates menu */
     scene = G_SceneCreate(1, 1, 0);
     menu_id = scene->id;
     G_InitMenu(&scene);
-
-    G_SceneChange(&scene);
 
     fmutex = SDL_CreateMutex();
 /*
@@ -186,8 +186,14 @@ int G_Update(void *data) {
         game_info.phys[SDL_SCANCODE_J] ||
         game_info.phys[SDL_SCANCODE_K] ||
         game_info.phys[SDL_SCANCODE_L]) {
-      game_info.phys[SDL_SCANCODE_Z] = 0;
       game_info.full = 1;
+
+if (game_info.phys[SDL_SCANCODE_Z]) {
+      G_Entity *entity = (G_Entity*)(G_TreeNodeFind(&(active_scene->entities), 2)->data);
+      G_SceneEntityDelete(&active_scene, &entity);
+}
+
+      game_info.phys[SDL_SCANCODE_Z] = 0;
     }
 
     G_UpdateEntities(NULL);
@@ -577,7 +583,7 @@ void G_UpdateEnd(void) {
 
     while (node != NULL) {
       G_TreeNode *actual = G_TreeNodeFind(&(active_scene->entities), node->key);
-      
+
       if (actual != NULL) {
         G_TreeNodeDelete(&(active_scene->entities), &actual);
       }
@@ -591,12 +597,14 @@ void G_UpdateEnd(void) {
 
     node = active_scene->ins_buffer;
 
+/* insert all nodes that were created */
+
     while (node != NULL) {
       active_scene->ins_buffer = node->left;
       node->left = NULL;
 
       G_TreeNodeInsert(&(active_scene->entities), &node);
-      
+
       node = active_scene->ins_buffer;
     }
   }
