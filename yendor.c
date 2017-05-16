@@ -186,14 +186,8 @@ int G_Update(void *data) {
         game_info.phys[SDL_SCANCODE_J] ||
         game_info.phys[SDL_SCANCODE_K] ||
         game_info.phys[SDL_SCANCODE_L]) {
-      game_info.full = 1;
-
-if (game_info.phys[SDL_SCANCODE_Z]) {
-      G_Entity *entity = (G_Entity*)(G_TreeNodeFind(&(active_scene->entities), 2)->data);
-      G_SceneEntityDelete(&active_scene, &entity);
-}
-
       game_info.phys[SDL_SCANCODE_Z] = 0;
+      game_info.full = 1;
     }
 
     G_UpdateEntities(NULL);

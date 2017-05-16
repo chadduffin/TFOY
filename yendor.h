@@ -315,9 +315,9 @@ typedef struct G_Tree {
 } G_Tree;
 
 typedef struct G_QTree {
-  int level;
+  int size, count;
   void *nodes[4];
-} G_QTreeNode;
+} G_QTree;
 
 typedef struct G_QTreeLeaf {
   G_Entity *entities[TILE_LAYER_COUNT];
@@ -469,9 +469,10 @@ G_TreeNode* G_TreeNodeSuccessor(G_Tree **tree, G_TreeNode **node);
 /* qtree.c */
 
 G_QTree* G_QTreeCreate(void);
+int G_QTreeQuadrant(int *x, int *y, int *size);
 void G_QTreeDestroy(G_QTree **tree);
-void G_QTreeNodeInsert(G_Tree **tree, G_Entity **entity);
-void G_QTreeNodeDelete(G_Tree **tree, G_Entity **entity);
-G_Entity** G_QTreeNodeFind(G_Tree **tree, int x, int y);
+void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity);
+void G_QTreeNodeDelete(G_QTree **tree, G_Entity **entity);
+G_Entity** G_QTreeNodeFind(G_QTree **tree, int x, int y);
 
 #endif /* YENDOR */
