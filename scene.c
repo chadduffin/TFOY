@@ -30,6 +30,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   node->data = (void*)scene;
   G_TreeNodeInsert(&scenes, &node);
 
+  scene->collision = G_QTreeCreate();
+  scene->collision->size = (w > h) ? scene->tw : scene->th;
+
   scene->ambient.r = 0;
   scene->ambient.g = 0;
   scene->ambient.b = 0;
@@ -65,11 +68,6 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   scene->focus = entity;
   G_SceneEntityInsert(&scene, &entity);
 
-  G_QTree *tree = G_QTreeCreate();
-  tree->size = 512*CHUNK_SIZE;
-  G_QTreeNodeInsert(&tree, &entity, CREATURE_LAYER);
-  G_QTreeNodeDelete(&tree, &entity, CREATURE_LAYER);
-
   entity = G_EntityCreate();
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
   render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
@@ -85,9 +83,6 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   render->layer = ORNAMENT_LAYER;
 
   G_SceneEntityInsert(&scene, &entity);
-
-  G_QTreeNodeDelete(&tree, &entity, CREATURE_LAYER);
-  G_QTreeDestroy(&tree);
 
   entity = G_EntityCreate();
   light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
@@ -167,12 +162,24 @@ void G_SceneChange(G_Scene **scene) {
 
 void G_SceneDestroy(G_Scene **scene) {
   G_Scene *s = *scene;
-  G_TreeNode *node = G_TreeNodeFind(&scenes, s->id.value);
+  G_Entity *entity = NULL;
+  G_TreeNode *node = NULL;
 
   free(s->chunks);
+
+  while ((node = G_TreeNodeMinimum(&(s->entities))) != NULL) {
+    entity = (G_Entity*)(node->data);
+    node->data = NULL;
+    G_EntityDestroy(&entity);
+    G_TreeNodeDelete(&(s->entities), &node);
+  }
   
   G_TreeDestroy(&(s->entities));
   G_TreeDestroy(&(s->transitions));
+  G_QTreeDestroy(&(s->collision));
+
+  node = G_TreeNodeFind(&scenes, s->id.value);
+
   G_TreeNodeDelete(&scenes, &node);
 
   *scene = NULL;
@@ -181,6 +188,7 @@ void G_SceneDestroy(G_Scene **scene) {
 void G_SceneEntityInsert(G_Scene **scene, G_Entity **entity) {
   G_Scene *s = *scene;
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
   
   node->key = (*entity)->id.value;
   node->data = (void*)(*entity);
@@ -192,6 +200,10 @@ void G_SceneEntityInsert(G_Scene **scene, G_Entity **entity) {
   } else {
     node->left = s->ins_buffer;
     s->ins_buffer = node;
+  }
+
+  if (render != NULL) {
+    G_QTreeNodeInsert(&(s->collision), entity, render->layer);
   }
 }
 

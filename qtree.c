@@ -6,11 +6,12 @@ G_QTree* G_QTreeCreate(void) {
   G_QTree *tree = (G_QTree*)malloc(sizeof(G_QTree));
 
   for (i = 0; i < 4; i += 1) {
-    tree->nodes[i] = NULL;
+    tree->children[i] = NULL;
   }
 
   tree->size = -1;
   tree->count = 0;
+  tree->parent = NULL;
 
   return tree;
 }
@@ -42,12 +43,12 @@ void G_QTreeDestroy(G_QTree **tree) {
   G_QTree *t = *tree, *target;
 
   for (i = 0; i < 4; i += 1) {
-    if (t->nodes[i] != NULL) {
+    if (t->children[i] != NULL) {
       if (t->size > 2) {
-        target = t->nodes[i];
+        target = t->children[i];
         G_QTreeDestroy(&target);
       } else {
-        free(t->nodes[i]);
+        free(t->children[i]);
       }
     }
   }
@@ -68,25 +69,35 @@ void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity, TileLayer layer) {
   while (t->size > 1) {
     z = G_QTreeQuadrant(&x, &y, &(t->size));
 
-    if (t->nodes[z] == NULL) {
+    if (t->children[z] == NULL) {
       if (t->size == 2) {
-        t->nodes[z] = (G_QTreeLeaf*)malloc(sizeof(G_QTreeLeaf));
-        
+        t->children[z] = (G_QTreeLeaf*)malloc(sizeof(G_QTreeLeaf));
+        ((G_QTreeLeaf*)(t->children[z]))->parent = t;
+
         for (i = 0; i < TILE_LAYER_COUNT; i += 1) {
-          ((G_QTreeLeaf*)(t->nodes[z]))->entities[i] = NULL;
+          ((G_QTreeLeaf*)(t->children[z]))->entities[i] = NULL;
         }
   
         break;
       } else {
-        t->nodes[z] = G_QTreeCreate();
-        ((G_QTree*)(t->nodes[z]))->size = t->size/2;
+        t->children[z] = G_QTreeCreate();
+        ((G_QTree*)(t->children[z]))->parent = t;
+        ((G_QTree*)(t->children[z]))->size = t->size/2;
       }
     }
 
-    t = (G_QTree*)(t->nodes[z]);
+    t = (G_QTree*)(t->children[z]);
   }
 
-  leaf = t->nodes[z];
+  leaf = t->children[z];
+  
+  if (leaf->entities[layer] == NULL) {
+    while (t != NULL) {
+      t->count += 1;
+      t = t->parent;
+    }
+  }
+
   leaf->entities[layer] = *entity;
 }
 
@@ -101,7 +112,34 @@ void G_QTreeNodeDelete(G_QTree **tree, G_Entity **entity, TileLayer layer) {
   leaf = G_QTreeNodeFind(tree, x, y);
 
   if ((leaf != NULL) && (leaf->entities[layer] != NULL)) {
+    G_QTree *tree = (G_QTree*)(leaf->parent);
+
+    while (tree != NULL) {
+      tree->count -= 1;
+      tree = tree->parent;
+    }
+
     leaf->entities[layer] = NULL;
+  }
+}
+
+void G_QTreePurge(G_QTree **tree) {
+  assert((tree != NULL) && (*tree != NULL));
+
+  int i;
+  G_QTree *t = *tree, *child = NULL;
+
+  for (i = 0; i < 4; i += 1) {
+    child = (G_QTree*)(t->children[i]);
+
+    if (child != NULL) {
+      if ((t->size == CHUNK_SIZE) && (child->count == 0)) {
+        G_QTreeDestroy(&child);
+        t->children[i] = NULL;
+      } else if (t->size > CHUNK_SIZE) {
+        G_QTreePurge(&child);
+      }
+    }
   }
 }
 
@@ -112,11 +150,11 @@ G_QTreeLeaf* G_QTreeNodeFind(G_QTree **tree, int x, int y) {
   while (t->size > 1) {
     z = G_QTreeQuadrant(&x, &y, &(t->size));
 
-    if ((t->nodes[z] == NULL) || (t->size == 2)) {
-      return t->nodes[z];
+    if ((t->children[z] == NULL) || (t->size == 2)) {
+      return t->children[z];
     }
 
-    t = (G_QTree*)(t->nodes[z]);
+    t = (G_QTree*)(t->children[z]);
   }
   
   return NULL;

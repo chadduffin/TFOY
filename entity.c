@@ -118,6 +118,15 @@ void G_EntityPos(G_Entity **entity, int *x, int *y) {
 
 void G_EntityDestroy(G_Entity **entity) {
   assert((entity != NULL) && (*entity != NULL));
+
+  int i;
+  G_Entity *e = *entity;
+
+  for (i = 0; i < COMPONENT_COUNT; i += 1) {
+    if (e->components[i] != NULL) {
+      G_EntityComponentDelete(entity, i);
+    }
+  }
   
   free(*entity);
   *entity = NULL;

@@ -54,8 +54,8 @@
 #define CHUNK_SIZE 256
 #define FILE_CHUNK_SIZE 16
 
-#define WORLD_WIDTH 256
-#define WORLD_HEIGHT 256
+#define WORLD_WIDTH 512
+#define WORLD_HEIGHT 512
 
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
@@ -316,10 +316,11 @@ typedef struct G_Tree {
 
 typedef struct G_QTree {
   int size, count;
-  void *nodes[4];
+  void *parent, *children[4];
 } G_QTree;
 
 typedef struct G_QTreeLeaf {
+  void *parent;
   G_Entity *entities[TILE_LAYER_COUNT];
 } G_QTreeLeaf;
 
@@ -337,6 +338,7 @@ typedef struct G_Scene {
   G_SceneChunk *chunks;
   G_Tree *entities, *transitions;
   G_TreeNode *ins_buffer, *del_buffer;
+  G_QTree *collision;
   G_Light ambient;
   boolean persistent;
 } G_Scene;
@@ -473,6 +475,7 @@ int G_QTreeQuadrant(int *x, int *y, int *size);
 void G_QTreeDestroy(G_QTree **tree);
 void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity, TileLayer layer);
 void G_QTreeNodeDelete(G_QTree **tree, G_Entity **entity, TileLayer layer);
+void G_QTreePurge(G_QTree **tree);
 G_QTreeLeaf* G_QTreeNodeFind(G_QTree **tree, int x, int y);
 
 #endif /* YENDOR */

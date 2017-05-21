@@ -80,14 +80,14 @@ int G_Init(void *data) {
     scene->view.follows = 1;
     overworld_id = scene->id;
 
-    G_SceneChange(&scene);
-
     /* creates menu */
     scene = G_SceneCreate(1, 1, 0);
     menu_id = scene->id;
     G_InitMenu(&scene);
 
     fmutex = SDL_CreateMutex();
+
+    G_SceneChange(&scene);
 /*
     unsigned char *encoded = NULL, elen[4];
     unsigned int len, q;
