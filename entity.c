@@ -116,6 +116,27 @@ void G_EntityPos(G_Entity **entity, int *x, int *y) {
   }
 }
 
+void G_EntityMove(G_Entity **entity, boolean relative, int x, int y) {
+  assert((entity != NULL) && (*entity != NULL));
+
+  int cur_x = 0, cur_y = 0;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
+
+  if (render != NULL) {
+    G_EntityPos(entity, &cur_x, &cur_y);
+
+    if (relative) {
+      x += cur_x;
+      y += cur_y;
+    }
+
+    render->x = x;
+    render->y = y;
+
+    G_QTreeNodeMove(&(active_scene->collision), entity, render->layer, cur_x, cur_y);
+  }
+}
+
 void G_EntityDestroy(G_Entity **entity) {
   assert((entity != NULL) && (*entity != NULL));
 
@@ -201,15 +222,18 @@ void G_ElementComponentUpdate(G_Entity **entity) {
 }
 
 void G_ControllerComponentUpdate(G_Entity **entity) {
-  G_Entity *e = *entity;
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
-  G_ControllerComponent *controller = (G_ControllerComponent*)G_EntityComponentFind(&e, CONTROLLER_COMPONENT);
+  int x, y;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
+  G_ControllerComponent *controller = (G_ControllerComponent*)G_EntityComponentFind(entity, CONTROLLER_COMPONENT);
 
   if (controller != NULL) {
+    x = render->x;
+    y = render->y;
+
     if (game_info.phys[SDL_SCANCODE_H]) {
       if (render->x > 0) {
         if (!G_SceneTileObstructs(&active_scene, render->x-1, render->y)) {
-          render->x -= 1;
+          G_EntityMove(entity, 1, -1, 0);
           game_info.phys[SDL_SCANCODE_H] = 0;
         }
       }
@@ -217,7 +241,7 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
     if (game_info.phys[SDL_SCANCODE_K]) {
       if (render->y > 0) {
         if (!G_SceneTileObstructs(&active_scene, render->x, render->y-1)) {
-          render->y -= 1;
+          G_EntityMove(entity, 1, 0, -1);
           game_info.phys[SDL_SCANCODE_K] = 0;
         }
       }
@@ -225,7 +249,7 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
     if (game_info.phys[SDL_SCANCODE_J]) {
       if (render->y < active_scene->th-2) {
         if (!G_SceneTileObstructs(&active_scene, render->x, render->y+1)) {
-          render->y += 1;
+          G_EntityMove(entity, 1, 0, 1);
           game_info.phys[SDL_SCANCODE_J] = 0;
         }
       }
@@ -233,7 +257,7 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
     if (game_info.phys[SDL_SCANCODE_L]) {
       if (render->x < active_scene->tw-2) {
         if (!G_SceneTileObstructs(&active_scene, render->x+1, render->y)) {
-          render->x += 1;
+          G_EntityMove(entity, 1, 1, 0);
           game_info.phys[SDL_SCANCODE_L] = 0;
         }
       }

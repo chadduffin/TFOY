@@ -57,6 +57,18 @@ void G_QTreeDestroy(G_QTree **tree) {
   t = NULL;
 }
 
+void G_QTreeNodeMove(G_QTree **tree, G_Entity **entity, TileLayer layer, int x, int y) {
+  assert((tree != NULL) && (*tree != NULL) && (entity != NULL) && (*entity != NULL));
+
+  G_QTreeLeaf *leaf = G_QTreeNodeFind(tree, x, y);
+
+  if (leaf != NULL) {
+    leaf->entities[layer] = NULL;
+  }
+
+  G_QTreeNodeInsert(tree, entity, layer);
+}
+
 void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity, TileLayer layer) {
   assert((tree != NULL) && (*tree != NULL) && (entity != NULL) && (*entity != NULL));
 
@@ -86,7 +98,11 @@ void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity, TileLayer layer) {
       }
     }
 
-    t = (G_QTree*)(t->children[z]);
+    if (t->size > 2) {
+      t = (G_QTree*)(t->children[z]);
+    } else {
+      break;
+    }
   }
 
   leaf = t->children[z];

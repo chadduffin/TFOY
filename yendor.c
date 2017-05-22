@@ -644,6 +644,8 @@ void G_UpdateInfrequent(void) {
     }
 
     SDL_UnlockMutex(fmutex);
+
+    G_QTreePurge(&(active_scene->collision));
   }
 }
 
