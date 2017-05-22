@@ -63,6 +63,15 @@ void G_QTreeNodeMove(G_QTree **tree, G_Entity **entity, TileLayer layer, int x, 
   G_QTreeLeaf *leaf = G_QTreeNodeFind(tree, x, y);
 
   if (leaf != NULL) {
+    if (leaf->entities[layer] != NULL) {
+      G_QTree *t = (G_QTree*)(leaf->parent);
+
+      while (t != NULL) {
+        t->count -= 1;
+        t = (G_QTree*)(t->parent);
+      }
+    }
+
     leaf->entities[layer] = NULL;
   }
 
