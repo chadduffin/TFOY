@@ -31,7 +31,6 @@ int G_QTreeQuadrant(int *x, int *y, int *size) {
 
   *x = a;
   *y = b;
-  *size = c;
 
   return z;
 }
@@ -60,6 +59,101 @@ void G_QTreeDestroy(G_QTree **tree) {
 void G_QTreeNodeMove(G_QTree **tree, G_Entity **entity, TileLayer layer, int x, int y) {
   assert((tree != NULL) && (*tree != NULL) && (entity != NULL) && (*entity != NULL));
 
+  int i, to_x, to_y, to_z, from_x, from_y, from_z;
+  G_QTree *t = *tree;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
+
+  to_x = render->x;
+  to_y = render->y;
+  from_x = x;
+  from_y = y;
+
+  while (t->size > 1) {
+    to_z = G_QTreeQuadrant(&to_x, &to_y, &(t->size));
+    from_z = G_QTreeQuadrant(&from_x, &from_y, &(t->size));
+
+    if (t->size == 2) {
+      if (t->children[to_z] == NULL) {
+        G_QTreeLeaf *leaf = (G_QTreeLeaf*)malloc(sizeof(G_QTreeLeaf));
+        t->children[to_z] = leaf;
+
+        for (i = 0; i < TILE_LAYER_COUNT; i += 1) {
+          leaf->entities[i] = NULL;
+        }
+
+        leaf->parent = t;
+        leaf->entities[layer] = *entity;
+      } else {
+        ((G_QTreeLeaf*)(t->children[to_z]))->entities[layer] = *entity;
+      }
+
+      if (t->children[from_z] != NULL) {
+        ((G_QTreeLeaf*)(t->children[from_z]))->entities[layer] = NULL;
+      }
+
+      break;
+    } else if ((to_z != from_z) || (t->children[to_z] == NULL)) {
+      if (from_z >= 2) {
+        from_y += (t->size)/2;
+        from_z -= 2;
+      }
+
+      if (from_z >= 1) {
+        from_x += (t->size)/2;
+        from_z -= 1;
+      }
+
+      if (to_z >= 2) {
+        to_y += (t->size)/2;
+        to_z -= 2;
+      }
+
+      if (to_z >= 1) {
+        to_x += (t->size)/2;
+        to_z -= 1;
+      }
+
+      x = render->x;
+      y = render->y;
+
+      render->x = from_x;
+      render->y = from_y;
+      G_QTreeNodeDelete(&t, entity, layer);
+
+      render->x = to_x;
+      render->y = to_y;
+      G_QTreeNodeInsert(&t, entity, layer);
+
+      render->x = x;
+      render->y = y;
+      break;
+    }
+
+    t = (G_QTree*)(t->children[to_z]);
+  }
+}
+
+/*
+G_QTreeLeaf* G_QTreeNodeFind(G_QTree **tree, int x, int y) {
+  int z;
+  G_QTree *t = *tree;
+  
+  while (t->size > 1) {
+    z = G_QTreeQuadrant(&x, &y, &(t->size));
+
+    if ((t->children[z] == NULL) || (t->size == 2)) {
+      return t->children[z];
+    }
+
+    t = (G_QTree*)(t->children[z]);
+  }
+  
+  return NULL;
+}
+
+void G_QTreeNodeMove(G_QTree **tree, G_Entity **entity, TileLayer layer, int x, int y) {
+  assert((tree != NULL) && (*tree != NULL) && (entity != NULL) && (*entity != NULL));
+
   G_QTreeLeaf *leaf = G_QTreeNodeFind(tree, x, y);
 
   if (leaf != NULL) {
@@ -77,6 +171,7 @@ void G_QTreeNodeMove(G_QTree **tree, G_Entity **entity, TileLayer layer, int x, 
 
   G_QTreeNodeInsert(tree, entity, layer);
 }
+*/
 
 void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity, TileLayer layer) {
   assert((tree != NULL) && (*tree != NULL) && (entity != NULL) && (*entity != NULL));
