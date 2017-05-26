@@ -193,7 +193,7 @@ int G_Update(void *data) {
     G_UpdateEntities(NULL);
     G_FocusView(&active_scene);
     G_EntityPos(&(active_scene->focus), &x, &y);
-    G_GenerateFOV(x, y, COLS/2, NULL, &G_MakeVisible);
+    G_GenerateFOV(x, y, COLS, NULL, &G_MakeVisible);
 
     threads[WORKER_THREAD_B] = SDL_CreateThread(G_UpdateLightmap, "game-lightmap-updating", NULL);
     threads[WORKER_THREAD_C] = SDL_CreateThread(G_RenderEntities, "game-entity-render-updating", NULL);
@@ -304,13 +304,27 @@ int G_PollEvents(void* data) {
 				{
 					if (game_info.event.button.button == SDL_BUTTON_LEFT) {
 						game_info.mouse_lb = (game_info.mouse_lb == 0) ? SDL_GetTicks() : game_info.mouse_lb;
+            
 
-            int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w-DCOLS_OFFSET+active_scene->view.x,
-                y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h-DROWS_OFFSET+active_scene->view.y;
-            G_Tile tile;
-            tile.tile = WALL;
+            if (game_info.phys[SDL_SCANCODE_LCTRL]) {
+              int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w-DCOLS_OFFSET+active_scene->view.x,
+                  y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h-DROWS_OFFSET+active_scene->view.y;
+              G_Tile tile;
+              tile.tile = WALL;
 
-            G_SceneSetGTile(&active_scene, tile, x, y);
+              G_SceneSetGTile(&active_scene, tile, x, y);
+            } else {
+              int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
+                  y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
+              printf("Tile Information\n");
+              printf("is visible  %i  \n", vismap[x][y]);
+              printf("light           \n");
+              printf("+ intensity %i  \n", lightmap[x][y].count);
+              printf("+ count     %i  \n", lightmap[x][y].count);
+              printf("+ green     %i  \n", lightmap[x][y].r);
+              printf("+ blue      %i  \n", lightmap[x][y].r);
+              printf("+ red       %i  \n", lightmap[x][y].r);
+            }
 					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
 						game_info.mouse_rb = (game_info.mouse_rb == 0) ? SDL_GetTicks() : game_info.mouse_rb;
 					}
@@ -393,6 +407,13 @@ int G_CopyBuffer(void *data) {
 
   for (y = 0; y < ROWS; y += 1) {
     for (x = 0; x < COLS; x += 1) {
+      if ((lightmap[x][y].count == 1) &&
+          (lightmap[x][y].r == 0) &&
+          (lightmap[x][y].g == 0) &&
+          (lightmap[x][y].b == 0)) {
+        vismap[x][y] = 0;
+      }
+
       if ((x >= dst.x) && (x < dst.x+dst.w) &&
           (y >= dst.y) && (y < dst.y+dst.h)) {
         console.changed[x][y] = G_CellChanged(x, y, x+dx, y+dy);
@@ -860,8 +881,6 @@ void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range,
               (((top >= start) && (top <= end)) ||
               ((bot >= start) && (bot <= end)))) {
             func(&x_adj, &y_adj, data);
-         // } else if ((mid <= end) && (y == dist)) {
-         //   func(&x_adj, &y_adj, data);
           }
         }
       } else if (bot > end) {
@@ -907,7 +926,7 @@ void G_AddLight(int *x, int *y, void *data) {
 
 	if (intensity > 1.0) {
 		intensity  = 1.0;
-	} else if (intensity < 0.001) {
+	} else if (intensity < 0.01) {
 		return;
 	}
 
@@ -1012,7 +1031,6 @@ boolean G_CellChanged(int x, int y, int a, int b) {
       } else {
         range = FLICKER_RANGE;
       }
-
 
       if (G_RandomNumber(0, range) == 0) {
         return 1;
