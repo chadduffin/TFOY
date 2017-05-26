@@ -170,7 +170,7 @@ int G_Init(void *data) {
 
 int G_Update(void *data) {
   int status, x, y, dx, dy;
- 
+
   if (SDL_GetTicks()-game_info.timer > UPDATE_DELAY) {
     G_UpdateInfrequent();
   }
@@ -193,7 +193,7 @@ int G_Update(void *data) {
     G_UpdateEntities(NULL);
     G_FocusView(&active_scene);
     G_EntityPos(&(active_scene->focus), &x, &y);
-    G_GenerateFOV(x, y, COLS*2, NULL, &G_MakeVisible);
+    G_GenerateFOV(x, y, COLS/2, NULL, &G_MakeVisible);
 
     threads[WORKER_THREAD_B] = SDL_CreateThread(G_UpdateLightmap, "game-lightmap-updating", NULL);
     threads[WORKER_THREAD_C] = SDL_CreateThread(G_RenderEntities, "game-entity-render-updating", NULL);
@@ -606,7 +606,8 @@ void G_UpdateEnd(void) {
 
 void G_UpdateInfrequent(void) {
   /* output frames per second */
-  printf("%u fps with %i entities.\n", G_GetFPS(), active_scene->entities->size);
+  printf("FPS          %u\n", G_GetFPS());
+  printf("Entity Count %i\n", active_scene->entities->size);
 
   game_info.frame_count = 0;
   game_info.timer = SDL_GetTicks();
@@ -697,14 +698,14 @@ void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*
 	}
 
 	if (!G_SceneTileObstructs(&active_scene, x, y)) {
-		G_Sightcast(x, y, 1, 1, 1, range, 0, 0.0, 1.0, light, func);
-		G_Sightcast(x, y, 1, 1, 1, range, 1, 0.0, 1.0, light, func);
-		G_Sightcast(x, y, -1, 1, 1, range, 0, 0.0, 1.0, light, func);
-		G_Sightcast(x, y, -1, 1, 1, range, 1, 0.0, 1.0, light, func);
-		G_Sightcast(x, y, 1, -1, 1, range, 0, 0.0, 1.0, light, func);
-		G_Sightcast(x, y, 1, -1, 1, range, 1, 0.0, 1.0, light, func);
-		G_Sightcast(x, y, -1, -1, 1, range, 0, 0.0, 1.0, light, func);
-		G_Sightcast(x, y, -1, -1, 1, range, 1, 0.0, 1.0, light, func);
+		G_Shadowcast(x, y, 1, 1, 1, range, 0, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, 1, 1, 1, range, 1, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, -1, 1, 1, range, 0, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, -1, 1, 1, range, 1, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, 1, -1, 1, range, 0, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, 1, -1, 1, range, 1, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, -1, -1, 1, range, 0, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, -1, -1, 1, range, 1, 1.0, 0.0, light, func);
 	}
 
 	x -= active_scene->view.x;
@@ -799,6 +800,79 @@ void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, 
     }
     
     dist = (start < end) ? dist+1 : range+1;
+  }
+}
+
+void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
+  int x, y, x_adj, y_adj;
+  float top, mid, bot;
+  boolean good = 0, is_solid = 0, was_solid = 0;
+
+  while (dist <= range) {
+    x = y = dist;
+
+    while (y >= 0) {
+      if (dist == -1) {
+        top = (float)(y-0.5)/(x-1.0);
+        mid = (float)(y)/(x-1.0);
+        bot = (float)(y+0.5)/(x-1.0);
+      } else {
+        top = (float)(y)/(x);
+        mid = (float)(y+0.5)/(x);
+        bot = (float)(y+1.0)/(x);
+      }
+
+      if (((top >= end) || (mid >= end) || (bot >= end)) &&
+          ((top <= start) || (mid <= start) || (bot <= start))) {
+        if (invert) {
+          x_adj = scene_x+(y*dx);
+          y_adj = scene_y+(x*dy);
+        } else {
+          x_adj = scene_x+(x*dx);
+          y_adj = scene_y+(y*dy);
+        }
+
+        was_solid = (y == dist) ? 0 : is_solid;
+        is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
+
+        x_adj -= active_scene->view.x;
+        y_adj -= active_scene->view.y;
+
+        good = 1;
+
+        if (is_solid) {
+          if ((y == 0) || ((float)(y-1.0)/(x) < end)) {
+            end = bot;
+          } else {
+            if ((was_solid == 0) && (y > 0)) {
+              G_Shadowcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, bot, data, func);
+            }
+
+            start = top;
+          }
+
+          func(&x_adj, &y_adj, data);
+        } else {
+          if ((mid <= start) && (mid >= end) &&
+              (((top <= start) && (top >= end)) ||
+              ((bot <= start) && (bot >= end)))) {
+            func(&x_adj, &y_adj, data);
+          } else if ((top >= end) && (y == dist)) {
+            func(&x_adj, &y_adj, data);
+          }
+        }
+      } else if (bot < end) {
+        y = 0;
+      }
+
+      y -= 1;
+    }
+
+    if (!good) {
+      return;
+    }
+    
+    dist = (start > end) ? dist+1 : range+1;
   }
 }
 

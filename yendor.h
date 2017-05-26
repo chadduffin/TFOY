@@ -45,6 +45,7 @@
 #define VERSION "v0.0.1"
 
 /* #define NDEBUG */
+#define TIMING
 
 #define TEXTURE_COUNT 1
 
@@ -375,6 +376,7 @@ int G_CheckBound(Keybinding keybinding);
 int G_RandomNumber(int lower, int upper);
 unsigned int G_GetFPS(void);
 float G_GetSlope(int scene_x, int scene_y, int x, int y, int dx, int dy, int invert, boolean top);
+double G_GetTime(void);
 void G_Quit(void);
 void G_UpdateBegin(void);
 void G_UpdateEnd(void);
@@ -384,6 +386,7 @@ void G_InitializeKeybindings(void);
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*));
 void G_GenerateFOVSimple(int x, int y, void *light, void (*func)(int*, int*, void*));
 void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
+void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
 void G_AddLight(int *x, int *y, void *data);
 void G_AddPointLight(int x, int y, int r, int g, int b, int intensity);
 void G_MakeVisible(int *x, int *y, void *data);

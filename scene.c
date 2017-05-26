@@ -91,7 +91,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light->light.r = 0;
   light->light.g = 127;
   light->light.b = 255;
-  light->light.intensity = 16;
+  light->light.intensity = 12;
 
   render->x = 32;
   render->y = 32;
