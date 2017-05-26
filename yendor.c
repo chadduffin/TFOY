@@ -304,6 +304,13 @@ int G_PollEvents(void* data) {
 				{
 					if (game_info.event.button.button == SDL_BUTTON_LEFT) {
 						game_info.mouse_lb = (game_info.mouse_lb == 0) ? SDL_GetTicks() : game_info.mouse_lb;
+
+            int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w-DCOLS_OFFSET+active_scene->view.x,
+                y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h-DROWS_OFFSET+active_scene->view.y;
+            G_Tile tile;
+            tile.tile = WALL;
+
+            G_SceneSetGTile(&active_scene, tile, x, y);
 					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
 						game_info.mouse_rb = (game_info.mouse_rb == 0) ? SDL_GetTicks() : game_info.mouse_rb;
 					}
@@ -698,14 +705,14 @@ void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*
 	}
 
 	if (!G_SceneTileObstructs(&active_scene, x, y)) {
-		G_Shadowcast(x, y, 1, 1, 1, range, 0, 1.0, 0.0, light, func);
-		G_Shadowcast(x, y, 1, 1, 1, range, 1, 1.0, 0.0, light, func);
-		G_Shadowcast(x, y, -1, 1, 1, range, 0, 1.0, 0.0, light, func);
-		G_Shadowcast(x, y, -1, 1, 1, range, 1, 1.0, 0.0, light, func);
-		G_Shadowcast(x, y, 1, -1, 1, range, 0, 1.0, 0.0, light, func);
-		G_Shadowcast(x, y, 1, -1, 1, range, 1, 1.0, 0.0, light, func);
-		G_Shadowcast(x, y, -1, -1, 1, range, 0, 1.0, 0.0, light, func);
-		G_Shadowcast(x, y, -1, -1, 1, range, 1, 1.0, 0.0, light, func);
+		G_Shadowcast(x, y, 1, 1, 1, range, 0, 0.0, 2.0, light, func);
+		G_Shadowcast(x, y, 1, 1, 1, range, 1, 0.0, 2.0, light, func);
+		G_Shadowcast(x, y, -1, 1, 1, range, 0, 0.0, 2.0, light, func);
+		G_Shadowcast(x, y, -1, 1, 1, range, 1, 0.0, 2.0, light, func);
+		G_Shadowcast(x, y, 1, -1, 1, range, 0, 0.0, 2.0, light, func);
+		G_Shadowcast(x, y, 1, -1, 1, range, 1, 0.0, 2.0, light, func);
+		G_Shadowcast(x, y, -1, -1, 1, range, 0, 0.0, 2.0, light, func);
+		G_Shadowcast(x, y, -1, -1, 1, range, 1, 0.0, 2.0, light, func);
 	}
 
 	x -= active_scene->view.x;
@@ -805,25 +812,21 @@ void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, 
 
 void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
   int x, y, x_adj, y_adj;
-  float top, mid, bot;
+  float top, mid, bot, width;
   boolean good = 0, is_solid = 0, was_solid = 0;
 
   while (dist <= range) {
-    x = y = dist;
+    x = dist;
+    y = 0;
+    width = (1.0)/(dist);
 
-    while (y >= 0) {
-      if (dist == -1) {
-        top = (float)(y-0.5)/(x-1.0);
-        mid = (float)(y)/(x-1.0);
-        bot = (float)(y+0.5)/(x-1.0);
-      } else {
-        top = (float)(y)/(x);
-        mid = (float)(y+0.5)/(x);
-        bot = (float)(y+1.0)/(x);
-      }
+    while (y <= dist) {
+      top = y*width;
+      mid = (y+0.5)*width;
+      bot = (y+1.0)*width;
 
-      if (((top >= end) || (mid >= end) || (bot >= end)) &&
-          ((top <= start) || (mid <= start) || (bot <= start))) {
+      if (((top <= end) || (mid <= end) || (bot <= end)) &&
+          ((top >= start) || (mid >= start) || (bot >= start))) {
         if (invert) {
           x_adj = scene_x+(y*dx);
           y_adj = scene_y+(x*dy);
@@ -832,7 +835,7 @@ void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range,
           y_adj = scene_y+(y*dy);
         }
 
-        was_solid = (y == dist) ? 0 : is_solid;
+        was_solid = (y == 0) ? 0 : is_solid;
         is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
 
         x_adj -= active_scene->view.x;
@@ -841,38 +844,38 @@ void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range,
         good = 1;
 
         if (is_solid) {
-          if ((y == 0) || ((float)(y-1.0)/(x) < end)) {
-            end = bot;
+          if ((y == dist) || ((float)(y+1.0)/(x) > end)) {
+            end = top;
           } else {
-            if ((was_solid == 0) && (y > 0)) {
-              G_Shadowcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, bot, data, func);
+            if ((was_solid == 0) && (y < dist) && (y > 0)) {
+              G_Shadowcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, top, data, func);
             }
 
-            start = top;
+            start = bot;
           }
 
           func(&x_adj, &y_adj, data);
         } else {
-          if ((mid <= start) && (mid >= end) &&
-              (((top <= start) && (top >= end)) ||
-              ((bot <= start) && (bot >= end)))) {
+          if ((mid >= start) && (mid <= end) &&
+              (((top >= start) && (top <= end)) ||
+              ((bot >= start) && (bot <= end)))) {
             func(&x_adj, &y_adj, data);
-          } else if ((top >= end) && (y == dist)) {
-            func(&x_adj, &y_adj, data);
+         // } else if ((mid <= end) && (y == dist)) {
+         //   func(&x_adj, &y_adj, data);
           }
         }
-      } else if (bot < end) {
-        y = 0;
+      } else if (bot > end) {
+        y = dist;
       }
 
-      y -= 1;
+      y += 1;
     }
 
     if (!good) {
       return;
     }
     
-    dist = (start > end) ? dist+1 : range+1;
+    dist = (start < end) ? dist+1 : range+1;
   }
 }
 
