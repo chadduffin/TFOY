@@ -9,6 +9,8 @@ int G_Render(void *data) {
 
   SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
 
+  G_RenderSalvage();
+
   G_RenderChanges();
 
 	SDL_SetRenderTarget(game_info.renderer, NULL);	
@@ -31,6 +33,37 @@ int G_Render(void *data) {
   return 0;
 }
 
+void G_RenderSalvage(void) {
+  /* Salvage the left outline of the 
+     display quote */
+  console.src.x = console.dst.x = game_info.display_x;
+  console.src.y = console.dst.y = game_info.display_y;
+  console.src.w = console.dst.w = DCOLS_OFFSET*game_info.tile_w;
+  console.src.h = console.dst.h = game_info.display_h;
+  SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
+
+  /* Top outline */
+  console.src.x = console.dst.x = game_info.display_x+DCOLS_OFFSET*game_info.tile_w;
+  console.src.y = console.dst.y = game_info.display_y;
+  console.src.w = console.dst.w = DCOLS*game_info.tile_w;
+  console.src.h = console.dst.h = DROWS_OFFSET*game_info.tile_h;
+  SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
+
+  /* Right outline */
+  console.src.x = console.dst.x = game_info.display_x+(DCOLS_OFFSET+DCOLS)*game_info.tile_w;
+  console.src.y = console.dst.y = game_info.display_y;
+  console.src.w = console.dst.w = game_info.display_w-((DCOLS+DCOLS_OFFSET)*game_info.tile_w);
+  console.src.h = console.dst.h = game_info.display_h;
+  SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
+
+  /* Bottom outline */
+  console.src.x = console.dst.x = game_info.display_x+DCOLS_OFFSET*game_info.tile_w;
+  console.src.y = console.dst.y = game_info.display_y+(DROWS+DROWS_OFFSET)*game_info.tile_h;
+  console.src.w = console.dst.w = DCOLS*game_info.tile_w;
+  console.src.h = console.dst.h = game_info.display_h-((DROWS+DROWS_OFFSET)*game_info.tile_h);
+  SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
+}
+
 void G_RenderChanges(void) {
   int x, y, r, g, b;
   SDL_Rect src, dst;
@@ -50,15 +83,21 @@ void G_RenderChanges(void) {
 				dst.y = game_info.display_y+(y*game_info.tile_h);
 
         if ((console.vismap[x][y]) && (tile != NOTHING)) {
-  				if (console.tilemap[x][y].fg == &bad_color) {
-            fg = (tile < NOTHING) ? white : *(tile_info[tile-NOTHING].fg);
+          if (console.tilemap[x][y].fg == &bad_color) {
+            if (tile < NOTHING) {
+              fg = white;
+            } else {
+              if (tile_info[tile-NOTHING].fg == &bad_color) {
+                fg = *(tile_info[console.tilemap[x][y].layers[BASE_LAYER]-NOTHING].fg);
+              } else {
+                fg = *(tile_info[tile-NOTHING].fg);
+              }
+            }
           } else {
             fg = *(console.tilemap[x][y].fg);
           }
-
-  				if (console.tilemap[x][y].bg == &bad_color) {
-            bg = (tile < NOTHING) ? black : *(tile_info[tile-NOTHING].bg);
-
+  				
+          if (console.tilemap[x][y].bg == &bad_color) {
             if (tile < NOTHING) {
               bg = black;
             } else {
@@ -105,41 +144,43 @@ void G_RenderLightmap(void) {
 
 	for (y = DROWS_OFFSET; y < DROWS_OFFSET+DROWS; y += 1) {
 		for (x = DCOLS_OFFSET; x < DCOLS_OFFSET+DCOLS; x += 1) {
-			if (console.lightmap[x][y].count != 0) {
-				max = (console.lightmap[x][y].r > console.lightmap[x][y].g) ? console.lightmap[x][y].r : console.lightmap[x][y].g;
-				max = (max > console.lightmap[x][y].b) ? max : console.lightmap[x][y].b;
-				scale = (float)(max)/255;
+      if (console.tilemap[x][y].layers[UI_LAYER] == NOTHING) {
+        if (console.lightmap[x][y].count != 0) {
+          max = (console.lightmap[x][y].r > console.lightmap[x][y].g) ? console.lightmap[x][y].r : console.lightmap[x][y].g;
+          max = (max > console.lightmap[x][y].b) ? max : console.lightmap[x][y].b;
+          scale = (float)(max)/255;
 
-				if (scale > 1.0) {
-					console.lightmap[x][y].r *= (1.0)/(scale);
-					console.lightmap[x][y].g *= (1.0)/(scale);
-					console.lightmap[x][y].b *= (1.0)/(scale);
-				}
-			}
+          if (scale > 1.0) {
+            console.lightmap[x][y].r *= (1.0)/(scale);
+            console.lightmap[x][y].g *= (1.0)/(scale);
+            console.lightmap[x][y].b *= (1.0)/(scale);
+          }
+        }
 
-			if (console.vismap[x][y]) {
-				r = console.lightmap[x][y].r;
-				g = console.lightmap[x][y].g;
-				b = console.lightmap[x][y].b;
-				intensity = console.lightmap[x][y].intensity;
-				dst.x = x*game_info.tile_w+game_info.display_x;
-				dst.y = y*game_info.tile_h+game_info.display_y;
-	
-				intensity = (intensity < 0) ? 0 : intensity;
-				intensity = (intensity > 255) ? 255 : intensity;
+        if (console.vismap[x][y]) {
+          r = console.lightmap[x][y].r;
+          g = console.lightmap[x][y].g;
+          b = console.lightmap[x][y].b;
+          intensity = console.lightmap[x][y].intensity;
+          dst.x = x*game_info.tile_w+game_info.display_x;
+          dst.y = y*game_info.tile_h+game_info.display_y;
+    
+          intensity = (intensity < 0) ? 0 : intensity;
+          intensity = (intensity > 255) ? 255 : intensity;
 
-				if ((intensity == 0) && (r == 0) && (g == 0) && (b == 0)) {
-					SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
-					SDL_RenderFillRect(game_info.renderer, &dst);
-				} else {	
-					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255-intensity);
-					SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
-					SDL_RenderFillRect(game_info.renderer, &dst);
-			
-					SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
-					SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
-				}
-			}
+          if ((intensity == 0) && (r == 0) && (g == 0) && (b == 0)) {
+            SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(game_info.renderer, &dst);
+          } else {	
+            SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255-intensity);
+            SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_MOD);
+            SDL_RenderFillRect(game_info.renderer, &dst);
+        
+            SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+            SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
+          }
+        }
+      }
 		}
 	}
 }

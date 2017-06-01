@@ -43,10 +43,13 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
     case ELEMENT_COMPONENT:
       {
         G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
-        element->volume = 128+G_RandomNumber(0, 32);
-        element->spread_chance = 15;
+        element->x = 0;
+        element->y = 0;
+        element->count = 0;
+        element->magnitude = 0;
         element->tile_flags = 0;
         element->element_flags = 0;
+        element->head = element->tail = NULL;
         (*entity)->components[ELEMENT_COMPONENT] = element;
         return element;
       }
@@ -78,6 +81,7 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
 		case UI_COMPONENT:
 			{
 				G_UIComponent *ui = (G_UIComponent*)malloc(sizeof(G_UIComponent));
+        ui->root = NULL;
 				(*entity)->components[UI_COMPONENT] = ui;
 				return ui;
 			}
@@ -92,7 +96,12 @@ void G_EntityComponentDelete(G_Entity **entity, Component component) {
   assert((entity != NULL) && (*entity != NULL));
   
   if ((*entity)->components[component] != NULL) {
-    free((*entity)->components[component]);
+    if (component == UI_COMPONENT) {
+      G_UIComponent *ui = (G_UIComponent*)G_EntityComponentFind(entity, component);
+      G_UIWindowDestroy(&(ui->root));
+    } else {
+      free((*entity)->components[component]);
+    }
   }
 }
 
@@ -157,13 +166,20 @@ void G_EntityRender(void *entity) {
   assert(entity != NULL);
 
   G_Entity *e = *((G_Entity**)entity);
+  G_UIComponent *ui = (G_UIComponent*)G_EntityComponentFind(&e, UI_COMPONENT);
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
 
   if (render != NULL) {
     if (G_PointWithinView(render->x, render->y)) {
       tilemap[render->x-active_scene->view.x+DCOLS_OFFSET][render->y-active_scene->view.y+DROWS_OFFSET].layers[render->layer] = render->tile;
     }
+  } else if ((ui != NULL) && (ui->root != NULL) && (ui->root->visible)) {
+    G_EntityRenderUI(&ui);
   }
+}
+
+void G_EntityRenderUI(G_UIComponent **ui) {
+  G_RenderUIWindow(&((*ui)->root));
 }
 
 void G_EntityUpdate(void *entity) {
@@ -172,8 +188,18 @@ void G_EntityUpdate(void *entity) {
   G_Entity *e = *((G_Entity**)entity);
 
   if (game_info.full) {
+    G_UIComponentUpdate(&e);
     G_ElementComponentUpdate(&e);
     G_ControllerComponentUpdate(&e);
+  }
+}
+
+void G_UIComponentUpdate(G_Entity **entity) {
+  G_Entity *e = *((G_Entity**)entity);
+  G_UIComponent *ui = (G_UIComponent*)G_EntityComponentFind(&e, UI_COMPONENT);
+
+  if (ui != NULL) {
+    G_UpdateUIWindow(&(ui->root));
   }
 }
 
@@ -191,28 +217,7 @@ void G_ElementComponentUpdate(G_Entity **entity) {
         break;
       case SPREADS_PROPOGATE:
         {
-          boolean
-            n = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x, render->y-1), OBSTRUCTS_MOVEMENT),
-            s = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x, render->y+1), OBSTRUCTS_MOVEMENT),
-            e = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x+1, render->y), OBSTRUCTS_MOVEMENT),
-            w = !G_TileFlagCompare(G_SceneGetTile(&active_scene, render->x-1, render->y), OBSTRUCTS_MOVEMENT);
-
-          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y, (G_RandomNumber(0, 100) < element->spread_chance));
-          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y, (G_RandomNumber(0, 100) < element->spread_chance));
-          G_SceneTilePropogate(&active_scene, entity, render->x, render->y+1, (G_RandomNumber(0, 100) < element->spread_chance));
-          G_SceneTilePropogate(&active_scene, entity, render->x, render->y-1, (G_RandomNumber(0, 100) < element->spread_chance));
-
-          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y-1, ((n && e) && (G_RandomNumber(0, 100) < element->spread_chance)));
-          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y-1, ((n && w) && (G_RandomNumber(0, 100) < element->spread_chance)));
-          G_SceneTilePropogate(&active_scene, entity, render->x+1, render->y+1, ((s && e) && (G_RandomNumber(0, 100) < element->spread_chance)));
-          G_SceneTilePropogate(&active_scene, entity, render->x-1, render->y+1, ((s && w) && (G_RandomNumber(0, 100) < element->spread_chance)));
-
-          element->volume -= 1;
-    
-          if (element->volume == 0) {
-            element->volume = -1;
-            G_SceneEntityDelete(&active_scene, entity);
-          }
+          // spreads propogates
         }
         break;
       default:

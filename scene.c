@@ -55,9 +55,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
   G_ControllerComponent *controller = G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
 
-  light->light.r = 255;
+  light->light.r = 64;
   light->light.g = 255;
-  light->light.b = 255;
+  light->light.b = 46;
   light->light.intensity = 24;
 
   render->x = 30;
@@ -75,7 +75,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light->light.r = 255;
   light->light.g = 0;
   light->light.b = 0;
-  light->light.intensity = 16;
+  light->light.intensity = 24;
 
   render->x = 64;
   render->y = 32;
@@ -91,12 +91,48 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   light->light.r = 0;
   light->light.g = 127;
   light->light.b = 255;
-  light->light.intensity = 12;
+  light->light.intensity = 30;
 
   render->x = 32;
   render->y = 32;
   render->tile = HUMAN;
   render->layer = ORNAMENT_LAYER;
+
+  G_SceneEntityInsert(&scene, &entity);
+
+  entity = G_EntityCreate();
+  G_UIComponent *ui = (G_UIComponent*)G_EntityComponentInsert(&entity, UI_COMPONENT);
+
+  ui->root = G_UIWindowCreate();
+
+  ui->root->x = 0;
+  ui->root->y = 0;
+  ui->root->w = 16;
+  ui->root->h = 16;
+  ui->root->visible = 1;
+
+  ui->root->widget = G_UIWidgetCreate();
+
+  ui->root->widget->x = 1;
+  ui->root->widget->y = 1;
+  ui->root->widget->w = 5;
+  ui->root->widget->h = 2;
+  ui->root->widget->length = 9;
+  ui->root->widget->hotkey = 0;
+  ui->root->widget->func = NULL;
+  ui->root->widget->data = NULL;
+  ui->root->widget->tiles = (G_TileCell*)malloc(sizeof(G_TileCell)*(ui->root->widget->length));
+  ui->root->widget->flags = VISIBLE | ACTIVE;
+
+  ui->root->widget->tiles[0].layers[UI_LAYER] = 'P';
+  ui->root->widget->tiles[1].layers[UI_LAYER] = 'L';
+  ui->root->widget->tiles[2].layers[UI_LAYER] = 'A';
+  ui->root->widget->tiles[3].layers[UI_LAYER] = 'Y';
+  ui->root->widget->tiles[4].layers[UI_LAYER] = 0;
+  ui->root->widget->tiles[5].layers[UI_LAYER] = 'G';
+  ui->root->widget->tiles[6].layers[UI_LAYER] = 'A';
+  ui->root->widget->tiles[7].layers[UI_LAYER] = 'M';
+  ui->root->widget->tiles[8].layers[UI_LAYER] = 'E';
 
   G_SceneEntityInsert(&scene, &entity);
 /*
@@ -296,58 +332,6 @@ G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y) {
 
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y) {
   return ((G_TileFlags(G_SceneGetTile(scene, x, y)) & OBSTRUCTS_VISION) == OBSTRUCTS_VISION);
-}
-
-boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel) {
-  if (!sentinel) {
-    return 0;
-  }
-
-  G_Scene *s = *scene;
-  G_Entity *e = *entity;
-  G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(entity, LIGHT_COMPONENT);
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT);
-  Tile tile = G_SceneGetTile(scene, x, y);
-
-  if ((element != NULL) && (tile != NOTHING) && (tile != ERROR_TILE)) {
-    switch (element->tile_flags) {
-      case IS_BURNING:
-        {
-          if (G_TileFlagCompare(tile, FLAMMABLE)) {
-            G_TileTransitionCreate(x, y, s->step+512, BURNT_GRASS);
-
-            G_Entity *child = G_EntityCreate();
-            G_LightComponent *n_light = (G_LightComponent*)G_EntityComponentInsert(&child, LIGHT_COMPONENT);
-            G_RenderComponent *n_render = (G_RenderComponent*)G_EntityComponentInsert(&child, RENDER_COMPONENT);
-            G_ElementComponent *n_element = (G_ElementComponent*)G_EntityComponentInsert(&child, ELEMENT_COMPONENT);
-
-            child->parent = e->id;
-            
-            *n_light = *light;
-            *n_render = *render;
-
-            n_element->tile_flags = element->tile_flags;
-            n_element->element_flags = element->element_flags;
-
-            n_render->x = x;
-            n_render->y = y;
-
-            G_SceneEntityInsert(&active_scene, &child);
-
-            return 1;
-          }
-        }
-        break;
-      default:
-        {
-          //empty
-        }
-        break;
-    }
-  }
-
-  return 0;
 }
 
 void G_InitMenu(G_Scene **scene) {

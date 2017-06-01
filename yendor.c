@@ -316,7 +316,9 @@ int G_PollEvents(void* data) {
             } else {
               int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
                   y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
+
               printf("Tile Information\n");
+              printf("tile        %i  \n", G_GetTile(tilemap[x][y].layers));
               printf("is visible  %i  \n", vismap[x][y]);
               printf("light           \n");
               printf("+ intensity %i  \n", lightmap[x][y].count);
@@ -407,10 +409,12 @@ int G_CopyBuffer(void *data) {
 
   for (y = 0; y < ROWS; y += 1) {
     for (x = 0; x < COLS; x += 1) {
-      if ((lightmap[x][y].count == 1) &&
-          (lightmap[x][y].r == 0) &&
-          (lightmap[x][y].g == 0) &&
-          (lightmap[x][y].b == 0)) {
+      if (tilemap[x][y].layers[UI_LAYER] != NOTHING) {
+        vismap[x][y] = 1;
+      } else if ((lightmap[x][y].count == 1) &&
+                (lightmap[x][y].r == 0) &&
+                (lightmap[x][y].g == 0) &&
+                (lightmap[x][y].b == 0)) {
         vismap[x][y] = 0;
       }
 
@@ -418,7 +422,7 @@ int G_CopyBuffer(void *data) {
           (y >= dst.y) && (y < dst.y+dst.h)) {
         console.changed[x][y] = G_CellChanged(x, y, x+dx, y+dy);
       } else if ((x < DCOLS_OFFSET) || (x >= DCOLS+DCOLS_OFFSET) ||
-          (y < DROWS_OFFSET) || (y >= DROWS+DROWS_OFFSET)) {
+                 (y < DROWS_OFFSET) || (y >= DROWS+DROWS_OFFSET)) {
         console.changed[x][y] = G_CellChanged(x, y, x, y);
       } else {
         console.changed[x][y] = 1;
@@ -431,6 +435,9 @@ int G_CopyBuffer(void *data) {
       console.vismap[x][y] = vismap[x][y];
       console.lightmap[x][y] = lightmap[x][y];
       console.tilemap[x][y] = tilemap[x][y];
+
+      console.tilemap[x][y].fg = tilemap[x][y].fg;
+      console.tilemap[x][y].bg = tilemap[x][y].bg;
 
       vismap[x][y] = 0;
       lightmap[x][y].r = (active_scene == NULL) ? 0 : (active_scene->ambient.r);
@@ -1038,6 +1045,11 @@ boolean G_CellChanged(int x, int y, int a, int b) {
     }
   }
 
+  if ((tilemap[x][y].fg != console.tilemap[a][b].fg) ||
+      (tilemap[x][y].bg != console.tilemap[a][b].bg)) {
+    return 1;
+  }
+
   return 0;
 }
 
@@ -1081,4 +1093,3 @@ Tile G_GetTile(Tile *layers) {
 
   return layers[BASE_LAYER];
 }
-

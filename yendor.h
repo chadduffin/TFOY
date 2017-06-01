@@ -131,7 +131,8 @@ typedef enum Tile {
 } Tile;
 
 typedef enum ElementFlag {
-  SPREADS_DIFFUSE = 0,
+  SPREADS_EXPLODE = 0,
+  SPREADS_DIFFUSE,
   SPREADS_PROPOGATE,
 
   ELEMENT_FLAG_COUNT
@@ -183,6 +184,14 @@ typedef enum Keybinding {
 
 	KEYBINDING_COUNT
 } Keybinding;
+
+typedef enum UIFlag {
+  INACTIVE = 0,
+  VISIBLE = 1,
+  ACTIVE = 2,
+  HOVER = 4,
+  FOCUS = 8,
+} UIFlag;
 
 typedef enum ChunkStatus {
   NOT_LOADED = 0,
@@ -269,14 +278,28 @@ typedef struct G_View {
   boolean follows;
 } G_View;
 
+typedef struct G_UIWidget {
+  int x, y, w, h, length;
+  unsigned char hotkey;
+  void (*func)(void*), *data;
+  G_TileCell *tiles;
+  UIFlag flags;
+} G_UIWidget;
+
+typedef struct G_UIWindow {
+  int x, y, w, h;
+  boolean visible;
+
+  G_UIWidget *widget;
+} G_UIWindow;
+
 typedef struct G_Entity {
   G_Id id, parent;
   void *components[COMPONENT_COUNT];
 } G_Entity;
 
 typedef struct G_UIComponent {
-  int x, y;
-  Tile *tiles;
+  G_UIWindow *root;
 } G_UIComponent;
 
 typedef struct G_LightComponent {
@@ -289,10 +312,17 @@ typedef struct G_RenderComponent {
   TileLayer layer;
 } G_RenderComponent;
 
+typedef struct G_ElementNode {
+  int x, y, age, amount;
+  boolean is_active;
+  struct G_ElementNode *next;
+} G_ElementNode;
+
 typedef struct G_ElementComponent {
-  int volume, spread_chance;
+  int x, y, count, magnitude;
   TileFlag tile_flags;
   ElementFlag element_flags;
+  G_ElementNode *head, *tail;
 } G_ElementComponent;
 
 typedef struct G_CreatureComponent {
@@ -315,15 +345,16 @@ typedef struct G_Tree {
   G_TreeNode *root, *nil;
 } G_Tree;
 
-typedef struct G_QTree {
-  int size, count;
-  void *parent, *children[4];
-} G_QTree;
-
 typedef struct G_QTreeLeaf {
-  void *parent;
+  struct G_QTree *parent;
   G_Entity *entities[TILE_LAYER_COUNT];
 } G_QTreeLeaf;
+
+typedef struct G_QTree {
+  int size, count;
+  void *children[4];
+  struct G_QTree *parent;
+} G_QTree;
 
 typedef struct G_SceneChunk {
   G_Tile *tiles;
@@ -400,6 +431,7 @@ Tile G_GetTile(Tile layers[TILE_LAYER_COUNT]);
 
 /* rendering.c */
 int G_Render(void *data);
+void G_RenderSalvage(void);
 void G_RenderChanges(void);
 void G_RenderLightmap(void);
 void G_UpdateRenderingInfo(void);
@@ -427,7 +459,9 @@ void G_EntityPos(G_Entity **entity, int *x, int *y);
 void G_EntityMove(G_Entity **entity, boolean relative, int x, int y);
 void G_EntityDestroy(G_Entity **entity);
 void G_EntityRender(void *entity);
+void G_EntityRenderUI(G_UIComponent **ui);
 void G_EntityUpdate(void *entity);
+void G_UIComponentUpdate(G_Entity **entity);
 void G_ElementComponentUpdate(G_Entity **entity);
 void G_ControllerComponentUpdate(G_Entity **entity);
 void G_EntityLightAdd(void *entity);
@@ -450,11 +484,20 @@ boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, b
 void G_InitMenu(G_Scene **scene);
 
 /* tiles.c */
-
 void G_TileUpdate(Tile tile, int x, int y);
 TileFlag G_TileFlags(Tile tile);
 SDL_Rect G_TileSource(Tile tile);
 boolean G_TileFlagCompare(Tile tile, TileFlag flag);
+
+/* ui.c */
+G_UIWindow* G_UIWindowCreate(void);
+G_UIWidget* G_UIWidgetCreate(void);
+void G_UpdateUIWindow(G_UIWindow **window);
+void G_UpdateUIWidget(G_UIWidget **widget);
+void G_RenderUIWindow(G_UIWindow **window);
+void G_RenderUIWidget(G_UIWidget **widget);
+void G_UIWindowDestroy(G_UIWindow **window);
+void G_UIWidgetDestroy(G_UIWidget **widget);
 
 /* tree.c */
 G_Tree* G_TreeCreate(void);
