@@ -26,4 +26,21 @@ G_Color dyellow = {102, 102, 0, 20, 20, 0};
 G_Color dviolet = {51, 0, 102, 10, 0, 20};
 G_Color dmagenta = {102, 0, 102, 20, 0, 20};
 
+G_Color ui_red = {220, 50, 47, 0, 0, 0};
+G_Color ui_blue = {38, 139, 210, 0, 0, 0};
+G_Color ui_cyan = {42, 161, 152, 0, 0, 0};
+G_Color ui_green = {133, 153, 0, 0, 0, 0};
+G_Color ui_yellow = {181, 137, 0, 0, 0, 0};
+G_Color ui_orange = {203, 75, 22, 0, 0, 0};
+G_Color ui_violet = {108, 113, 196, 0, 0, 0};
+G_Color ui_magenta = {211, 54, 130, 0, 0, 0};
+G_Color ui_dark_b = {0, 43, 54, 0, 0, 0};
+G_Color ui_dark_a = {7, 54, 66, 0, 0, 0};
+G_Color ui_mid_d = {88, 110, 117, 0, 0, 0};
+G_Color ui_mid_c = {101, 123, 131, 0, 0, 0};
+G_Color ui_mid_b = {131, 148, 150, 0, 0, 0};
+G_Color ui_mid_a = {147, 161, 161, 0, 0, 0};
+G_Color ui_light_b = {238, 232, 213, 0, 0, 0};
+G_Color ui_light_a = {253, 246, 227, 0, 0, 0};
+
 G_Color bad_color = {-1, -1, -1, -1, -1, -1};

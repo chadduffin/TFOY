@@ -1,6 +1,10 @@
 #include "yendor.h"
 #include "globals.h"
 
+void G_Print(void *data) {
+  printf("triggered\n");
+}
+
 const int gradient[12][3] = {
 	{1, 1, 0}, {1, -1, 0}, {-1, 1, 0}, {-1, -1, 0},
 	{0, 1, 1}, {0, 1, -1}, {0, -1, 1}, {0, -1, -1},

@@ -187,8 +187,9 @@ void G_EntityUpdate(void *entity) {
 
   G_Entity *e = *((G_Entity**)entity);
 
+  G_UIComponentUpdate(&e);
+
   if (game_info.full) {
-    G_UIComponentUpdate(&e);
     G_ElementComponentUpdate(&e);
     G_ControllerComponentUpdate(&e);
   }

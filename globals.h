@@ -99,6 +99,23 @@ extern G_Color dviolet;
 extern G_Color dpurple;
 extern G_Color dmagenta;
 
+extern G_Color ui_yellow;
+extern G_Color ui_orange;
+extern G_Color ui_red;
+extern G_Color ui_magenta;
+extern G_Color ui_violet;
+extern G_Color ui_blue;
+extern G_Color ui_cyan;
+extern G_Color ui_green;
+extern G_Color ui_dark_b;
+extern G_Color ui_dark_a;
+extern G_Color ui_mid_d;
+extern G_Color ui_mid_c;
+extern G_Color ui_mid_b;
+extern G_Color ui_mid_a;
+extern G_Color ui_light_b;
+extern G_Color ui_light_a;
+
 extern G_Color bad_color;
 
 #endif /* GLOBALS */

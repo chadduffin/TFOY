@@ -115,24 +115,32 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
 
   ui->root->widget->x = 1;
   ui->root->widget->y = 1;
-  ui->root->widget->w = 5;
-  ui->root->widget->h = 2;
+  ui->root->widget->w = 14;
+  ui->root->widget->h = 5;
+  ui->root->widget->fg.r = 150;
+  ui->root->widget->fg.g = 150;
+  ui->root->widget->fg.b = 150;
+  ui->root->widget->bg.r = 50;
+  ui->root->widget->bg.g = 50;
+  ui->root->widget->bg.b = 50;
+  ui->root->widget->focus = 0;
   ui->root->widget->length = 9;
+  ui->root->widget->changed = 0;
   ui->root->widget->hotkey = 0;
-  ui->root->widget->func = NULL;
+  ui->root->widget->func = &G_Print;
   ui->root->widget->data = NULL;
-  ui->root->widget->tiles = (G_TileCell*)malloc(sizeof(G_TileCell)*(ui->root->widget->length));
-  ui->root->widget->flags = VISIBLE | ACTIVE;
+  ui->root->widget->tiles = (G_Tile*)malloc(sizeof(G_Tile)*(ui->root->widget->length));
+  ui->root->widget->flags = VISIBLE | ACTIVE | HOVER;
 
-  ui->root->widget->tiles[0].layers[UI_LAYER] = 'P';
-  ui->root->widget->tiles[1].layers[UI_LAYER] = 'L';
-  ui->root->widget->tiles[2].layers[UI_LAYER] = 'A';
-  ui->root->widget->tiles[3].layers[UI_LAYER] = 'Y';
-  ui->root->widget->tiles[4].layers[UI_LAYER] = 0;
-  ui->root->widget->tiles[5].layers[UI_LAYER] = 'G';
-  ui->root->widget->tiles[6].layers[UI_LAYER] = 'A';
-  ui->root->widget->tiles[7].layers[UI_LAYER] = 'M';
-  ui->root->widget->tiles[8].layers[UI_LAYER] = 'E';
+  ui->root->widget->tiles[0].tile = 'P';
+  ui->root->widget->tiles[1].tile = 'L';
+  ui->root->widget->tiles[2].tile = 'A';
+  ui->root->widget->tiles[3].tile = 'Y';
+  ui->root->widget->tiles[4].tile = 0;
+  ui->root->widget->tiles[5].tile = 'G';
+  ui->root->widget->tiles[6].tile = 'A';
+  ui->root->widget->tiles[7].tile = 'M';
+  ui->root->widget->tiles[8].tile = 'E';
 
   G_SceneEntityInsert(&scene, &entity);
 /*
@@ -156,7 +164,8 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   element->element_flags = SPREADS_PROPOGATE;
 
   G_SceneEntityInsert(&scene, &entity);
-*/  }
+*/
+  }
 
   /*************/
 

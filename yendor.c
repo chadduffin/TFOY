@@ -451,6 +451,7 @@ int G_CopyBuffer(void *data) {
         tilemap[x][y].layers[z] = NOTHING;
       }
 
+      tilemap[x][y].fchange = 0;
       tilemap[x][y].fg = &bad_color;
       tilemap[x][y].bg = &bad_color;
     }
@@ -1018,6 +1019,10 @@ void G_ResizeDPort(int x, int y, int w, int h) {
 boolean G_CellChanged(int x, int y, int a, int b) {
   int range;
   TileFlag flags;
+
+  if (tilemap[x][y].fchange) {
+    return 1;
+  }
 
   if (vismap[x][y] != console.vismap[a][b]) {
     return 1;

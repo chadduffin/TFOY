@@ -118,6 +118,7 @@ typedef enum Tile {
 
   HUMAN,
 
+  SOLID_COLOR,
   SOLID_WHITE,
   SOLID_BLACK,
   SOLID_RED,
@@ -258,6 +259,7 @@ typedef struct G_Tile {
 typedef struct G_TileCell {
   Tile layers[TILE_LAYER_COUNT];
   G_Color *fg, *bg;
+  boolean fchange;
 } G_TileCell;
 
 typedef struct G_TileInformation {
@@ -279,10 +281,12 @@ typedef struct G_View {
 } G_View;
 
 typedef struct G_UIWidget {
-  int x, y, w, h, length;
+  int x, y, w, h, focus, length;
   unsigned char hotkey;
   void (*func)(void*), *data;
-  G_TileCell *tiles;
+  G_Tile *tiles;
+  G_Color fg, bg;
+  boolean changed;
   UIFlag flags;
 } G_UIWidget;
 
@@ -290,6 +294,7 @@ typedef struct G_UIWindow {
   int x, y, w, h;
   boolean visible;
 
+  G_Color fg, bg;
   G_UIWidget *widget;
 } G_UIWindow;
 
@@ -388,6 +393,7 @@ typedef struct G_Console {
 **************/
 
 /* TEMPORARY */
+void G_Print(void *data);
 void G_FillChunk(G_SceneChunk* chunk, int id);
 double G_Noise(double X, double Y);
 double G_NoiseOctaveSum(int X, int Y);

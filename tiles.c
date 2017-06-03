@@ -21,6 +21,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
 
   {"Human", "", 0, 4, &white, &bad_color, OBSTRUCTS_MOVEMENT},
 
+  {"solid", "", 0, 0, &magenta, &black, 0},
   {"white", "", 0, 0, &white, &white, 0},
   {"black", "", 0, 0, &black, &black, 0},
   {"red", "", 0, 0, &red, &red, 0},
