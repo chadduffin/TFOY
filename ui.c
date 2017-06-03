@@ -53,9 +53,12 @@ void G_UpdateUIWidget(G_UIWidget **widget) {
       w->func(w->data);
     }
 
-    if (w->focus < 255) {
+    if (w->focus < 32) {
       w->focus += 1;
       w->changed = 1;
+      w->bg.r += 1;
+      w->bg.g += 1;
+      w->bg.b += 1;
     } else {
       w->changed = 0;
     }
@@ -65,14 +68,13 @@ void G_UpdateUIWidget(G_UIWidget **widget) {
     if (w->focus > 0) {
       w->focus -= 1;
       w->changed = 1;
+      w->bg.r -= 1;
+      w->bg.g -= 1;
+      w->bg.b -= 1;
     } else {
       w->changed = 0;
     }
   }
-
-  w->bg.r = w->focus;
-  w->bg.g = w->focus;
-  w->bg.b = w->focus;
 }
 
 void G_RenderUIWindow(G_UIWindow **window) {
@@ -123,11 +125,12 @@ void G_RenderUIWidget(G_UIWidget **widget) {
 
     for (x = w->x; x < x_lim; x += 1) {
       if ((x >= 0) && (x < COLS) && (y >= 0) && (y < ROWS)) {
-        tilemap[x][y].fg = &(w->fg);
         tilemap[x][y].bg = &(w->bg);
         tilemap[x][y].fchange = w->changed;
 
         if ((len > 0) && (newline == 0)) {
+          tilemap[x][y].fg = &(w->tiles[w->length-len].fg);
+
           if (w->tiles[w->length-len].tile != 0) {
             tilemap[x][y].layers[UI_LAYER] = w->tiles[w->length-len].tile;
           } else {
@@ -137,6 +140,7 @@ void G_RenderUIWidget(G_UIWidget **widget) {
 
           len -= 1;
         } else {
+          tilemap[x][y].fg = &(w->fg);
           tilemap[x][y].layers[UI_LAYER] = SOLID_COLOR;
         }
       }

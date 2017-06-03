@@ -256,6 +256,11 @@ typedef struct G_Tile {
   unsigned short tile;
 } G_Tile;
 
+typedef struct G_UITile {
+  unsigned short tile;
+  G_Color fg;
+} G_UITile;
+
 typedef struct G_TileCell {
   Tile layers[TILE_LAYER_COUNT];
   G_Color *fg, *bg;
@@ -284,8 +289,8 @@ typedef struct G_UIWidget {
   int x, y, w, h, focus, length;
   unsigned char hotkey;
   void (*func)(void*), *data;
-  G_Tile *tiles;
   G_Color fg, bg;
+  G_UITile *tiles;
   boolean changed;
   UIFlag flags;
 } G_UIWidget;
