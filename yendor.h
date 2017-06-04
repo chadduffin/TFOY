@@ -30,11 +30,9 @@
 	#include <SDL2_net/SDL_net.h>
 	#include <SDL2_image/SDL_image.h>
 #elif _WIN32
-	#ifdef _WIN64
-		/* 64-Bit Windows */
-	#else
-		/* 32-Bit Windows */
-	#endif
+  #include "SDL2/SDL.h"
+  #include "SDL2/SDL_net.h"
+  #include "SDL2/SDL_image.h"
 #endif
 
 /*
@@ -188,10 +186,14 @@ typedef enum Keybinding {
 
 typedef enum UIFlag {
   INACTIVE = 0,
-  VISIBLE = 1,
-  ACTIVE = 2,
-  HOVER = 4,
-  FOCUS = 8,
+  MOUSE_PRESSED = 1,
+  KEY_PRESSED = 2,
+  VISIBLE = 4,
+  ACTIVE = 8,
+  HOVER = 16,
+  FOCUS = 32,
+
+  PRESSED = MOUSE_PRESSED | KEY_PRESSED,
 } UIFlag;
 
 typedef enum ChunkStatus {
@@ -225,7 +227,7 @@ typedef struct G_GameInformation {
     window_w, window_h,
     target_buffer,
     phys[SDL_NUM_SCANCODES];
-  unsigned int frame_count, timer;
+  unsigned int timer, frame_count;
   G_Id id;
   SDL_Event event;
   SDL_Window *window;
@@ -287,8 +289,8 @@ typedef struct G_View {
 
 typedef struct G_UIWidget {
   int x, y, w, h, focus, length;
-  unsigned char hotkey;
   void (*func)(void*), *data;
+  SDL_Scancode hotkey;
   G_Color fg, bg;
   G_UITile *tiles;
   boolean changed;

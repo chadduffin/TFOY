@@ -40,6 +40,7 @@ void G_UpdateUIWindow(G_UIWindow **window) {
 }
 
 void G_UpdateUIWidget(G_UIWidget **widget) {
+  int focus = 0;
   G_UIWidget *w = *widget;
 
   int mouse_x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
@@ -49,31 +50,42 @@ void G_UpdateUIWidget(G_UIWidget **widget) {
       (mouse_y >= w->y) && (mouse_y < w->y+w->h)) {
     w->flags = w->flags | HOVER;
 
-    if (game_info.mouse_lb) {
-      w->func(w->data);
-    }
-
-    if (w->focus < 32) {
-      w->focus += 1;
-      w->changed = 1;
-      w->bg.r += 1;
-      w->bg.g += 1;
-      w->bg.b += 1;
-    } else {
-      w->changed = 0;
+    if (game_info.mouse_lb != 0) {
+      w->flags = w->flags | MOUSE_PRESSED;
+      focus = 32;
     }
   } else {
-    w->flags = (w->flags | HOVER) ^ HOVER;
+    w->flags = (w->flags | HOVER | MOUSE_PRESSED) ^ (HOVER | MOUSE_PRESSED);
+  }
 
-    if (w->focus > 0) {
-      w->focus -= 1;
-      w->changed = 1;
-      w->bg.r -= 1;
-      w->bg.g -= 1;
-      w->bg.b -= 1;
-    } else {
-      w->changed = 0;
+  if (game_info.phys[w->hotkey] != 0) {
+    w->flags = w->flags | KEY_PRESSED;
+    focus = 32;
+  } else if (((w->flags & HOVER) == HOVER) || (game_info.phys[w->hotkey] > 0)) {
+    focus = (w->focus < 32) ? w->focus+1 : 32;
+  } else {
+    focus = (w->focus > 0) ? w->focus-1 : 0;
+  }
+
+  if ((w->flags & PRESSED) > 0) {
+    if ((game_info.mouse_lb == 0) &&
+        ((w->flags & MOUSE_PRESSED) == MOUSE_PRESSED)) {
+      w->func(w->data);
+      w->flags = w->flags ^ MOUSE_PRESSED;
+    } else if ((game_info.phys[w->hotkey] == 0) &&
+               ((w->flags & KEY_PRESSED) == KEY_PRESSED)) {
+      w->func(w->data);
+      w->flags = w->flags ^ KEY_PRESSED;
     }
+  }
+
+  if (focus != w->focus) {
+    w->focus = focus;
+    w->changed = 1;
+
+    w->bg.r = ui_dark_b.r+focus;
+    w->bg.g = ui_dark_b.g+focus;
+    w->bg.b = ui_dark_b.b+focus;
   }
 }
 

@@ -126,7 +126,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   ui->root->widget->focus = 0;
   ui->root->widget->length = 9;
   ui->root->widget->changed = 0;
-  ui->root->widget->hotkey = 0;
+  ui->root->widget->hotkey = SDL_SCANCODE_P;
   ui->root->widget->func = &G_Print;
   ui->root->widget->data = NULL;
   ui->root->widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(ui->root->widget->length));
@@ -146,7 +146,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     ui->root->widget->tiles[i].fg = ui->root->widget->fg;
   }
 
-  ui->root->widget->tiles[2].fg = yellow;
+  ui->root->widget->tiles[0].fg = yellow;
 
   G_SceneEntityInsert(&scene, &entity);
 /*

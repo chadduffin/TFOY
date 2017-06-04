@@ -14,8 +14,8 @@ int G_Init(void *data) {
 	game_info.display_y = 0;
 	game_info.display_w = 320;
 	game_info.display_h = 240;
-	game_info.frame_count = 0;
 	game_info.timer = 0;
+	game_info.frame_count = 0;
 	game_info.target_buffer = 0;
   game_info.id.value = 0;
 	game_info.running = 0;

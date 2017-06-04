@@ -1,15 +1,8 @@
 #include "yendor.h"
 #include "globals.h"
 
-#include <sys/time.h>
-#include <sys/resource.h>
-
 int main(int argc, char **argv) {
   int status = 0;
-
-  #ifndef NDEBUG
-    struct rusage usage;
-  #endif
   
   G_Init(NULL);
 
@@ -36,14 +29,6 @@ int main(int argc, char **argv) {
   };
 
   G_Quit();
-
-  #ifndef NDEBUG
-    getrusage(RUSAGE_SELF, &usage);
-
-    printf("Resident Set Size: %liMB\n", usage.ru_maxrss/1048576);
-    printf("Minor Page Faults: %li\n", usage.ru_minflt);
-    printf("Major Page Faults: %li\n", usage.ru_majflt);
-  #endif
 
   return 0;
 }
