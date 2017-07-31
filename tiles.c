@@ -6,7 +6,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
 
   {"Ground", "", 14, 2, &brown, &dblue, 0},
   {"Stone", "", 14, 2, &dgrey, &grey, 0},
-  {"Sand", "", 14, 2, &dyellow, &yellow, FLICKERS_SLOW},
+  {"Sand", "", 14, 2, &dyellow, &yellow, 0},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
   {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE},
   {"Tall Grass", "", 2, 14, &green, &dblue, FLAMMABLE},

@@ -49,128 +49,165 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
   /* TEST CODE */
 
   if (scene->id.value == 0) {
+    G_Entity *entity = G_EntityCreate();
+    G_LightComponent *light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+    G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+    G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
 
-  G_Entity *entity = G_EntityCreate();
-  G_LightComponent *light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-  G_ControllerComponent *controller = G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
+    light->light.r = 255;
+    light->light.g = 255;
+    light->light.b = 255;
+    light->light.intensity = 24;
 
-  light->light.r = 64;
-  light->light.g = 255;
-  light->light.b = 46;
-  light->light.intensity = 24;
+    render->x = 30;
+    render->y = 80;
+    render->tile = HUMAN;
+    render->layer = CREATURE_LAYER;
 
-  render->x = 30;
-  render->y = 80;
-  render->tile = HUMAN;
-  render->layer = CREATURE_LAYER;
+    scene->focus = entity;
+    G_SceneEntityInsert(&scene, &entity);
 
-  scene->focus = entity;
-  G_SceneEntityInsert(&scene, &entity);
+    entity = G_EntityCreate();
+    light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
 
-  entity = G_EntityCreate();
-  light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+    light->light.r = 255;
+    light->light.g = 0;
+    light->light.b = 0;
+    light->light.intensity = 24;
 
-  light->light.r = 255;
-  light->light.g = 0;
-  light->light.b = 0;
-  light->light.intensity = 24;
+    render->x = 64;
+    render->y = 32;
+    render->tile = HUMAN;
+    render->layer = ORNAMENT_LAYER;
 
-  render->x = 64;
-  render->y = 32;
-  render->tile = HUMAN;
-  render->layer = ORNAMENT_LAYER;
+    G_SceneEntityInsert(&scene, &entity);
 
-  G_SceneEntityInsert(&scene, &entity);
+    entity = G_EntityCreate();
+    light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
 
-  entity = G_EntityCreate();
-  light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+    light->light.r = 0;
+    light->light.g = 127;
+    light->light.b = 255;
+    light->light.intensity = 30;
 
-  light->light.r = 0;
-  light->light.g = 127;
-  light->light.b = 255;
-  light->light.intensity = 30;
+    render->x = 32;
+    render->y = 32;
+    render->tile = HUMAN;
+    render->layer = ORNAMENT_LAYER;
 
-  render->x = 32;
-  render->y = 32;
-  render->tile = HUMAN;
-  render->layer = ORNAMENT_LAYER;
+    G_SceneEntityInsert(&scene, &entity);
+  } else {
+    G_Entity *entity = G_EntityCreate();
+    G_UIComponent *ui = (G_UIComponent*)G_EntityComponentInsert(&entity, UI_COMPONENT);
 
-  G_SceneEntityInsert(&scene, &entity);
+    G_UIWindow *window_temp = G_UIWindowCreate();
 
-  entity = G_EntityCreate();
-  G_UIComponent *ui = (G_UIComponent*)G_EntityComponentInsert(&entity, UI_COMPONENT);
+    window_temp->x = 35;
+    window_temp->y = 28;
+    window_temp->w = 11;
+    window_temp->h = 13;
+    window_temp->visible = 0;
 
-  ui->root = G_UIWindowCreate();
+    ui->root = G_UIWindowCreate();
 
-  ui->root->x = 0;
-  ui->root->y = 0;
-  ui->root->w = 16;
-  ui->root->h = 16;
-  ui->root->visible = 1;
+    ui->root->x = 35;
+    ui->root->y = 25;
+    ui->root->w = 11;
+    ui->root->h = 3;
+    ui->root->visible = 1;
 
-  ui->root->widget = G_UIWidgetCreate();
+    G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+    node->key = 10;
+    node->data = window_temp;
+    G_TreeNodeInsert(&(ui->root->windows), &node);
 
-  ui->root->widget->x = 1;
-  ui->root->widget->y = 1;
-  ui->root->widget->w = 14;
-  ui->root->widget->h = 1;
-  ui->root->widget->fg.r = 150;
-  ui->root->widget->fg.g = 150;
-  ui->root->widget->fg.b = 150;
-  ui->root->widget->bg.r = 0;
-  ui->root->widget->bg.g = 43;
-  ui->root->widget->bg.b = 54;
-  ui->root->widget->focus = 0;
-  ui->root->widget->length = 9;
-  ui->root->widget->changed = 0;
-  ui->root->widget->hotkey = SDL_SCANCODE_P;
-  ui->root->widget->func = &G_Print;
-  ui->root->widget->data = NULL;
-  ui->root->widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(ui->root->widget->length));
-  ui->root->widget->flags = VISIBLE | ACTIVE | HOVER;
+    ui->root->widget = G_UIWidgetCreate();
 
-  ui->root->widget->tiles[0].tile = 'P';
-  ui->root->widget->tiles[1].tile = 'L';
-  ui->root->widget->tiles[2].tile = 'A';
-  ui->root->widget->tiles[3].tile = 'Y';
-  ui->root->widget->tiles[4].tile = ' ';
-  ui->root->widget->tiles[5].tile = 'G';
-  ui->root->widget->tiles[6].tile = 'A';
-  ui->root->widget->tiles[7].tile = 'M';
-  ui->root->widget->tiles[8].tile = 'E';
+    ui->root->widget->x = 36;
+    ui->root->widget->y = 26;
+    ui->root->widget->w = 9;
+    ui->root->widget->h = 1;
+    ui->root->widget->fg.r = 150;
+    ui->root->widget->fg.g = 150;
+    ui->root->widget->fg.b = 150;
+    ui->root->widget->bg.r = 0;
+    ui->root->widget->bg.g = 43;
+    ui->root->widget->bg.b = 54;
+    ui->root->widget->focus = 0;
+    ui->root->widget->length = 9;
+    ui->root->widget->changed = 0;
+    ui->root->widget->hotkey = SDL_SCANCODE_P;
+    ui->root->widget->func = (void(*)(void*))(&G_UIWindowToggleVisible);
+    ui->root->widget->data = &(node->data);
+    ui->root->widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(ui->root->widget->length));
+    ui->root->widget->flags = VISIBLE | ACTIVE | HOVER;
 
-  for (i = 0; i < 9; i += 1) {
-    ui->root->widget->tiles[i].fg = ui->root->widget->fg;
-  }
+    ui->root->widget->tiles[0].tile = 'P';
+    ui->root->widget->tiles[1].tile = 'L';
+    ui->root->widget->tiles[2].tile = 'A';
+    ui->root->widget->tiles[3].tile = 'Y';
+    ui->root->widget->tiles[4].tile = ' ';
+    ui->root->widget->tiles[5].tile = 'G';
+    ui->root->widget->tiles[6].tile = 'A';
+    ui->root->widget->tiles[7].tile = 'M';
+    ui->root->widget->tiles[8].tile = 'E';
 
-  ui->root->widget->tiles[0].fg = yellow;
+    for (i = 0; i < 9; i += 1) {
+      ui->root->widget->tiles[i].fg = ui->root->widget->fg;
+    }
 
-  G_SceneEntityInsert(&scene, &entity);
-/*
-  entity = G_EntityCreate();
-  light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-  render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-  G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+    ui->root->widget->tiles[0].fg = yellow;
 
-  light->light.r = 255;
-  light->light.g = 255;
-  light->light.b = 255;
-  light->light.intensity = 2;
+    node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+    node->key = 10;
+    node->data = ui->root->widget;
+    G_TreeNodeInsert(&(ui->root->widgets), &node);
 
-  render->x = 25;
-  render->y = 80;
-  render->tile = BASIC_FIRE;
-  render->layer = ORNAMENT_LAYER;
+    ui->root->widget = G_UIWidgetCreate();
 
-  element->spread_chance = 5;
-  element->tile_flags = IS_BURNING;
-  element->element_flags = SPREADS_PROPOGATE;
+    ui->root->widget->x = 36;
+    ui->root->widget->y = 29;
+    ui->root->widget->w = 9;
+    ui->root->widget->h = 1;
+    ui->root->widget->fg.r = 150;
+    ui->root->widget->fg.g = 150;
+    ui->root->widget->fg.b = 150;
+    ui->root->widget->bg.r = 0;
+    ui->root->widget->bg.g = 43;
+    ui->root->widget->bg.b = 54;
+    ui->root->widget->focus = 0;
+    ui->root->widget->length = 9;
+    ui->root->widget->changed = 0;
+    ui->root->widget->hotkey = SDL_SCANCODE_P;
+    ui->root->widget->func = (void(*)(void*))(&G_SceneChange);
+    ui->root->widget->data = &(G_TreeNodeFind(&scenes, 0)->data);
+    ui->root->widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(ui->root->widget->length));
+    ui->root->widget->flags = VISIBLE | ACTIVE | HOVER;
 
-  G_SceneEntityInsert(&scene, &entity);
-*/
+    ui->root->widget->tiles[0].tile = 'P';
+    ui->root->widget->tiles[1].tile = 'L';
+    ui->root->widget->tiles[2].tile = 'A';
+    ui->root->widget->tiles[3].tile = 'Y';
+    ui->root->widget->tiles[4].tile = ' ';
+    ui->root->widget->tiles[5].tile = 'G';
+    ui->root->widget->tiles[6].tile = 'A';
+    ui->root->widget->tiles[7].tile = 'M';
+    ui->root->widget->tiles[8].tile = 'E';
+
+    for (i = 0; i < 9; i += 1) {
+      ui->root->widget->tiles[i].fg = ui->root->widget->fg;
+    }
+
+    ui->root->widget->tiles[0].fg = yellow;
+
+    node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+    node->key = 10;
+    node->data = ui->root->widget;
+    G_TreeNodeInsert(&(window_temp->widgets), &node);
+
+    G_SceneEntityInsert(&scene, &entity);
   }
 
   /*************/

@@ -34,29 +34,29 @@ int G_Render(void *data) {
 }
 
 void G_RenderSalvage(void) {
-  /* Salvage the left outline of the 
-     display quote */
+  /* Salvage the area left of the 
+     display screen */
   console.src.x = console.dst.x = game_info.display_x;
   console.src.y = console.dst.y = game_info.display_y;
   console.src.w = console.dst.w = DCOLS_OFFSET*game_info.tile_w;
   console.src.h = console.dst.h = game_info.display_h;
   SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
 
-  /* Top outline */
+  /* Top */
   console.src.x = console.dst.x = game_info.display_x+DCOLS_OFFSET*game_info.tile_w;
   console.src.y = console.dst.y = game_info.display_y;
   console.src.w = console.dst.w = DCOLS*game_info.tile_w;
   console.src.h = console.dst.h = DROWS_OFFSET*game_info.tile_h;
   SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
 
-  /* Right outline */
+  /* Right */
   console.src.x = console.dst.x = game_info.display_x+(DCOLS_OFFSET+DCOLS)*game_info.tile_w;
   console.src.y = console.dst.y = game_info.display_y;
   console.src.w = console.dst.w = game_info.display_w-((DCOLS+DCOLS_OFFSET)*game_info.tile_w);
   console.src.h = console.dst.h = game_info.display_h;
   SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], &(console.src), &(console.dst));
 
-  /* Bottom outline */
+  /* Bottom */
   console.src.x = console.dst.x = game_info.display_x+DCOLS_OFFSET*game_info.tile_w;
   console.src.y = console.dst.y = game_info.display_y+(DROWS+DROWS_OFFSET)*game_info.tile_h;
   console.src.w = console.dst.w = DCOLS*game_info.tile_w;

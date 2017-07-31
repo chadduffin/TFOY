@@ -36,8 +36,8 @@
 #endif
 
 /*
-* DEFINES
-*/
+ * DEFINES
+ */
 
 #define TITLE "The Fellowships of Yendor"
 #define VERSION "v0.0.1"
@@ -66,9 +66,9 @@
 
 #define boolean unsigned char
 
-/**************
-**** ENUMS ****
-**************/
+/*
+ * ENUMS
+ */
 
 typedef enum Thread {
   FILE_THREAD = 0,
@@ -185,7 +185,6 @@ typedef enum Keybinding {
 } Keybinding;
 
 typedef enum UIFlag {
-  INACTIVE = 0,
   MOUSE_PRESSED = 1,
   KEY_PRESSED = 2,
   VISIBLE = 4,
@@ -204,9 +203,9 @@ typedef enum ChunkStatus {
   IS_LOADED,
 } ChunkStatus;
 
-/*************
-** TYPEDEFS **
-*************/
+/*
+ * TYPEDEFS
+ */
 
 typedef struct G_Id {
   long int value;
@@ -282,13 +281,25 @@ typedef struct G_TileTransition {
   Tile is, to;
 } G_TileTransition;
 
+typedef struct G_TreeNode {
+  char color;
+  void *data;
+  long int key;
+  struct G_TreeNode *left, *right, *parent;
+} G_TreeNode;
+
+typedef struct G_Tree {
+  int size;
+  G_TreeNode *root, *nil;
+} G_Tree;
+
 typedef struct G_View {
   int x, y, xp, yp, w, h;
   boolean follows;
 } G_View;
 
 typedef struct G_UIWidget {
-  int x, y, w, h, focus, length;
+  int x, y, w, h, focus, length, depth;
   void (*func)(void*), *data;
   SDL_Scancode hotkey;
   G_Color fg, bg;
@@ -298,11 +309,12 @@ typedef struct G_UIWidget {
 } G_UIWidget;
 
 typedef struct G_UIWindow {
-  int x, y, w, h;
+  int x, y, w, h, depth;
   boolean visible;
 
   G_Color fg, bg;
   G_UIWidget *widget;
+  G_Tree *widgets, *windows;
 } G_UIWindow;
 
 typedef struct G_Entity {
@@ -345,18 +357,6 @@ typedef struct G_ControllerComponent {
   G_Entity *entity;
 } G_ControllerComponent;
 
-typedef struct G_TreeNode {
-  char color;
-  void *data;
-  long int key;
-  struct G_TreeNode *left, *right, *parent;
-} G_TreeNode;
-
-typedef struct G_Tree {
-  int size;
-  G_TreeNode *root, *nil;
-} G_Tree;
-
 typedef struct G_QTreeLeaf {
   struct G_QTree *parent;
   G_Entity *entities[TILE_LAYER_COUNT];
@@ -395,9 +395,9 @@ typedef struct G_Console {
   boolean vismap[COLS][ROWS], changed[COLS][ROWS];
 } G_Console;
 
-/**************
-** FUNCTIONS **
-**************/
+/*
+ * FUNCTIONS
+ */
 
 /* TEMPORARY */
 void G_Print(void *data);
@@ -505,10 +505,15 @@ boolean G_TileFlagCompare(Tile tile, TileFlag flag);
 /* ui.c */
 G_UIWindow* G_UIWindowCreate(void);
 G_UIWidget* G_UIWidgetCreate(void);
+void G_AddUIWindow(G_UIWindow **parent, G_UIWindow **child);
+void G_AddUIWidget(G_UIWindow **parent, G_UIWidget **child);
 void G_UpdateUIWindow(G_UIWindow **window);
 void G_UpdateUIWidget(G_UIWidget **widget);
 void G_RenderUIWindow(G_UIWindow **window);
 void G_RenderUIWidget(G_UIWidget **widget);
+void G_UIWindowToggleVisible(G_UIWindow **window);
+void G_UIWidgetToggleVisible(G_UIWidget **widget);
+void G_UIWidgetToggleActive(G_UIWidget **widget);
 void G_UIWindowDestroy(G_UIWindow **window);
 void G_UIWidgetDestroy(G_UIWidget **widget);
 
