@@ -18,7 +18,10 @@ int main(int argc, char **argv) {
       game_info.running = 0;
     }
 
-    #ifdef FRAME_CAP
+    #ifndef FRAME_CAP
+      if ((1000.0/FPS) <= (SDL_GetTicks()-game_info.last_update)) {
+    #endif
+
       G_UpdateBegin();
 
       threads[UPDATE_THREAD] = SDL_CreateThread(G_Update, "game-updating", NULL);
@@ -29,26 +32,17 @@ int main(int argc, char **argv) {
 
       G_UpdateEnd();
 
+    #ifdef FRAME_CAP
       delay = (1000.0/FPS)-(SDL_GetTicks()-game_info.last_update);
 
       if (delay > 0) {
         SDL_Delay(delay);
       }
+    #endif
 
       game_info.last_update = SDL_GetTicks();
-    #else
-      if ((1000.0/FPS) <= (SDL_GetTicks()-game_info.last_update)) {
-        G_UpdateBegin();
 
-        threads[UPDATE_THREAD] = SDL_CreateThread(G_Update, "game-updating", NULL);
-
-        G_Render(NULL);
-
-        SDL_WaitThread(threads[UPDATE_THREAD], &status);
-
-        G_UpdateEnd();
-     
-        game_info.last_update = SDL_GetTicks();
+    #ifndef FRAME_CAP
       } else {
         game_info.frame_count += 1;
         G_RenderLight();

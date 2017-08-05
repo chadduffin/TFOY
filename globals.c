@@ -1,6 +1,6 @@
 #include "yendor.h"
 
-int FPS = 30;
+int FPS = 60;
 int DCOLS = 78;
 int DROWS = 43;
 int DCOLS_OFFSET = 1;
