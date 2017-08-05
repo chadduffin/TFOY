@@ -16,6 +16,7 @@ int G_Init(void *data) {
 	game_info.display_h = 240;
 	game_info.timer = 0;
 	game_info.frame_count = 0;
+	game_info.last_update = 0;
 	game_info.target_buffer = 0;
   game_info.id.value = 0;
 	game_info.running = 0;
@@ -766,76 +767,6 @@ void G_GenerateFOVSimple(int x, int y, void *light, void (*func)(int*, int*, voi
         G_AddLight(&adj_x, &adj_y, light);
       }
     }
-  }
-}
-
-void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*)) {
-  int x, y, x_adj, y_adj;
-  float top, mid, bot;
-  boolean good = 0, is_solid = 0, was_solid = 0;
-
-  while (dist <= range) {
-    good = 0;
-    x = dist;
-    y = 0;
-
-    while (y <= dist) {
-      top = (float)(y)/(x);
-      mid = (float)(y+0.5)/(x);
-      bot = (float)(y+1.0)/(x);
-
-      if (((top <= end) || (mid <= end) || (bot <= end)) &&
-          ((top >= start) || (mid >= start) || (bot >= start))) {
-        if (invert) {
-          x_adj = scene_x+(y*dx);
-          y_adj = scene_y+(x*dy);
-        } else {
-          x_adj = scene_x+(x*dx);
-          y_adj = scene_y+(y*dy);
-        }
-
-        was_solid = (y == 0) ? 0 : is_solid;
-        is_solid = G_SceneTileObstructs(&active_scene, x_adj, y_adj);
-
-        x_adj -= active_scene->view.x;
-        y_adj -= active_scene->view.y;
-
-        good = 1;
-
-        if (is_solid) {
-          if ((y == dist) || ((float)(y+1.0)/(x-1.0) > end)) {
-            end = (float)(y)/(x+1.0);
-          } else {
-            if ((was_solid == 0) && (y > 0)) {
-              G_Sightcast(scene_x, scene_y, dx, dy, dist+1, range, invert, start, (float)(y)/(x+1.0), data, func);
-            }
-
-            start = bot;
-          }
-
-          func(&x_adj, &y_adj, data);
-        } else {
-          if ((mid >= start) && (mid <= end) &&
-              (((top >= start) && (top <= end)) ||
-              ((bot >= start) && (bot <= end)))) {
-            func(&x_adj, &y_adj, data);
-          } else if ((top <= end) && (y == dist/2)) {
-            func(&x_adj, &y_adj, data);
-          }
-        }
-      } else if (top > end) {
-        y = dist;
-      }
-
-      x -= 1;
-      y += 1;
-    }
-
-    if (!good) {
-      return;
-    }
-    
-    dist = (start < end) ? dist+1 : range+1;
   }
 }
 

@@ -59,6 +59,7 @@
 #define LEVEL_CAP 20
 #define EXPERIENCE_OFFSET 42
 
+#define FRAME_CAP
 #define UPDATE_DELAY 1014
 #define FLICKER_RANGE 128
 #define MAX_VIEW_DISTANCE (DCOLS/2)
@@ -226,7 +227,8 @@ typedef struct G_GameInformation {
     window_w, window_h,
     target_buffer,
     phys[SDL_NUM_SCANCODES];
-  unsigned int timer, frame_count;
+  unsigned int
+    timer, frame_count, last_update;
   G_Id id;
   SDL_Event event;
   SDL_Window *window;
@@ -429,7 +431,6 @@ void G_ClearBuffers(void);
 void G_InitializeKeybindings(void);
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*));
 void G_GenerateFOVSimple(int x, int y, void *light, void (*func)(int*, int*, void*));
-void G_Sightcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
 void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range, int invert, float start, float end, void *data, void (*func)(int*, int*, void*));
 void G_AddLight(int *x, int *y, void *data);
 void G_AddPointLight(int x, int y, int r, int g, int b, int intensity);
@@ -444,6 +445,7 @@ Tile G_GetTile(Tile layers[TILE_LAYER_COUNT]);
 
 /* rendering.c */
 int G_Render(void *data);
+void G_RenderLight(void);
 void G_RenderSalvage(void);
 void G_RenderChanges(void);
 void G_RenderLightmap(void);

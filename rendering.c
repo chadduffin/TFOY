@@ -33,6 +33,32 @@ int G_Render(void *data) {
   return 0;
 }
 
+void G_RenderLight(void) {
+  SDL_Rect dst;
+
+	SDL_SetRenderTarget(game_info.renderer, game_info.buffers[game_info.target_buffer]);
+  SDL_RenderClear(game_info.renderer);
+
+  SDL_RenderCopy(game_info.renderer, game_info.buffers[!game_info.target_buffer], NULL, NULL);
+
+	SDL_SetRenderTarget(game_info.renderer, NULL);	
+	SDL_RenderCopy(game_info.renderer, game_info.buffers[game_info.target_buffer], NULL, NULL);
+	game_info.target_buffer = (game_info.target_buffer == 0) ? 1 : 0;	
+
+  G_RenderLightmap();
+
+  dst.x = game_info.mouse_x;
+  dst.y = game_info.mouse_y;
+  dst.w = game_info.tile_w;
+  dst.h = game_info.tile_h;
+
+  SDL_SetRenderDrawColor(game_info.renderer, 255, 255, 0, 255);
+  SDL_RenderDrawRect(game_info.renderer, &dst);	
+  SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
+
+	SDL_RenderPresent(game_info.renderer);
+}
+
 void G_RenderSalvage(void) {
   /* Salvage the area left of the 
      display screen */
@@ -179,6 +205,8 @@ void G_RenderLightmap(void) {
             SDL_SetRenderDrawColor(game_info.renderer, 0, 0, 0, 255);
             SDL_SetRenderDrawBlendMode(game_info.renderer, SDL_BLENDMODE_NONE);
           }
+
+          console.lightmap[x][y].count = 0;
         }
       }
 		}

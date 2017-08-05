@@ -34,6 +34,7 @@
 
 /* globals.c */
 
+extern int FPS;
 extern int DCOLS;
 extern int DROWS;
 extern int DCOLS_OFFSET;
