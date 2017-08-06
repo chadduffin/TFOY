@@ -1,13 +1,14 @@
 #include "yendor.h"
 #include "globals.h"
 
-G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, boolean visible) {
+G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, int depth, boolean visible) {
   G_UIWindow *window = (G_UIWindow*)malloc(sizeof(G_UIWindow));
 
   window->x = x;
   window->y = y;
   window->w = w;
   window->h = h;
+  window->depth = depth;
   window->visible = visible;
   window->fg = white;
   window->bg = black;
@@ -17,7 +18,8 @@ G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, boolean visible) {
   return window;
 }
 
-G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int length, void(*func)(void*), void *data) {
+G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int depth, int length, void(*func)(void*), void *data, char *text) {
+  int i;
   G_UIWidget *widget = (G_UIWidget*)malloc(sizeof(G_UIWidget));
 
   widget->x = x;
@@ -25,17 +27,61 @@ G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int length, void(*func)
   widget->w = w;
   widget->h = h;
   widget->focus = 0;
+  widget->depth = depth;
   widget->length = length;
   widget->func = func;
   widget->data = data;
   widget->hotkey = 0;
   widget->fg = white;
   widget->bg = black;
-  widget->tiles = NULL;
+  widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(length));
+
+  for (i = 0; i < length; i += 1) {
+    widget->tiles[i].fg = white;
+    widget->tiles[i].tile = text[i];
+  }
+
   widget->changed = 1;
   widget->flags = VISIBLE | ACTIVE;
 
   return widget;
+}
+
+void G_UIWindowAddWidget(G_UIWindow **window, G_UIWidget **widget) {
+  assert((window != NULL) && (*window != NULL) && (widget != NULL) && (*widget != NULL));
+
+  G_UIWidget *wid = *widget;
+  G_UIWindow *win = *window;
+  G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+
+  node->key = wid->depth;
+  node->data = wid;
+
+  G_TreeNodeInsert(&(win->widgets), &node);
+}
+
+void G_UIWindowAddWindow(G_UIWindow **window, G_UIWindow **subwindow) {
+  assert((window != NULL) && (*window != NULL) && (subwindow != NULL) && (*subwindow != NULL));
+
+  G_UIWindow *win = *window, *sub = *subwindow;
+  G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+
+  node->key = sub->depth;
+  node->data = sub;
+
+  G_TreeNodeInsert(&(win->windows), &node);
+}
+
+void G_UIWidgetHotkey(G_UIWidget **widget, SDL_Scancode hotkey, int index) {
+  assert((widget != NULL) && (*widget != NULL));
+
+  G_UIWidget *w = *widget;
+
+  if ((index != -1) && (index < w->length)) {
+    w->tiles[index].fg = yellow;
+  }
+
+  w->hotkey = hotkey;
 }
 
 void G_UpdateUIWindow(G_UIWindow **window) {
@@ -89,16 +135,18 @@ void G_UpdateUIWidget(G_UIWidget **widget) {
     }
 
     if (focus != w->focus) {
+      w->bg.r += focus-w->focus;
+      w->bg.g += focus-w->focus;
+      w->bg.b += focus-w->focus;
+
       w->focus = focus;
       w->changed = 1;
-
-      w->bg.r = ui_bg_active.r+focus;
-      w->bg.g = ui_bg_active.g+focus;
-      w->bg.b = ui_bg_active.b+focus;
     }
   } else {
+    w->bg.r -= w->focus;
+    w->bg.g -= w->focus;
+    w->bg.b -= w->focus;
     w->focus = 0;
-    w->bg = ui_bg_inactive;
   }
 }
 
@@ -119,8 +167,8 @@ void G_RenderUIWindow(G_UIWindow **window) {
       for (x = w->x; x < x_lim; x += 1) {
         if ((x >= 0) && (x < COLS) && (y >= 0) && (y < ROWS)) {
           if (tilemap[x][y].layers[UI_LAYER] == NOTHING) {
-            tilemap[x][y].fg = &ui_fg_inactive;
-            tilemap[x][y].bg = &ui_bg_active;
+            tilemap[x][y].fg = &(w->fg);
+            tilemap[x][y].bg = &(w->bg);
 
             if ((x == w->x) || (x == w->x+w->w-1) ||
                 (y == w->y) || (y == w->y+w->h-1)) {
@@ -154,11 +202,11 @@ void G_RenderUIWidget(G_UIWidget **widget) {
 
       for (x = w->x; x < x_lim; x += 1) {
         if ((x >= 0) && (x < COLS) && (y >= 0) && (y < ROWS)) {
-          tilemap[x][y].bg = (active) ? &(w->bg) : &ui_bg_inactive;
+          tilemap[x][y].bg = (active) ? &(w->bg) : &grey;
           tilemap[x][y].fchange = w->changed;
 
           if ((len > 0) && (newline == 0)) {
-            tilemap[x][y].fg = (active) ? &(w->tiles[w->length-len].fg) : &ui_fg_inactive;
+            tilemap[x][y].fg = (active) ? &(w->tiles[w->length-len].fg) : &dgrey;
 
             if (w->tiles[w->length-len].tile != 0) {
               tilemap[x][y].layers[UI_LAYER] = w->tiles[w->length-len].tile;

@@ -301,7 +301,7 @@ typedef struct G_View {
 } G_View;
 
 typedef struct G_UIWidget {
-  int x, y, w, h, focus, length;
+  int x, y, w, h, focus, depth, length;
   void (*func)(void*), *data;
   SDL_Scancode hotkey;
   G_Color fg, bg;
@@ -311,7 +311,7 @@ typedef struct G_UIWidget {
 } G_UIWidget;
 
 typedef struct G_UIWindow {
-  int x, y, w, h;
+  int x, y, w, h, depth;
   boolean visible;
 
   G_Color fg, bg;
@@ -503,8 +503,11 @@ SDL_Rect G_TileSource(Tile tile);
 boolean G_TileFlagCompare(Tile tile, TileFlag flag);
 
 /* ui.c */
-G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, boolean visible);
-G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int length, void(*func)(void*), void *data);
+G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, int depth, boolean visible);
+G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int depth, int length, void(*func)(void*), void *data, char *text);
+void G_UIWindowAddWidget(G_UIWindow **window, G_UIWidget **widget);
+void G_UIWindowAddWindow(G_UIWindow **window, G_UIWindow **subwindow);
+void G_UIWidgetHotkey(G_UIWidget **widget, SDL_Scancode hotkey, int index);
 void G_AddUIWindow(G_UIWindow **parent, G_UIWindow **child);
 void G_AddUIWidget(G_UIWindow **parent, G_UIWidget **child);
 void G_UpdateUIWindow(G_UIWindow **window);

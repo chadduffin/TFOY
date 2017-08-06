@@ -26,6 +26,8 @@ G_Color dyellow = {102, 102, 0, 20, 20, 0};
 G_Color dviolet = {51, 0, 102, 10, 0, 20};
 G_Color dmagenta = {102, 0, 102, 20, 0, 20};
 
+G_Color scott_blue = {25, 140, 211, 8, 24, 0};
+
 G_Color ui_fg_active = {253, 246, 227, 0, 0, 0};
 G_Color ui_bg_active = {0, 43, 54, 0, 0, 0};
 G_Color ui_fg_inactive = {147, 161, 161, 0, 0, 0};

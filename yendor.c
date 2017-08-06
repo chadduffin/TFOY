@@ -267,7 +267,7 @@ int G_PollEvents(void* data) {
 			case SDL_KEYDOWN:
 				{
 					if (game_info.event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-            return -1;
+            // escape pressed
 					} else {
 						if (game_info.phys[game_info.event.key.keysym.scancode] == 0) {
 							game_info.phys[game_info.event.key.keysym.scancode] = SDL_GetTicks();
@@ -950,11 +950,10 @@ void G_ResizeDPort(int x, int y, int w, int h) {
 void G_InitializeMenu(G_Scene **scene) {
   assert((scene != NULL) && (*scene != NULL));
 
-  int x, y, i;
+  int x, y;
   G_Tile tile;
   G_Scene *s = *scene;
   G_Entity *entity = NULL;
-  G_TreeNode *node = NULL;
   G_UIWidget *widget = NULL;
   G_UIComponent *ui = NULL;
 
@@ -984,65 +983,15 @@ void G_InitializeMenu(G_Scene **scene) {
   entity = G_EntityCreate();
   ui = (G_UIComponent*)G_EntityComponentInsert(&entity, UI_COMPONENT);
 
-  ui->root = G_UIWindowCreate(35, 25, 11, 5, 1);
+  ui->root = G_UIWindowCreate(35, 25, 11, 5, 0, 1);
 
-  widget = G_UIWidgetCreate(36, 26, 9, 1, 9, (void(*)(void*))(&G_SceneChange), &(G_TreeNodeFind(&scenes, 0)->data));
+  widget = G_UIWidgetCreate(36, 26, 9, 1, 0, 9, (void(*)(void*))(&G_SceneChange), &(G_TreeNodeFind(&scenes, 0)->data), "PLAY GAME");
+  G_UIWidgetHotkey(&widget, SDL_SCANCODE_P, 0);
+  G_UIWindowAddWidget(&(ui->root), &widget);
 
-  widget->focus = 0;
-  widget->changed = 0;
-  widget->hotkey = SDL_SCANCODE_P;
-  widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(widget->length));
-  widget->flags = VISIBLE | ACTIVE | HOVER;
-
-  widget->tiles[0].tile = 'P';
-  widget->tiles[1].tile = 'L';
-  widget->tiles[2].tile = 'A';
-  widget->tiles[3].tile = 'Y';
-  widget->tiles[4].tile = ' ';
-  widget->tiles[5].tile = 'G';
-  widget->tiles[6].tile = 'A';
-  widget->tiles[7].tile = 'M';
-  widget->tiles[8].tile = 'E';
-
-  for (i = 0; i < 9; i += 1) {
-    widget->tiles[i].fg = widget->fg;
-  }
-
-  widget->tiles[0].fg = yellow;
-
-  node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
-  node->key = 10;
-  node->data = widget;
-  G_TreeNodeInsert(&(ui->root->widgets), &node);
-
-  widget = G_UIWidgetCreate(36, 28, 9, 1, 9, &G_UIWidgetQuitGame, NULL);
-
-  widget->focus = 0;
-  widget->changed = 0;
-  widget->hotkey = SDL_SCANCODE_E;
-  widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(widget->length));
-  widget->flags = VISIBLE | ACTIVE | HOVER;
-
-  widget->tiles[0].tile = 'E';
-  widget->tiles[1].tile = 'X';
-  widget->tiles[2].tile = 'I';
-  widget->tiles[3].tile = 'T';
-  widget->tiles[4].tile = ' ';
-  widget->tiles[5].tile = 'G';
-  widget->tiles[6].tile = 'A';
-  widget->tiles[7].tile = 'M';
-  widget->tiles[8].tile = 'E';
-
-  for (i = 0; i < 9; i += 1) {
-    widget->tiles[i].fg = widget->fg;
-  }
-
-  widget->tiles[0].fg = yellow;
-
-  node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
-  node->key = 10;
-  node->data = widget;
-  G_TreeNodeInsert(&(ui->root->widgets), &node);
+  widget = G_UIWidgetCreate(36, 28, 9, 1, 0, 9, &G_UIWidgetQuitGame, NULL, "EXIT GAME");
+  G_UIWidgetHotkey(&widget, SDL_SCANCODE_E, 0);
+  G_UIWindowAddWidget(&(ui->root), &widget);
 
   G_SceneEntityInsert(scene, &entity);
 }

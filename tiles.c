@@ -12,7 +12,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Tall Grass", "", 2, 14, &green, &dblue, FLAMMABLE},
   {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
   {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
-  {"Water", "", 14, 7, &dblue, &blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
+  {"Water", "", 14, 7, &dblue, &scott_blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
 
   {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | ILLUMINATING},
 

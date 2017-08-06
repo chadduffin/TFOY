@@ -98,6 +98,8 @@ extern G_Color dviolet;
 extern G_Color dpurple;
 extern G_Color dmagenta;
 
+extern G_Color scott_blue;
+
 extern G_Color ui_fg_active;
 extern G_Color ui_bg_active;
 extern G_Color ui_fg_inactive;
