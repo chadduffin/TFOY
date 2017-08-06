@@ -546,6 +546,7 @@ void G_QTreeNodeMove(G_QTree **tree, G_Entity **entity, TileLayer layer, int x, 
 void G_QTreeNodeInsert(G_QTree **tree, G_Entity **entity, TileLayer layer);
 void G_QTreeNodeDelete(G_QTree **tree, G_Entity **entity, TileLayer layer);
 void G_QTreePurge(G_QTree **tree);
+G_Entity* G_QTreeEntityFind(G_QTree **tree, TileLayer layer, int x, int y);
 G_QTreeLeaf* G_QTreeNodeFind(G_QTree **tree, int x, int y);
 
 #endif /* YENDOR */

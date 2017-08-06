@@ -221,6 +221,11 @@ void G_ElementComponentUpdate(G_Entity **entity) {
           // spreads propogates
         }
         break;
+      case SPREADS_EXPLODE:
+        {
+          // spreads explode
+        }
+        break;
       default:
         break;
     }

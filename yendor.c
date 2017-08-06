@@ -311,7 +311,7 @@ int G_PollEvents(void* data) {
               int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w-DCOLS_OFFSET+active_scene->view.x,
                   y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h-DROWS_OFFSET+active_scene->view.y;
               G_Tile tile;
-              tile.tile = LAVA;
+              tile.tile = WALL;
 
               G_SceneSetGTile(&active_scene, tile, x, y);
             } else {
@@ -319,7 +319,7 @@ int G_PollEvents(void* data) {
                   y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
 
               printf("Tile Information\n");
-              printf("tile        %i  \n", G_GetTile(tilemap[x][y].layers));
+              printf("tile        %s  \n", tile_info[G_GetTile(tilemap[x][y].layers)-256].name);
               printf("is visible  %i  \n", vismap[x][y]);
               printf("light           \n");
               printf("+ intensity %i  \n", lightmap[x][y].count);
@@ -327,6 +327,14 @@ int G_PollEvents(void* data) {
               printf("+ green     %i  \n", lightmap[x][y].r);
               printf("+ blue      %i  \n", lightmap[x][y].r);
               printf("+ red       %i  \n", lightmap[x][y].r);
+
+              if (G_QTreeEntityFind(&(active_scene->collision), CREATURE_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET) != NULL) {
+                printf("Creature here.\n");
+              }
+
+              if (G_QTreeEntityFind(&(active_scene->collision), ORNAMENT_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET) != NULL) {
+                printf("Ornament here.\n");
+              }
             }
 					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
 						game_info.mouse_rb = (game_info.mouse_rb == 0) ? SDL_GetTicks() : game_info.mouse_rb;
@@ -1019,7 +1027,7 @@ boolean G_CellChanged(int x, int y, int a, int b) {
       if (flags & FLICKERS_QUICK) {
         range = FLICKER_RANGE/2;
       } else if (flags & FLICKERS_SLOW) {
-        range = FLICKER_RANGE*8;
+        range = FLICKER_RANGE*2;
       } else {
         range = FLICKER_RANGE;
       }
