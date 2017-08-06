@@ -2,8 +2,7 @@
 #include "globals.h"
 
 int main(int argc, char **argv) {
-  int status = 0, delay;
-  boolean full_frame = 0;
+  int status = 0;
   
   G_Init(NULL);
 
@@ -33,7 +32,7 @@ int main(int argc, char **argv) {
       G_UpdateEnd();
 
     #ifdef FRAME_CAP
-      delay = (1000.0/FPS)-(SDL_GetTicks()-game_info.last_update);
+      int delay = (1000.0/FPS)-(SDL_GetTicks()-game_info.last_update);
 
       if (delay > 0) {
         SDL_Delay(delay);

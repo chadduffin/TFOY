@@ -61,7 +61,7 @@
 
 #define FRAME_CAP
 #define UPDATE_DELAY 1014
-#define FLICKER_RANGE 128
+#define FLICKER_RANGE 48
 #define MAX_VIEW_DISTANCE (DCOLS/2)
 #define MAX_LIGHT_DISTANCE 128
 
@@ -301,7 +301,7 @@ typedef struct G_View {
 } G_View;
 
 typedef struct G_UIWidget {
-  int x, y, w, h, focus, length, depth;
+  int x, y, w, h, focus, length;
   void (*func)(void*), *data;
   SDL_Scancode hotkey;
   G_Color fg, bg;
@@ -311,11 +311,10 @@ typedef struct G_UIWidget {
 } G_UIWidget;
 
 typedef struct G_UIWindow {
-  int x, y, w, h, depth;
+  int x, y, w, h;
   boolean visible;
 
   G_Color fg, bg;
-  G_UIWidget *widget;
   G_Tree *widgets, *windows;
 } G_UIWindow;
 
@@ -437,6 +436,7 @@ void G_AddPointLight(int x, int y, int r, int g, int b, int intensity);
 void G_MakeVisible(int *x, int *y, void *data);
 void G_FocusView(G_Scene **view);
 void G_ResizeDPort(int x, int y, int w, int h);
+void G_InitializeMenu(G_Scene **scene);
 boolean G_CellChanged(int x, int y, int a, int b);
 boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 boolean G_PointWithinView(int x, int y);
@@ -496,8 +496,6 @@ G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);
 boolean G_SceneTilePropogate(G_Scene **scene, G_Entity **entity, int x, int y, boolean sentinel);
 
-void G_InitMenu(G_Scene **scene);
-
 /* tiles.c */
 void G_TileUpdate(Tile tile, int x, int y);
 TileFlag G_TileFlags(Tile tile);
@@ -505,8 +503,8 @@ SDL_Rect G_TileSource(Tile tile);
 boolean G_TileFlagCompare(Tile tile, TileFlag flag);
 
 /* ui.c */
-G_UIWindow* G_UIWindowCreate(void);
-G_UIWidget* G_UIWidgetCreate(void);
+G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, boolean visible);
+G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int length, void(*func)(void*), void *data);
 void G_AddUIWindow(G_UIWindow **parent, G_UIWindow **child);
 void G_AddUIWidget(G_UIWindow **parent, G_UIWidget **child);
 void G_UpdateUIWindow(G_UIWindow **window);
@@ -518,6 +516,7 @@ void G_UIWidgetToggleVisible(G_UIWidget **widget);
 void G_UIWidgetToggleActive(G_UIWidget **widget);
 void G_UIWindowDestroy(G_UIWindow **window);
 void G_UIWidgetDestroy(G_UIWidget **widget);
+void G_UIWidgetQuitGame(void *empty);
 
 /* tree.c */
 G_Tree* G_TreeCreate(void);

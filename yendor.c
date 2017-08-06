@@ -84,7 +84,7 @@ int G_Init(void *data) {
     /* creates menu */
     scene = G_SceneCreate(1, 1, 0);
     menu_id = scene->id;
-    G_InitMenu(&scene);
+    G_InitializeMenu(&scene);
 
     fmutex = SDL_CreateMutex();
 
@@ -311,7 +311,7 @@ int G_PollEvents(void* data) {
               int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w-DCOLS_OFFSET+active_scene->view.x,
                   y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h-DROWS_OFFSET+active_scene->view.y;
               G_Tile tile;
-              tile.tile = WALL;
+              tile.tile = LAVA;
 
               G_SceneSetGTile(&active_scene, tile, x, y);
             } else {
@@ -945,6 +945,106 @@ void G_ResizeDPort(int x, int y, int w, int h) {
 
     G_ClearBuffers();
   }
+}
+
+void G_InitializeMenu(G_Scene **scene) {
+  assert((scene != NULL) && (*scene != NULL));
+
+  int x, y, i;
+  G_Tile tile;
+  G_Scene *s = *scene;
+  G_Entity *entity = NULL;
+  G_TreeNode *node = NULL;
+  G_UIWidget *widget = NULL;
+  G_UIComponent *ui = NULL;
+
+  s->chunks[0].tiles = (G_Tile*)malloc(sizeof(G_Tile)*CHUNK_SIZE*CHUNK_SIZE);
+  s->chunks[0].status = IS_LOADED;
+
+  s->ambient.r = 255;
+  s->ambient.g = 255;
+  s->ambient.b = 255;
+
+  for (y = 0; y < ROWS; y += 1) {
+    for (x = 0; x < COLS; x += 1) {
+      if (title[y][x] == 'B') {
+        tile.tile = SOLID_BLACK;
+      } else if ((x > 0) && (title[y][x-1] == 'B')) {
+        tile.tile = SOLID_WHITE;
+      } else if (title[y][x] == ' ') {
+        tile.tile = SOLID_MAGENTA;
+      } else {
+        tile.tile = title[y][x];
+      }
+
+      G_SceneSetGTile(scene, tile, x, y);
+    }
+  }
+
+  entity = G_EntityCreate();
+  ui = (G_UIComponent*)G_EntityComponentInsert(&entity, UI_COMPONENT);
+
+  ui->root = G_UIWindowCreate(35, 25, 11, 5, 1);
+
+  widget = G_UIWidgetCreate(36, 26, 9, 1, 9, (void(*)(void*))(&G_SceneChange), &(G_TreeNodeFind(&scenes, 0)->data));
+
+  widget->focus = 0;
+  widget->changed = 0;
+  widget->hotkey = SDL_SCANCODE_P;
+  widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(widget->length));
+  widget->flags = VISIBLE | ACTIVE | HOVER;
+
+  widget->tiles[0].tile = 'P';
+  widget->tiles[1].tile = 'L';
+  widget->tiles[2].tile = 'A';
+  widget->tiles[3].tile = 'Y';
+  widget->tiles[4].tile = ' ';
+  widget->tiles[5].tile = 'G';
+  widget->tiles[6].tile = 'A';
+  widget->tiles[7].tile = 'M';
+  widget->tiles[8].tile = 'E';
+
+  for (i = 0; i < 9; i += 1) {
+    widget->tiles[i].fg = widget->fg;
+  }
+
+  widget->tiles[0].fg = yellow;
+
+  node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  node->key = 10;
+  node->data = widget;
+  G_TreeNodeInsert(&(ui->root->widgets), &node);
+
+  widget = G_UIWidgetCreate(36, 28, 9, 1, 9, &G_UIWidgetQuitGame, NULL);
+
+  widget->focus = 0;
+  widget->changed = 0;
+  widget->hotkey = SDL_SCANCODE_E;
+  widget->tiles = (G_UITile*)malloc(sizeof(G_UITile)*(widget->length));
+  widget->flags = VISIBLE | ACTIVE | HOVER;
+
+  widget->tiles[0].tile = 'E';
+  widget->tiles[1].tile = 'X';
+  widget->tiles[2].tile = 'I';
+  widget->tiles[3].tile = 'T';
+  widget->tiles[4].tile = ' ';
+  widget->tiles[5].tile = 'G';
+  widget->tiles[6].tile = 'A';
+  widget->tiles[7].tile = 'M';
+  widget->tiles[8].tile = 'E';
+
+  for (i = 0; i < 9; i += 1) {
+    widget->tiles[i].fg = widget->fg;
+  }
+
+  widget->tiles[0].fg = yellow;
+
+  node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  node->key = 10;
+  node->data = widget;
+  G_TreeNodeInsert(&(ui->root->widgets), &node);
+
+  G_SceneEntityInsert(scene, &entity);
 }
 
 boolean G_CellChanged(int x, int y, int a, int b) {

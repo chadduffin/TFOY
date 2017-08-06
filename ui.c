@@ -1,35 +1,38 @@
 #include "yendor.h"
 #include "globals.h"
 
-G_UIWindow* G_UIWindowCreate(void) {
+G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, boolean visible) {
   G_UIWindow *window = (G_UIWindow*)malloc(sizeof(G_UIWindow));
 
-  window->x = 0;
-  window->y = 0;
-  window->w = 0;
-  window->h = 0;
-  window->depth = 0;
-  window->visible = 1;
-  window->widget = NULL;
+  window->x = x;
+  window->y = y;
+  window->w = w;
+  window->h = h;
+  window->visible = visible;
+  window->fg = white;
+  window->bg = black;
   window->widgets = G_TreeCreate();
   window->windows = G_TreeCreate();
 
   return window;
 }
 
-G_UIWidget* G_UIWidgetCreate(void) {
+G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int length, void(*func)(void*), void *data) {
   G_UIWidget *widget = (G_UIWidget*)malloc(sizeof(G_UIWidget));
 
-  widget->x = 0;
-  widget->y = 0;
-  widget->w = 0;
-  widget->h = 0;
-  widget->depth = 0;
-  widget->length = 0;
+  widget->x = x;
+  widget->y = y;
+  widget->w = w;
+  widget->h = h;
+  widget->focus = 0;
+  widget->length = length;
+  widget->func = func;
+  widget->data = data;
   widget->hotkey = 0;
-  widget->func = NULL;
-  widget->data = NULL;
+  widget->fg = white;
+  widget->bg = black;
   widget->tiles = NULL;
+  widget->changed = 1;
   widget->flags = VISIBLE | ACTIVE;
 
   return widget;
@@ -116,7 +119,7 @@ void G_RenderUIWindow(G_UIWindow **window) {
       for (x = w->x; x < x_lim; x += 1) {
         if ((x >= 0) && (x < COLS) && (y >= 0) && (y < ROWS)) {
           if (tilemap[x][y].layers[UI_LAYER] == NOTHING) {
-            tilemap[x][y].fg = &ui_bg_active;
+            tilemap[x][y].fg = &ui_fg_inactive;
             tilemap[x][y].bg = &ui_bg_active;
 
             if ((x == w->x) || (x == w->x+w->w-1) ||
@@ -197,10 +200,6 @@ void G_UIWindowDestroy(G_UIWindow **window) {
 
   G_UIWindow *w = *window;
 
-  if (w->widget != NULL) {
-    G_UIWidgetDestroy(&(w->widget));
-  }
-
   G_TreeDestroy(&(w->windows));
   G_TreeDestroy(&(w->widgets));
 }
@@ -208,4 +207,8 @@ void G_UIWindowDestroy(G_UIWindow **window) {
 void G_UIWidgetDestroy(G_UIWidget **widget) {
   free((*widget)->tiles);
   free((*widget));
+}
+
+void G_UIWidgetQuitGame(void *empty) {
+  game_info.running = 0;
 }
