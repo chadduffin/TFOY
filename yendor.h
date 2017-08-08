@@ -65,6 +65,8 @@
 #define MAX_VIEW_DISTANCE (DCOLS/2)
 #define MAX_LIGHT_DISTANCE 128
 
+#define ELEMENT_THRESHOLD 16
+
 #define boolean unsigned char
 
 /*
@@ -204,6 +206,21 @@ typedef enum ChunkStatus {
   IS_LOADED,
 } ChunkStatus;
 
+typedef enum DirectionFlags {
+  NA = 0,
+  EE = 1,
+  NE = 2,
+  NN = 4,
+  NW = 8,
+  WW = 16,
+  SW = 32,
+  SS = 64,
+  SE = 128,
+  AL = EE | NE | NN | NW | WW | SW | SS | SE,
+
+  DIRECTION_COUNT = 8
+} DirectionFlags;
+
 /*
  * TYPEDEFS
  */
@@ -337,17 +354,11 @@ typedef struct G_RenderComponent {
   TileLayer layer;
 } G_RenderComponent;
 
-typedef struct G_ElementNode {
-  int x, y, age, amount;
-  boolean is_active;
-  struct G_ElementNode *next;
-} G_ElementNode;
-
 typedef struct G_ElementComponent {
-  int x, y, count, magnitude;
+  int amount, spread;
   TileFlag tile_flags;
   ElementFlag element_flags;
-  G_ElementNode *head, *tail;
+  DirectionFlags directions;
 } G_ElementComponent;
 
 typedef struct G_CreatureComponent {

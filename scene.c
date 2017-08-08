@@ -52,7 +52,12 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     G_Entity *entity = G_EntityCreate();
     G_LightComponent *light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
     G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+    G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
     G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
+
+    element->amount = 200;
+    element->tile_flags = FLICKERS_REGULAR | ILLUMINATING;
+    element->element_flags = SPREADS_PROPOGATE;
 
     light->light.r = 255;
     light->light.g = 255;

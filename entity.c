@@ -43,13 +43,11 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
     case ELEMENT_COMPONENT:
       {
         G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
-        element->x = 0;
-        element->y = 0;
-        element->count = 0;
-        element->magnitude = 0;
+        element->amount = 0;
+        element->spread = 100;
         element->tile_flags = 0;
         element->element_flags = 0;
-        element->head = element->tail = NULL;
+        element->directions = AL;
         (*entity)->components[ELEMENT_COMPONENT] = element;
         return element;
       }
@@ -196,7 +194,7 @@ void G_EntityUpdate(void *entity) {
 }
 
 void G_UIComponentUpdate(G_Entity **entity) {
-  G_Entity *e = *((G_Entity**)entity);
+  G_Entity *e = *entity;
   G_UIComponent *ui = (G_UIComponent*)G_EntityComponentFind(&e, UI_COMPONENT);
 
   if (ui != NULL) {
@@ -205,7 +203,7 @@ void G_UIComponentUpdate(G_Entity **entity) {
 }
 
 void G_ElementComponentUpdate(G_Entity **entity) {
-  G_Entity *e = *((G_Entity**)entity);
+  G_Entity *e = *entity;
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
 
@@ -218,7 +216,22 @@ void G_ElementComponentUpdate(G_Entity **entity) {
         break;
       case SPREADS_PROPOGATE:
         {
-          // spreads propogates
+          element->amount -= 1;
+
+          if (element->amount > ELEMENT_THRESHOLD) {
+            unsigned int i, value;
+
+            for (i = 1; i <= SS; i *= 4) {
+              value = G_RandomNumber(0, 100);
+
+              if ((value < element->spread) && ((element->directions & i) != NA)) {
+                element->spread = element->spread-25;
+                element->directions = element->directions ^ i;
+
+                printf("Spread %i.\n", i);
+              }
+            }
+          }
         }
         break;
       case SPREADS_EXPLODE:

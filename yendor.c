@@ -318,8 +318,10 @@ int G_PollEvents(void* data) {
               int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
                   y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;
 
+              Tile tile = G_GetTile(tilemap[x][y].layers);
+
               printf("Tile Information\n");
-              printf("tile        %s  \n", tile_info[G_GetTile(tilemap[x][y].layers)-256].name);
+              printf("tile        %i  \n", tile);
               printf("is visible  %i  \n", vismap[x][y]);
               printf("light           \n");
               printf("+ intensity %i  \n", lightmap[x][y].count);
