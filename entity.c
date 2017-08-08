@@ -218,17 +218,33 @@ void G_ElementComponentUpdate(G_Entity **entity) {
         {
           element->amount -= 1;
 
-          if (element->amount > ELEMENT_THRESHOLD) {
-            unsigned int i, value;
+          if (((element->directions & CA) != NA) && (element->amount > ELEMENT_THRESHOLD)) {
+            unsigned int i, j, value;
+            G_Entity *subentity = NULL;
+            G_RenderComponent *subrender = NULL;
+            G_ElementComponent *subelement = NULL;
 
-            for (i = 1; i <= SS; i *= 4) {
+            for (i = 1, j = 1; i <= SS; i *= 4, j += 1) {
               value = G_RandomNumber(0, 100);
 
               if ((value < element->spread) && ((element->directions & i) != NA)) {
+                subentity = G_EntityCreate();
+                subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
+                subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+
+                memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
+                memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
+
+                subrender->x += (j == 1)-(j == 3);
+                subrender->y += (j == 4)-(j == 2);
+
                 element->spread = element->spread-25;
                 element->directions = element->directions ^ i;
 
-                printf("Spread %i.\n", i);
+                subelement->spread = 75;
+                subelement->directions = CA ^ ((i == SS) ? NN : (i << 4));
+
+                G_SceneEntityInsert(&active_scene, &subentity);
               }
             }
           }

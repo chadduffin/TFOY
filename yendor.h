@@ -207,7 +207,7 @@ typedef enum ChunkStatus {
 } ChunkStatus;
 
 typedef enum DirectionFlags {
-  NA = 0,
+  NA = 0, // no direction
   EE = 1,
   NE = 2,
   NN = 4,
@@ -216,6 +216,7 @@ typedef enum DirectionFlags {
   SW = 32,
   SS = 64,
   SE = 128,
+  CA = EE | NN | WW | SS,
   AL = EE | NE | NN | NW | WW | SW | SS | SE,
 
   DIRECTION_COUNT = 8
