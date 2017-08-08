@@ -44,7 +44,7 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
       {
         G_ElementComponent *element = (G_ElementComponent*)malloc(sizeof(G_ElementComponent));
         element->amount = 0;
-        element->spread = 100;
+        element->spread = 10;
         element->tile_flags = 0;
         element->element_flags = 0;
         element->directions = AL;
@@ -228,23 +228,25 @@ void G_ElementComponentUpdate(G_Entity **entity) {
               value = G_RandomNumber(0, 100);
 
               if ((value < element->spread) && ((element->directions & i) != NA)) {
-                subentity = G_EntityCreate();
-                subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
-                subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+                if (G_QTreeEntityFind(&(active_scene->collision), CREATURE_LAYER, render->x+(j==1)-(j==3), render->y-(j==2)+(j==4)) == NULL) {
+                  subentity = G_EntityCreate();
+                  subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
+                  subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
 
-                memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
-                memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
+                  memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
+                  memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
 
-                subrender->x += (j == 1)-(j == 3);
-                subrender->y += (j == 4)-(j == 2);
+                  subrender->x += (j == 1)-(j == 3);
+                  subrender->y += (j == 4)-(j == 2);
 
-                element->spread = element->spread-25;
-                element->directions = element->directions ^ i;
+                  element->spread = element->spread-3;
+                  element->directions = element->directions ^ i;
 
-                subelement->spread = 75;
-                subelement->directions = CA ^ ((i == SS) ? NN : (i << 4));
+                  subelement->spread = 10;
+                  subelement->directions = CA ^ ((i == SS) ? NN : (i << 4));
 
-                G_SceneEntityInsert(&active_scene, &subentity);
+                  G_SceneEntityInsert(&active_scene, &subentity);
+                }
               }
             }
           }

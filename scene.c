@@ -55,7 +55,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
     G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
 
-    element->amount = 200;
+    element->amount = 64;
     element->tile_flags = FLICKERS_REGULAR | ILLUMINATING;
     element->element_flags = SPREADS_PROPOGATE;
 
