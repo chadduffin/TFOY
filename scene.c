@@ -53,11 +53,30 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     G_LightComponent *light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
     G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
     G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
-    G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
 
-    element->amount = 64;
-    element->tile_flags = FLICKERS_REGULAR | ILLUMINATING;
+    light->light.r = 255;
+    light->light.g = 255;
+    light->light.b = 255;
+    light->light.intensity = 2;
+
+    element->amount = 100;
+    element->intensity = 100;
+    element->dissipation = 1;
+    element->tile_flags = IS_FREEZING | FLICKERS_REGULAR | ILLUMINATING;
     element->element_flags = SPREADS_PROPOGATE;
+
+    render->x = 35;
+    render->y = 80;
+    render->tile = BASIC_FIRE;
+    render->layer = ELEMENT_LAYER;
+
+    scene->focus = entity;
+    G_SceneEntityInsert(&scene, &entity);
+
+    entity = G_EntityCreate();
+    G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
+    light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
+    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
 
     light->light.r = 255;
     light->light.g = 255;
@@ -240,6 +259,18 @@ void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y) {
       }
     }
   }
+}
+
+void G_BurnTile(int x, int y) {
+  G_TileTransition *transition = G_TileTransitionCreate(x, y, active_scene->step+256, BURNT_GRASS);
+
+  G_SceneTransitionInsert(&active_scene, &transition);
+}
+
+void G_FreezeTile(int x, int y) {
+  G_TileTransition *transition = G_TileTransitionCreate(x, y, active_scene->step+256, FROZEN_GRASS);
+
+  G_SceneTransitionInsert(&active_scene, &transition);
 }
 
 Tile G_SceneGetTile(G_Scene **scene, int x, int y) {

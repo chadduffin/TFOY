@@ -109,6 +109,7 @@ typedef enum Tile {
   GRASS,
   TALL_GRASS,
   BURNT_GRASS,
+  FROZEN_GRASS,
   FUNGUS,
   WATER,
 
@@ -167,8 +168,7 @@ typedef enum TileLayer {
   CREATURE_LAYER,
   ITEM_LAYER,
   ORNAMENT_LAYER,
-  EFFECT_LAYER,
-  GAS_LAYER,
+  ELEMENT_LAYER,
   BASE_LAYER,
 
   TILE_LAYER_COUNT
@@ -356,7 +356,7 @@ typedef struct G_RenderComponent {
 } G_RenderComponent;
 
 typedef struct G_ElementComponent {
-  int amount, spread;
+  int amount, intensity, dissipation;
   TileFlag tile_flags;
   ElementFlag element_flags;
   DirectionFlags directions;
@@ -492,6 +492,9 @@ void G_UIComponentUpdate(G_Entity **entity);
 void G_ElementComponentUpdate(G_Entity **entity);
 void G_ControllerComponentUpdate(G_Entity **entity);
 void G_EntityLightAdd(void *entity);
+void G_ElementDiffuse(G_Entity **entity);
+void G_ElementPropogate(G_Entity **entity);
+void G_ElementExplode(G_Entity **entity);
 
 /* scene.c */
 G_Scene* G_SceneCreate(int w, int h, boolean persistent);
@@ -503,6 +506,8 @@ void G_SceneEntityInsert(G_Scene **scene, G_Entity **entity);
 void G_SceneEntityDelete(G_Scene **scene, G_Entity **entity);
 void G_SceneTransitionInsert(G_Scene **scene, G_TileTransition **transition);
 void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y);
+void G_BurnTile(int x, int y);
+void G_FreezeTile(int x, int y);
 Tile G_SceneGetTile(G_Scene **scene, int x, int y);
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);

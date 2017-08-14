@@ -8,15 +8,16 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Stone", "", 14, 2, &dgrey, &grey, 0},
   {"Sand", "", 14, 2, &dyellow, &yellow, 0},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
-  {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE},
+  {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE | FREEZABLE},
   {"Tall Grass", "", 2, 14, &green, &dblue, FLAMMABLE},
   {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
+  {"Frozen Grass", "", 2, 2, &white, &scott_blue, 0},
   {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
   {"Water", "", 14, 7, &dblue, &scott_blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
 
   {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | ILLUMINATING},
 
-  {"Fire", "", 14, 1, &orange, &bad_color, FLICKERS_QUICK | DISABLES_ACTIONS},
+  {"Fire", "", 14, 1, &orange, &bad_color, ILLUMINATING | FLICKERS_QUICK | DISABLES_ACTIONS},
   {"Green Fire", "", 14, 1, &dgreen, &bad_color, FLICKERS_QUICK | DISABLES_ACTIONS},
 
   {"Human", "", 0, 4, &white, &bad_color, OBSTRUCTS_MOVEMENT},
