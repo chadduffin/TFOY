@@ -147,20 +147,24 @@ typedef enum TileFlag {
   FLICKERS_SLOW = 4,
   FLICKERS = FLICKERS_REGULAR | FLICKERS_QUICK | FLICKERS_SLOW,
 
-  FLAMMABLE = 8,
-  FREEZABLE = 16,
-  BREAKABLE = 32,
-  LUMINESCENT = 64,
-  ILLUMINATING = 128,
+  BARELY_FLAMMABLE = 8,
+  NORMAL_FLAMMABLE = 16,
+  HIGHLY_FLAMMABLE = 32,
+  FLAMMABLE = BARELY_FLAMMABLE | NORMAL_FLAMMABLE | HIGHLY_FLAMMABLE,
 
-  IS_BURNING = 256,
-  IS_FREEZING = 512,
+  FREEZABLE = 64,
+  BREAKABLE = 128,
+  LUMINESCENT = 256,
+  ILLUMINATING = 512,
 
-  OBSTRUCTS_VISION = 1024,
-  OBSTRUCTS_MOVEMENT = 2048,
+  IS_BURNING = 1024,
+  IS_FREEZING = 2048,
+
+  OBSTRUCTS_VISION = 4096,
+  OBSTRUCTS_MOVEMENT = 8192,
   OBSTRUCTS = OBSTRUCTS_VISION | OBSTRUCTS_MOVEMENT,
 
-  DISABLES_ACTIONS = 4096,
+  DISABLES_ACTIONS = 16384,
 } TileFlag;
 
 typedef enum TileLayer {
@@ -506,8 +510,8 @@ void G_SceneEntityInsert(G_Scene **scene, G_Entity **entity);
 void G_SceneEntityDelete(G_Scene **scene, G_Entity **entity);
 void G_SceneTransitionInsert(G_Scene **scene, G_TileTransition **transition);
 void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y);
-void G_BurnTile(int x, int y);
-void G_FreezeTile(int x, int y);
+void G_BurnTile(int x, int y, unsigned int when);
+void G_FreezeTile(int x, int y, unsigned int when);
 Tile G_SceneGetTile(G_Scene **scene, int x, int y);
 G_Tile G_SceneGetGTile(G_Scene **scene, int x, int y);
 boolean G_SceneTileObstructs(G_Scene **scene, int x, int y);

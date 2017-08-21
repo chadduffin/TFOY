@@ -107,7 +107,7 @@ void G_UpdateUIWidget(G_UIWidget **widget) {
 
       if (game_info.mouse_lb != 0) {
         w->flags = w->flags | MOUSE_PRESSED;
-        focus = 32;
+        focus = 64;
       }
     } else {
       w->flags = (w->flags | HOVER | MOUSE_PRESSED) ^ (HOVER | MOUSE_PRESSED);
@@ -115,11 +115,11 @@ void G_UpdateUIWidget(G_UIWidget **widget) {
 
     if (game_info.phys[w->hotkey] != 0) {
       w->flags = w->flags | KEY_PRESSED;
-      focus = 32;
+      focus = 64;
     } else if (((w->flags & HOVER) == HOVER) || (game_info.phys[w->hotkey] > 0)) {
-      focus = (w->focus < 32) ? w->focus+2 : 32;
+      focus = (w->focus < 64) ? w->focus+4 : 64;
     } else {
-      focus = (w->focus > 0) ? w->focus-1 : 0;
+      focus = (w->focus > 0) ? w->focus-2 : 0;
     }
 
     if ((w->flags & PRESSED) > 0) {

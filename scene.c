@@ -59,10 +59,10 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     light->light.b = 255;
     light->light.intensity = 2;
 
-    element->amount = 100;
-    element->intensity = 100;
+    element->amount = 128;
+    element->intensity = 32;
     element->dissipation = 1;
-    element->tile_flags = IS_FREEZING | FLICKERS_REGULAR | ILLUMINATING;
+    element->tile_flags = IS_BURNING | FLICKERS_REGULAR | ILLUMINATING;
     element->element_flags = SPREADS_PROPOGATE;
 
     render->x = 35;
@@ -216,6 +216,8 @@ void G_SceneEntityDelete(G_Scene **scene, G_Entity **entity) {
   G_Entity *e = *entity;
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
 
+  G_EntityMove(entity, 0, -1, -1);
+
   node->key = e->id.value;
   node->right = NULL;
   node->left = NULL;
@@ -261,14 +263,14 @@ void G_SceneSetGTile(G_Scene **scene, G_Tile tile, int x, int y) {
   }
 }
 
-void G_BurnTile(int x, int y) {
-  G_TileTransition *transition = G_TileTransitionCreate(x, y, active_scene->step+256, BURNT_GRASS);
+void G_BurnTile(int x, int y, unsigned int when) {
+  G_TileTransition *transition = G_TileTransitionCreate(x, y, when, BURNT_GRASS);
 
   G_SceneTransitionInsert(&active_scene, &transition);
 }
 
-void G_FreezeTile(int x, int y) {
-  G_TileTransition *transition = G_TileTransitionCreate(x, y, active_scene->step+256, FROZEN_GRASS);
+void G_FreezeTile(int x, int y, unsigned int when) {
+  G_TileTransition *transition = G_TileTransitionCreate(x, y, when, FROZEN_GRASS);
 
   G_SceneTransitionInsert(&active_scene, &transition);
 }

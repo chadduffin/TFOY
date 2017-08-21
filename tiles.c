@@ -8,7 +8,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Stone", "", 14, 2, &dgrey, &grey, 0},
   {"Sand", "", 14, 2, &dyellow, &yellow, 0},
   {"Wall", "", 3, 2, &dred, &grey, OBSTRUCTS},
-  {"Grass", "", 2, 2, &green, &dblue, FLAMMABLE | FREEZABLE},
+  {"Grass", "", 2, 2, &green, &dblue, HIGHLY_FLAMMABLE | FREEZABLE},
   {"Tall Grass", "", 2, 14, &green, &dblue, FLAMMABLE},
   {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
   {"Frozen Grass", "", 2, 2, &white, &scott_blue, 0},

@@ -339,13 +339,15 @@ void G_ElementPropogate(G_Entity **entity) {
 
         if ((leaf == NULL) || (leaf->entities[ELEMENT_LAYER] == NULL)) {
           if (((element->tile_flags & IS_BURNING) == IS_BURNING) &&
-              (G_TileFlagCompare(tile, FLAMMABLE))) {
-            G_BurnTile(x, y);
-            amount = G_RandomNumber(0, 16);
+              ((G_TileFlags(tile) & FLAMMABLE) != 0)) {
+            amount = G_RandomNumber(0, G_TileFlags(tile) & FLAMMABLE);
+
+            G_BurnTile(x, y, active_scene->step+element->amount+amount+G_RandomNumber(512, 768));
           } else if (((element->tile_flags & IS_FREEZING) == IS_FREEZING) &&
                       (G_TileFlagCompare(tile, FREEZABLE))) {
-            G_FreezeTile(x, y);
             amount = 0;
+
+            G_FreezeTile(x, y, active_scene->step+element->amount+G_RandomNumber(512, 768));
           } else {
             continue;
           }
