@@ -1006,6 +1006,15 @@ void G_InitializeMenu(G_Scene **scene) {
   G_SceneEntityInsert(scene, &entity);
 }
 
+G_Position G_GetDirectionComponents(DirectionFlags flag) {
+  G_Position position;
+
+  position.x = ((flag & 0x83) ? 1 : 0)-((flag & 0x38) ? 1 : 0);
+  position.y = ((flag & 0xE0) ? 1 : 0)-((flag & 0x0E) ? 1 : 0);
+
+  return position;
+}
+
 boolean G_CellChanged(int x, int y, int a, int b) {
   int range;
   TileFlag flags;

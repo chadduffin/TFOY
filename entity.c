@@ -6,7 +6,6 @@ G_Entity* G_EntityCreate(void) {
   G_Entity *entity = (G_Entity*)malloc(sizeof(G_Entity));
 
   entity->id = G_GetId();
-  entity->parent.value = -1;
   
   for (i = 0; i < COMPONENT_COUNT; i += 1) {
     entity->components[i] = NULL;
@@ -47,8 +46,10 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
         element->intensity = 0;
         element->dissipation = 0;
         element->tile_flags = 0;
+        element->target_flag = 0;
         element->element_flags = 0;
         element->directions = AL;
+        element->func = NULL;
         (*entity)->components[ELEMENT_COMPONENT] = element;
         return element;
       }
@@ -312,25 +313,71 @@ void G_EntityLightAdd(void *entity) {
 }
 
 void G_ElementDiffuse(G_Entity **entity) {
+  G_Entity *e = *entity;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
+  G_Position position;
 
+  if (((element->directions & CA) != NA)) {
+    unsigned int i, x, y, amount;
+    G_Entity *subentity = NULL;
+    G_RenderComponent *subrender = NULL;
+    G_ElementComponent *subelement = NULL;
+
+    for (i = 1; i <= SE; i *= 2) {
+      position = G_GetDirectionComponents(i);
+
+      x = render->x+position.x;
+      y = render->y+position.y;
+
+      if ((element->directions & i) != NA) {
+        Tile tile = G_SceneGetTile(&active_scene, x, y);
+        G_QTreeLeaf *leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
+
+        if ((leaf == NULL) || (leaf->entities[ELEMENT_LAYER] == NULL)) {
+          subentity = G_EntityCreate();
+          subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
+          subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+
+          memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
+          memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
+
+          subrender->x = x;
+          subrender->y = y;
+
+          element->directions = element->directions ^ i;
+
+          subelement->amount += amount;
+          subelement->intensity -= subelement->dissipation;
+          subelement->directions = AL ^ ((i > NW) ? (i >> 4) : (i << 4));
+
+          G_SceneEntityInsert(&active_scene, &subentity);
+        }
+      }
+    }
+  }
 }
 
 void G_ElementPropogate(G_Entity **entity) {
   G_Entity *e = *entity;
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
+  G_Position position;
 
   element->amount -= 1;
 
-  if ((element->directions & CA) != NA) {
-    unsigned int i, j, x, y, value, amount;
+  if (((element->directions & CA) != NA) && (element->intensity > 0)) {
+    unsigned int i, x, y, value, amount;
     G_Entity *subentity = NULL;
     G_RenderComponent *subrender = NULL;
     G_ElementComponent *subelement = NULL;
 
-    for (i = 1, j = 1; i <= SS; i *= 4, j += 1) {
-      x = render->x+(j==1)-(j==3);
-      y = render->y-(j==2)+(j==4);
+    for (i = 1; i <= SE; i *= 2) {
+      position = G_GetDirectionComponents(i);
+
+      x = render->x+position.x;
+      y = render->y+position.y;
+
       value = G_RandomNumber(0, 100);
 
       if ((value < element->intensity) && ((element->directions & i) != NA)) {
@@ -338,16 +385,14 @@ void G_ElementPropogate(G_Entity **entity) {
         G_QTreeLeaf *leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
 
         if ((leaf == NULL) || (leaf->entities[ELEMENT_LAYER] == NULL)) {
-          if (((element->tile_flags & IS_BURNING) == IS_BURNING) &&
-              ((G_TileFlags(tile) & FLAMMABLE) != 0)) {
-            amount = G_RandomNumber(0, G_TileFlags(tile) & FLAMMABLE);
+          if (G_TileFlags(tile) & element->target_flag) {
+            if (element->target_flag == FLAMMABLE) {
+              amount = G_RandomNumber(0, G_TileFlags(tile) & FLAMMABLE);
+            } else {
+              amount = 0;
+            }
 
-            G_BurnTile(x, y, active_scene->step+element->amount+amount+G_RandomNumber(512, 768));
-          } else if (((element->tile_flags & IS_FREEZING) == IS_FREEZING) &&
-                      (G_TileFlagCompare(tile, FREEZABLE))) {
-            amount = 0;
-
-            G_FreezeTile(x, y, active_scene->step+element->amount+G_RandomNumber(512, 768));
+            (element->func)(x, y, active_scene->step+element->amount+amount+G_RandomNumber(512, 768));
           } else {
             continue;
           }
@@ -366,7 +411,7 @@ void G_ElementPropogate(G_Entity **entity) {
 
           subelement->amount += amount;
           subelement->intensity -= subelement->dissipation;
-          subelement->directions = CA ^ ((i == SS) ? NN : (i << 4));
+          subelement->directions = AL ^ ((i > NW) ? (i >> 4) : (i << 4));
 
           G_SceneEntityInsert(&active_scene, &subentity);
         }

@@ -63,7 +63,9 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     element->intensity = 32;
     element->dissipation = 1;
     element->tile_flags = IS_BURNING | FLICKERS_REGULAR | ILLUMINATING;
+    element->target_flag = FLAMMABLE;
     element->element_flags = SPREADS_PROPOGATE;
+    element->func = &G_BurnTile;
 
     render->x = 35;
     render->y = 80;

@@ -341,7 +341,7 @@ typedef struct G_UIWindow {
 } G_UIWindow;
 
 typedef struct G_Entity {
-  G_Id id, parent;
+  G_Id id;
   void *components[COMPONENT_COUNT];
 } G_Entity;
 
@@ -361,9 +361,10 @@ typedef struct G_RenderComponent {
 
 typedef struct G_ElementComponent {
   int amount, intensity, dissipation;
-  TileFlag tile_flags;
+  TileFlag tile_flags, target_flag;
   ElementFlag element_flags;
   DirectionFlags directions;
+  void (*func)(int, int, unsigned int);
 } G_ElementComponent;
 
 typedef struct G_CreatureComponent {
@@ -423,7 +424,7 @@ double G_Noise(double X, double Y);
 double G_NoiseOctaveSum(int X, int Y);
 /*************/
 
-/* roguecraft.c */
+/* yendor.c */
 int G_Init(void *data);
 int G_Update(void *data);
 int G_PollEvents(void* data);
@@ -457,6 +458,7 @@ boolean G_CellChanged(int x, int y, int a, int b);
 boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy);
 boolean G_PointWithinView(int x, int y);
 G_Id G_GetId(void);
+G_Position G_GetDirectionComponents(DirectionFlags flag);
 Tile G_GetTile(Tile layers[TILE_LAYER_COUNT]);
 
 /* rendering.c */
