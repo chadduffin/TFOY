@@ -15,6 +15,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
   {"Water", "", 14, 7, &dblue, &scott_blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
 
+  {"Ice", "", 10, 2, &white, &scott_blue, 0},
   {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | ILLUMINATING},
 
   {"Fire", "", 14, 1, &orange, &bad_color, ILLUMINATING | FLICKERS_QUICK | DISABLES_ACTIONS},

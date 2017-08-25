@@ -48,7 +48,7 @@ G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int depth, int length, 
 }
 
 void G_UIWindowAddWidget(G_UIWindow **window, G_UIWidget **widget) {
-  assert((window != NULL) && (*window != NULL) && (widget != NULL) && (*widget != NULL));
+  assert((window) && (*window) && (widget) && (*widget));
 
   G_UIWidget *wid = *widget;
   G_UIWindow *win = *window;
@@ -61,7 +61,7 @@ void G_UIWindowAddWidget(G_UIWindow **window, G_UIWidget **widget) {
 }
 
 void G_UIWindowAddWindow(G_UIWindow **window, G_UIWindow **subwindow) {
-  assert((window != NULL) && (*window != NULL) && (subwindow != NULL) && (*subwindow != NULL));
+  assert((window) && (*window) && (subwindow) && (*subwindow));
 
   G_UIWindow *win = *window, *sub = *subwindow;
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
@@ -73,7 +73,7 @@ void G_UIWindowAddWindow(G_UIWindow **window, G_UIWindow **subwindow) {
 }
 
 void G_UIWidgetHotkey(G_UIWidget **widget, SDL_Scancode hotkey, int index) {
-  assert((widget != NULL) && (*widget != NULL));
+  assert((widget) && (*widget));
 
   G_UIWidget *w = *widget;
 
@@ -244,7 +244,7 @@ void G_UIWidgetToggleActive(G_UIWidget **widget) {
 }
 
 void G_UIWindowDestroy(G_UIWindow **window) {
-  assert((window != NULL) && (*window != NULL));
+  assert((window) && (*window));
 
   G_UIWindow *w = *window;
 

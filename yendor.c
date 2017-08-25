@@ -30,13 +30,13 @@ int G_Init(void *data) {
 
 		game_info.window = SDL_CreateWindow("TFOY", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
 
-    if (game_info.window != NULL) {
+    if (game_info.window) {
 			game_info.renderer = SDL_CreateRenderer(game_info.window, -1, SDL_RENDERER_ACCELERATED);
       
 			if (SDL_GetRendererOutputSize(game_info.renderer, &(game_info.window_w), &(game_info.window_h)) == 0) {
 				G_UpdateRenderingInfo();
 
-        if (game_info.renderer != NULL) {
+        if (game_info.renderer) {
 					game_info.buffers[0] = SDL_CreateTexture(game_info.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, game_info.window_w, game_info.window_h);
 					game_info.buffers[1] = SDL_CreateTexture(game_info.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, game_info.window_w, game_info.window_h);
 
@@ -56,7 +56,7 @@ int G_Init(void *data) {
     }
   }
 
-  if (game_info.renderer != NULL) {
+  if (game_info.renderer) {
 		int i;
 		IMG_Init(IMG_INIT_PNG);
 		SDL_Surface *holder = NULL;
@@ -176,7 +176,7 @@ int G_Update(void *data) {
     G_UpdateInfrequent();
   }
 
-  if (active_scene != NULL) {
+  if (active_scene) {
     active_scene->view.xp = active_scene->view.x;
     active_scene->view.yp = active_scene->view.y;
 
@@ -330,11 +330,11 @@ int G_PollEvents(void* data) {
               printf("+ blue      %i  \n", lightmap[x][y].r);
               printf("+ red       %i  \n", lightmap[x][y].r);
 
-              if (G_QTreeEntityFind(&(active_scene->collision), CREATURE_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET) != NULL) {
+              if (G_QTreeEntityFind(&(active_scene->collision), CREATURE_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET)) {
                 printf("Creature here.\n");
               }
 
-              if (G_QTreeEntityFind(&(active_scene->collision), ORNAMENT_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET) != NULL) {
+              if (G_QTreeEntityFind(&(active_scene->collision), ORNAMENT_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET)) {
                 printf("Ornament here.\n");
               }
             }
@@ -451,9 +451,9 @@ int G_CopyBuffer(void *data) {
       console.tilemap[x][y].bg = tilemap[x][y].bg;
 
       vismap[x][y] = 0;
-      lightmap[x][y].r = (active_scene == NULL) ? 0 : (active_scene->ambient.r);
-      lightmap[x][y].g = (active_scene == NULL) ? 0 : (active_scene->ambient.g);
-      lightmap[x][y].b = (active_scene == NULL) ? 0 : (active_scene->ambient.b);
+      lightmap[x][y].r = (active_scene) ? (active_scene->ambient.r) : 0;
+      lightmap[x][y].g = (active_scene) ? (active_scene->ambient.g) : 0;
+      lightmap[x][y].b = (active_scene) ? (active_scene->ambient.b) : 0;
       lightmap[x][y].count = 1;
       lightmap[x][y].id.value = -1;
       lightmap[x][y].intensity = 255;
@@ -599,14 +599,14 @@ void G_UpdateBegin(void) {
     if (active_scene->id.value == menu_id.value) {
       node = G_TreeNodeFind(&scenes, overworld_id.value);
       
-      if (node != NULL) {
+      if (node) {
         scene = (G_Scene*)(node->data);
         G_SceneChange(&scene);
       }
     } else {
       node = G_TreeNodeFind(&scenes, menu_id.value);
 
-      if (node != NULL) {
+      if (node) {
         scene = (G_Scene*)(node->data);
         G_SceneChange(&scene);
       }
@@ -619,13 +619,13 @@ void G_UpdateBegin(void) {
 }
 
 void G_UpdateEnd(void) {
-  if (active_scene != NULL) {
+  if (active_scene) {
     G_TreeNode *node = active_scene->del_buffer;
 
-    while (node != NULL) {
+    while (node) {
       G_TreeNode *actual = G_TreeNodeFind(&(active_scene->entities), node->key);
 
-      if (actual != NULL) {
+      if (actual) {
         G_TreeNodeDelete(&(active_scene->entities), &actual);
       }
 
@@ -640,7 +640,7 @@ void G_UpdateEnd(void) {
 
 /* insert all nodes that were created */
 
-    while (node != NULL) {
+    while (node) {
       active_scene->ins_buffer = node->left;
       node->left = NULL;
 
@@ -659,7 +659,7 @@ void G_UpdateInfrequent(void) {
   game_info.frame_count = 0;
   game_info.timer = SDL_GetTicks();
 
-  if ((active_scene != NULL) && (active_scene->persistent)) {
+  if ((active_scene) && (active_scene->persistent)) {
     int
       i, j, id,
       x = (active_scene->view.x+(active_scene->view.w/2))/CHUNK_SIZE,
@@ -703,9 +703,9 @@ void G_ClearBuffers(void) {
   for (y = 0; y < ROWS; y += 1) {
     for (x = 0; x < COLS; x += 1) {
       vismap[x][y] = 0;
-      lightmap[x][y].r = (active_scene == NULL) ? 0 : (active_scene->ambient.r);
-      lightmap[x][y].g = (active_scene == NULL) ? 0 : (active_scene->ambient.g);
-      lightmap[x][y].b = (active_scene == NULL) ? 0 : (active_scene->ambient.b);
+      lightmap[x][y].r = (active_scene) ? (active_scene->ambient.r) : 0;
+      lightmap[x][y].g = (active_scene) ? (active_scene->ambient.g) : 0;
+      lightmap[x][y].b = (active_scene) ? (active_scene->ambient.b) : 0;
       lightmap[x][y].count = 1;
       lightmap[x][y].id.value = -1;
       lightmap[x][y].intensity = 255;
@@ -738,7 +738,7 @@ void G_InitializeKeybindings(void) {
 }
 
 void G_GenerateFOV(int x, int y, int range, void *light, void (*func)(int*, int*, void*)) {
-	if ((active_scene == NULL) ||
+	if ((!active_scene) ||
       (x < 0) || (x >= active_scene->tw) ||
 			(y < 0) || (y >= active_scene->th)) {
 		return;
@@ -848,7 +848,7 @@ void G_Shadowcast(int scene_x, int scene_y, int dx, int dy, int dist, int range,
 }
 
 void G_AddLight(int *x, int *y, void *data) {
-	assert((x != NULL) && (y != NULL) && (data != NULL) && (active_scene != NULL));
+	assert((x) && (y) && (data) && (active_scene));
 
 	G_LightNode *light = (G_LightNode*)data;
 	int
@@ -912,7 +912,7 @@ void G_AddPointLight(int x, int y, int r, int g, int b, int intensity) {
 }
 
 void G_MakeVisible(int *x, int *y, void *data) {
-	assert((x != NULL) && (y != NULL));
+	assert((x) && (y));
 
 	int
 		lx = *x+DCOLS_OFFSET,
@@ -928,7 +928,7 @@ void G_FocusView(G_Scene **scene) {
   G_Scene *s = *scene;
   G_Entity *focus = s->focus;
 
-  if ((focus != NULL) && (s->view.follows)) {
+  if ((focus) && (s->view.follows)) {
     int x, y;
 
     G_EntityPos(&focus, &x, &y);
@@ -948,7 +948,7 @@ void G_ResizeDPort(int x, int y, int w, int h) {
     DROWS_OFFSET = y;
     DROWS = h;
 
-    if (active_scene != NULL) {
+    if (active_scene) {
       active_scene->view.w = DCOLS;
       active_scene->view.h = DROWS;
     }
@@ -958,7 +958,7 @@ void G_ResizeDPort(int x, int y, int w, int h) {
 }
 
 void G_InitializeMenu(G_Scene **scene) {
-  assert((scene != NULL) && (*scene != NULL));
+  assert((scene) && (*scene));
 
   int x, y;
   G_Tile tile;
@@ -1071,7 +1071,7 @@ boolean G_LightCanShine(int fx, int fy, int lx, int ly, int dx, int dy) {
 }
 
 boolean G_PointWithinView(int x, int y) {
-  assert(active_scene != NULL);
+  assert(active_scene);
 
   return ((x >= active_scene->view.x) && (x < active_scene->view.x+active_scene->view.w) &&
           (y >= active_scene->view.y) && (y < active_scene->view.y+active_scene->view.h));

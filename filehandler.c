@@ -93,7 +93,7 @@ void G_IntToChar(unsigned int input, unsigned char *output, boolean full) {
 }
 
 void G_LoadChunksInner(long int *chunk_list, long int *scene_list, unsigned int length) {
-  assert((chunk_list != NULL) && (scene_list != NULL));
+  assert((chunk_list) && (scene_list));
 
   char filename[16];
   unsigned char c[4], *chunk = NULL;
@@ -111,7 +111,7 @@ void G_LoadChunksInner(long int *chunk_list, long int *scene_list, unsigned int 
     file_id = (x/FILE_CHUNK_SIZE)+(y/FILE_CHUNK_SIZE)*(WORLD_WIDTH/FILE_CHUNK_SIZE);
     file_id_offset = (x%FILE_CHUNK_SIZE)+(y%FILE_CHUNK_SIZE)*FILE_CHUNK_SIZE;
     
-    if ((file == NULL) || (file_id != file_id_prev)) {
+    if ((!file) || (file_id != file_id_prev)) {
       sprintf(filename, "data/c.%3i.tfoy", file_id);
       filename[7] = (file_id > 99) ? filename[7] : '0';
       filename[8] = (file_id > 9) ? filename[8] : '0';
@@ -122,7 +122,7 @@ void G_LoadChunksInner(long int *chunk_list, long int *scene_list, unsigned int 
       j += 1;
     }
   
-    if (file != NULL) {
+    if (file) {
       fread(c, sizeof(unsigned char), 4, file);
       chunk_length = G_CharToInt(c, 1);
 
@@ -138,7 +138,7 @@ void G_LoadChunksInner(long int *chunk_list, long int *scene_list, unsigned int 
 
         node = G_TreeNodeFind(&scenes, scene_list[i]);
 
-        if (node != NULL) {
+        if (node) {
           scene = (G_Scene*)(node->data);
 
           chunk = (unsigned char*)malloc(sizeof(unsigned char)*chunk_length);

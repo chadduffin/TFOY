@@ -113,6 +113,7 @@ typedef enum Tile {
   FUNGUS,
   WATER,
 
+  ICE,
   LAVA,
   
   BASIC_FIRE,

@@ -15,13 +15,13 @@ G_Entity* G_EntityCreate(void) {
 }
 
 void* G_EntityComponentFind(G_Entity **entity, Component component) {
-  assert((entity != NULL) && (*entity != NULL));
+  assert((entity) && (*entity));
 
   return (*entity)->components[component];
 }
 
 void* G_EntityComponentInsert(G_Entity **entity, Component component) {
-  assert((entity != NULL) && (*entity != NULL));
+  assert((entity) && (*entity));
 
 	switch (component) {
 		case CONTROLLER_COMPONENT:
@@ -93,9 +93,9 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
 }
 
 void G_EntityComponentDelete(G_Entity **entity, Component component) {
-  assert((entity != NULL) && (*entity != NULL));
+  assert((entity) && (*entity));
   
-  if ((*entity)->components[component] != NULL) {
+  if ((*entity)->components[component]) {
     if (component == UI_COMPONENT) {
       G_UIComponent *ui = (G_UIComponent*)G_EntityComponentFind(entity, component);
       G_UIWindowDestroy(&(ui->root));
@@ -106,7 +106,7 @@ void G_EntityComponentDelete(G_Entity **entity, Component component) {
 }
 
 void G_EntitySetLayer(G_Entity **entity, TileLayer layer) {
-  assert((entity != NULL) && (*entity != NULL));
+  assert((entity) && (*entity));
 
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
 
@@ -114,7 +114,7 @@ void G_EntitySetLayer(G_Entity **entity, TileLayer layer) {
 }
 
 void G_EntityPos(G_Entity **entity, int *x, int *y) {
-  if ((entity != NULL) && (*entity != NULL)) {
+  if ((entity) && (*entity)) {
     G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
 
     *x = render->x;
@@ -126,12 +126,12 @@ void G_EntityPos(G_Entity **entity, int *x, int *y) {
 }
 
 void G_EntityMove(G_Entity **entity, boolean relative, int x, int y) {
-  assert((entity != NULL) && (*entity != NULL));
+  assert((entity) && (*entity));
 
   int cur_x = 0, cur_y = 0;
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
 
-  if (render != NULL) {
+  if (render) {
     G_EntityPos(entity, &cur_x, &cur_y);
 
     if (relative) {
@@ -147,13 +147,13 @@ void G_EntityMove(G_Entity **entity, boolean relative, int x, int y) {
 }
 
 void G_EntityDestroy(G_Entity **entity) {
-  assert((entity != NULL) && (*entity != NULL));
+  assert((entity) && (*entity));
 
   int i;
   G_Entity *e = *entity;
 
   for (i = 0; i < COMPONENT_COUNT; i += 1) {
-    if (e->components[i] != NULL) {
+    if (e->components[i]) {
       G_EntityComponentDelete(entity, i);
     }
   }
@@ -163,17 +163,17 @@ void G_EntityDestroy(G_Entity **entity) {
 }
 
 void G_EntityRender(void *entity) {
-  assert(entity != NULL);
+  assert(entity);
 
   G_Entity *e = *((G_Entity**)entity);
   G_UIComponent *ui = (G_UIComponent*)G_EntityComponentFind(&e, UI_COMPONENT);
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
 
-  if (render != NULL) {
+  if (render) {
     if (G_PointWithinView(render->x, render->y)) {
       tilemap[render->x-active_scene->view.x+DCOLS_OFFSET][render->y-active_scene->view.y+DROWS_OFFSET].layers[render->layer] = render->tile;
     }
-  } else if ((ui != NULL) && (ui->root != NULL) && (ui->root->visible)) {
+  } else if ((ui) && (ui->root) && (ui->root->visible)) {
     G_EntityRenderUI(&ui);
   }
 }
@@ -183,7 +183,7 @@ void G_EntityRenderUI(G_UIComponent **ui) {
 }
 
 void G_EntityUpdate(void *entity) {
-  assert(entity != NULL);
+  assert(entity);
 
   G_Entity *e = *((G_Entity**)entity);
 
@@ -199,7 +199,7 @@ void G_UIComponentUpdate(G_Entity **entity) {
   G_Entity *e = *entity;
   G_UIComponent *ui = (G_UIComponent*)G_EntityComponentFind(&e, UI_COMPONENT);
 
-  if (ui != NULL) {
+  if (ui) {
     G_UpdateUIWindow(&(ui->root));
   }
 }
@@ -209,7 +209,7 @@ void G_ElementComponentUpdate(G_Entity **entity) {
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
 
-  if ((render != NULL) && (element != NULL)) {
+  if ((render) && (element)) {
     switch (element->element_flags) {
       case SPREADS_DIFFUSE:
         {
@@ -219,6 +219,10 @@ void G_ElementComponentUpdate(G_Entity **entity) {
       case SPREADS_PROPOGATE:
         {
           if (element->amount <= 0) {
+            if (element->func) {
+              (element->func)(render->x, render->y, active_scene->step+G_RandomNumber(512, 768));
+            }
+
             G_SceneEntityDelete(&active_scene, entity);
           } else {
             G_ElementPropogate(entity);
@@ -241,7 +245,7 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
   G_ControllerComponent *controller = (G_ControllerComponent*)G_EntityComponentFind(entity, CONTROLLER_COMPONENT);
 
-  if (controller != NULL) {
+  if (controller) {
     x = render->x;
     y = render->y;
 
@@ -281,13 +285,13 @@ void G_ControllerComponentUpdate(G_Entity **entity) {
 }
 
 void G_EntityLightAdd(void *entity) {
-  assert(entity != NULL);
+  assert(entity);
 
   G_Entity *e = *((G_Entity**)entity);
   G_LightComponent *light = (G_LightComponent*)G_EntityComponentFind(&e, LIGHT_COMPONENT);
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
 
-  if ((light != NULL) && (render != NULL)) {
+  if ((light) && (render)) {
     int x = render->x-(active_scene->view.x+active_scene->view.w/2),
         y = render->y-(active_scene->view.y+active_scene->view.h/2),
         dist = sqrt(x*x+y*y)-light->light.intensity;
@@ -313,53 +317,12 @@ void G_EntityLightAdd(void *entity) {
 }
 
 void G_ElementDiffuse(G_Entity **entity) {
-  G_Entity *e = *entity;
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
-  G_Position position;
 
-  if (((element->directions & CA) != NA)) {
-    unsigned int i, x, y, amount;
-    G_Entity *subentity = NULL;
-    G_RenderComponent *subrender = NULL;
-    G_ElementComponent *subelement = NULL;
-
-    for (i = 1; i <= SE; i *= 2) {
-      position = G_GetDirectionComponents(i);
-
-      x = render->x+position.x;
-      y = render->y+position.y;
-
-      if ((element->directions & i) != NA) {
-        Tile tile = G_SceneGetTile(&active_scene, x, y);
-        G_QTreeLeaf *leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
-
-        if ((leaf == NULL) || (leaf->entities[ELEMENT_LAYER] == NULL)) {
-          subentity = G_EntityCreate();
-          subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
-          subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
-
-          memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
-          memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
-
-          subrender->x = x;
-          subrender->y = y;
-
-          element->directions = element->directions ^ i;
-
-          subelement->amount += amount;
-          subelement->intensity -= subelement->dissipation;
-          subelement->directions = AL ^ ((i > NW) ? (i >> 4) : (i << 4));
-
-          G_SceneEntityInsert(&active_scene, &subentity);
-        }
-      }
-    }
-  }
 }
 
 void G_ElementPropogate(G_Entity **entity) {
-  G_Entity *e = *entity;
+  G_QTreeLeaf *leaf;
+  G_Entity *e = *entity, *nearby;
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
   G_Position position;
@@ -380,19 +343,19 @@ void G_ElementPropogate(G_Entity **entity) {
 
       value = G_RandomNumber(0, 100);
 
+      leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
+      nearby = (leaf) ? leaf->entities[ELEMENT_LAYER] : NULL;
+
       if ((value < element->intensity) && ((element->directions & i) != NA)) {
         Tile tile = G_SceneGetTile(&active_scene, x, y);
-        G_QTreeLeaf *leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
 
-        if ((leaf == NULL) || (leaf->entities[ELEMENT_LAYER] == NULL)) {
+        if ((!leaf) || (!leaf->entities[ELEMENT_LAYER])) {
           if (G_TileFlags(tile) & element->target_flag) {
             if (element->target_flag == FLAMMABLE) {
               amount = G_RandomNumber(0, G_TileFlags(tile) & FLAMMABLE);
             } else {
-              amount = 0;
+              amount = G_RandomNumber(0, 4);
             }
-
-            (element->func)(x, y, active_scene->step+element->amount+amount+G_RandomNumber(512, 768));
           } else {
             continue;
           }

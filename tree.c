@@ -40,7 +40,7 @@ G_Tree* G_TreeCreate(void) {
 } 
 
 void G_TreeDestroy(G_Tree **tree) {
-  assert((tree != NULL) && (*tree != NULL));
+  assert((tree) && (*tree));
 
   G_Tree *t = *tree;
 
@@ -55,8 +55,8 @@ void G_TreeDestroy(G_Tree **tree) {
 }
 
 void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
-  assert((tree != NULL) && (*tree != NULL) &&
-        (node != NULL) && (*node != NULL));
+  assert((tree) && (*tree) &&
+        (node) && (*node));
 
   G_Tree *t = *tree;
   G_TreeNode *x = *node, *y = x;
@@ -109,8 +109,8 @@ void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node) {
 }
 
 void G_TreeNodeInsertInner(G_Tree **tree, G_TreeNode **node) {
-  assert((tree != NULL) && (*tree != NULL) &&
-        (node != NULL) && (*node != NULL));
+  assert((tree) && (*tree) &&
+        (node) && (*node));
 
   G_Tree *t = *tree;
   G_TreeNode *x, *y, *z = *node, *nil = (*tree)->nil;
@@ -139,8 +139,8 @@ void G_TreeNodeInsertInner(G_Tree **tree, G_TreeNode **node) {
 }
 
 void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
-  assert((tree != NULL) && (*tree != NULL) &&
-        (node != NULL) && (*node != NULL));
+  assert((tree) && (*tree) &&
+        (node) && (*node));
 
   G_TreeNode *z = *node, *x, *y, *nil = (*tree)->nil, *root = (*tree)->root;
 
@@ -188,8 +188,8 @@ void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
 }
 
 void G_TreeNodeSucceed(G_Tree **tree, G_TreeNode **node) {
-  assert((tree != NULL) && (*tree != NULL) &&
-        (node != NULL) && (*node != NULL));
+  assert((tree) && (*tree) &&
+        (node) && (*node));
 
   void *data;
   G_Tree *t = *tree;
@@ -208,7 +208,7 @@ void G_TreeNodeSucceed(G_Tree **tree, G_TreeNode **node) {
 }
 
 void G_TreeNodeRotateLeft(G_Tree **tree, G_TreeNode **node) {
-  assert((tree != NULL) && (*tree != NULL));
+  assert((tree) && (*tree));
 
   G_TreeNode
     *x = (*node),
@@ -234,7 +234,7 @@ void G_TreeNodeRotateLeft(G_Tree **tree, G_TreeNode **node) {
 }
 
 void G_TreeNodeRotateRight(G_Tree **tree, G_TreeNode **node) {
-  assert((tree != NULL) && (*tree != NULL));
+  assert((tree) && (*tree));
 
   G_TreeNode
     *y = (*node),
@@ -260,8 +260,8 @@ void G_TreeNodeRotateRight(G_Tree **tree, G_TreeNode **node) {
 }
 
 void G_TreeDeleteFix(G_Tree **tree, G_TreeNode **node) {
-  assert((tree != NULL) && (*tree != NULL) &&
-        (node != NULL) && (*node != NULL));
+  assert((tree) && (*tree) &&
+        (node) && (*node));
 
   G_TreeNode *x = *node, *root = (*tree)->root->left, *w;
 
@@ -327,7 +327,7 @@ void G_TreeDeleteFix(G_Tree **tree, G_TreeNode **node) {
 }
 
 void G_TreeNodeIterate(G_Tree **tree, G_TreeNode **node, void (*func)(void*)) {
-  assert((node != NULL) && (*node != NULL));
+  assert((node) && (*node));
 
   G_Tree *t = *tree;
   G_TreeNode *n = *node;
@@ -350,7 +350,7 @@ int G_TreeSize(G_Tree **tree) {
 }
 
 G_TreeNode* G_TreeNodeFind(G_Tree **tree, long int key) {
-  assert((tree != NULL) && (*tree != NULL));
+  assert((tree) && (*tree));
 
   G_TreeNode *node = (*tree)->root->left;
 
@@ -362,7 +362,7 @@ G_TreeNode* G_TreeNodeFind(G_Tree **tree, long int key) {
 }
 
 G_TreeNode* G_TreeNodeMinimum(G_Tree **tree) {
-  assert((tree != NULL) && (*tree != NULL));
+  assert((tree) && (*tree));
 
   G_TreeNode *other = (*tree)->root->left;
 

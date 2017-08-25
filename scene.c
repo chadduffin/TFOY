@@ -76,6 +76,25 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     G_SceneEntityInsert(&scene, &entity);
 
     entity = G_EntityCreate();
+    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+    element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+
+    element->amount = 128;
+    element->intensity = 32;
+    element->dissipation = 1;
+    element->tile_flags = IS_FREEZING | FLICKERS_REGULAR | ILLUMINATING;
+    element->target_flag = FREEZABLE;
+    element->element_flags = SPREADS_PROPOGATE;
+    element->func = &G_FreezeTile;
+
+    render->x = 28;
+    render->y = 60;
+    render->tile = ICE;
+    render->layer = ELEMENT_LAYER;
+
+    G_SceneEntityInsert(&scene, &entity);
+
+    entity = G_EntityCreate();
     G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
     light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
     render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
@@ -150,7 +169,7 @@ G_TileTransition* G_TileTransitionCreate(int x, int y, unsigned int when, Tile i
 }
 
 void G_SceneChange(G_Scene **scene) {
-  assert((scene != NULL) && (*scene != NULL));
+  assert((scene) && (*scene));
 
   if (*scene != active_scene) {
 	  game_info.redraw = 1;
@@ -171,7 +190,7 @@ void G_SceneDestroy(G_Scene **scene) {
 
   free(s->chunks);
 
-  while ((node = G_TreeNodeMinimum(&(s->entities))) != NULL) {
+  while ((node = G_TreeNodeMinimum(&(s->entities)))) {
     entity = (G_Entity*)(node->data);
     node->data = NULL;
     G_EntityDestroy(&entity);
@@ -199,20 +218,20 @@ void G_SceneEntityInsert(G_Scene **scene, G_Entity **entity) {
   node->right = NULL;
   node->left = NULL;
 
-  if (s->ins_buffer == NULL) {
+  if (!s->ins_buffer) {
     s->ins_buffer = node;
   } else {
     node->left = s->ins_buffer;
     s->ins_buffer = node;
   }
 
-  if (render != NULL) {
+  if (render) {
     G_QTreeNodeInsert(&(s->collision), entity, render->layer);
   }
 }
 
 void G_SceneEntityDelete(G_Scene **scene, G_Entity **entity) {
-  assert((scene != NULL) && (*scene != NULL));
+  assert((scene) && (*scene));
 
   G_Scene *s = *scene;
   G_Entity *e = *entity;
@@ -224,7 +243,7 @@ void G_SceneEntityDelete(G_Scene **scene, G_Entity **entity) {
   node->right = NULL;
   node->left = NULL;
 
-  if (s->del_buffer == NULL) {
+  if (!s->del_buffer) {
     s->del_buffer = node;
   } else {
     node->left = s->del_buffer;
