@@ -70,7 +70,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     render->x = 35;
     render->y = 80;
     render->tile = BASIC_FIRE;
-    render->layer = ELEMENT_LAYER;
+    render->layer = PROPOGATE_LAYER;
 
     scene->focus = entity;
     G_SceneEntityInsert(&scene, &entity);
@@ -79,7 +79,25 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
     element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
 
-    element->amount = 128;
+    element->amount = 32;
+    element->tile_flags = IS_EXTINGUISHING | FLICKERS_QUICK;
+    element->target_flag = 0;
+    element->element_flags = SPREADS_DIFFUSE;
+    element->directions = AL;
+    element->func = NULL;
+
+    render->x = 30;
+    render->y = 70;
+    render->tile = WATER;
+    render->layer = PROPOGATE_LAYER;
+
+    G_SceneEntityInsert(&scene, &entity);
+
+    entity = G_EntityCreate();
+    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+    element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+
+    element->amount = 1024;
     element->intensity = 32;
     element->dissipation = 1;
     element->tile_flags = IS_FREEZING | FLICKERS_REGULAR | ILLUMINATING;
@@ -90,7 +108,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     render->x = 28;
     render->y = 60;
     render->tile = ICE;
-    render->layer = ELEMENT_LAYER;
+    render->layer = PROPOGATE_LAYER;
 
     G_SceneEntityInsert(&scene, &entity);
 

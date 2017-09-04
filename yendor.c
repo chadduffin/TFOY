@@ -1031,6 +1031,10 @@ boolean G_CellChanged(int x, int y, int a, int b) {
     return 1;
   }
 
+  if (tilemap[x][y].layers[DIFFUSE_LAYER] != NOTHING) {
+    return 1;
+  }
+
   if (vismap[x][y] == 1) {
     flags = G_TileFlags(G_GetTile(tilemap[x][y].layers));
 

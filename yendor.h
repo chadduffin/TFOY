@@ -143,38 +143,42 @@ typedef enum ElementFlag {
 } ElementFlag;
 
 typedef enum TileFlag {
-  FLICKERS_REGULAR = 1,
-  FLICKERS_QUICK = 2,
-  FLICKERS_SLOW = 4,
+  FLICKERS_REGULAR    = 0x0001,
+  FLICKERS_QUICK      = 0x0002,
+  FLICKERS_SLOW       = 0x0004,
   FLICKERS = FLICKERS_REGULAR | FLICKERS_QUICK | FLICKERS_SLOW,
 
-  BARELY_FLAMMABLE = 8,
-  NORMAL_FLAMMABLE = 16,
-  HIGHLY_FLAMMABLE = 32,
+  BARELY_FLAMMABLE    = 0x0008,
+  NORMAL_FLAMMABLE    = 0x0010,
+  HIGHLY_FLAMMABLE    = 0x0020,
   FLAMMABLE = BARELY_FLAMMABLE | NORMAL_FLAMMABLE | HIGHLY_FLAMMABLE,
 
-  FREEZABLE = 64,
-  BREAKABLE = 128,
-  LUMINESCENT = 256,
-  ILLUMINATING = 512,
+  FREEZABLE           = 0x0040,
+  BREAKABLE           = 0x0080,
+  LUMINESCENT         = 0x0100,
+  ILLUMINATING        = 0x0200,
 
-  IS_BURNING = 1024,
-  IS_FREEZING = 2048,
+  IS_BURNING          = 0x0400,
+  IS_FREEZING         = 0x0800,
+  IS_EXTINGUISHING    = 0x1000,
 
-  OBSTRUCTS_VISION = 4096,
-  OBSTRUCTS_MOVEMENT = 8192,
+  OBSTRUCTS_VISION    = 0x2000,
+  OBSTRUCTS_MOVEMENT  = 0x4000,
   OBSTRUCTS = OBSTRUCTS_VISION | OBSTRUCTS_MOVEMENT,
 
-  DISABLES_ACTIONS = 16384,
+  DISABLES_ACTIONS    = 0x8000,
 } TileFlag;
 
 typedef enum TileLayer {
   UI_LAYER,
   CREATURE_LAYER,
+  PROPOGATE_LAYER,
   ITEM_LAYER,
   ORNAMENT_LAYER,
-  ELEMENT_LAYER,
   BASE_LAYER,
+
+  DIFFUSE_LAYER,
+  EXPLODE_LAYER,
 
   TILE_LAYER_COUNT
 } TileLayer;
@@ -222,6 +226,7 @@ typedef enum DirectionFlags {
   SS = 64,
   SE = 128,
   CA = EE | NN | WW | SS,
+  DI = NE | NW | SE | SW,
   AL = EE | NE | NN | NW | WW | SW | SS | SE,
 
   DIRECTION_COUNT = 8
@@ -361,7 +366,7 @@ typedef struct G_RenderComponent {
 } G_RenderComponent;
 
 typedef struct G_ElementComponent {
-  int amount, intensity, dissipation;
+  int amount, buffer, intensity, dissipation;
   TileFlag tile_flags, target_flag;
   ElementFlag element_flags;
   DirectionFlags directions;
