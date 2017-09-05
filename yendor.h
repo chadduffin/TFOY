@@ -135,7 +135,8 @@ typedef enum Tile {
 } Tile;
 
 typedef enum ElementFlag {
-  SPREADS_EXPLODE = 0,
+  SPREADS_FLUID = 0,
+  SPREADS_EXPLODE,
   SPREADS_DIFFUSE,
   SPREADS_PROPOGATE,
 
@@ -366,7 +367,7 @@ typedef struct G_RenderComponent {
 } G_RenderComponent;
 
 typedef struct G_ElementComponent {
-  int amount, buffer, intensity, dissipation;
+  int amount, intensity, dissipation;
   TileFlag tile_flags, target_flag;
   ElementFlag element_flags;
   DirectionFlags directions;
@@ -500,10 +501,11 @@ void G_EntityDestroy(G_Entity **entity);
 void G_EntityRender(void *entity);
 void G_EntityRenderUI(G_UIComponent **ui);
 void G_EntityUpdate(void *entity);
-void G_UIComponentUpdate(G_Entity **entity);
-void G_ElementComponentUpdate(G_Entity **entity);
-void G_ControllerComponentUpdate(G_Entity **entity);
 void G_EntityLightAdd(void *entity);
+void G_UIComponentUpdate(G_Entity **entity);
+void G_ControllerComponentUpdate(G_Entity **entity);
+void G_ElementComponentUpdate(G_Entity **entity);
+void G_ElementFluid(G_Entity **entity);
 void G_ElementDiffuse(G_Entity **entity);
 void G_ElementPropogate(G_Entity **entity);
 void G_ElementExplode(G_Entity **entity);
