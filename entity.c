@@ -45,6 +45,7 @@ void* G_EntityComponentInsert(G_Entity **entity, Component component) {
         element->amount = 0;
         element->intensity = 0;
         element->dissipation = 0;
+        element->group = NULL;
         element->tile_flags = 0;
         element->target_flag = 0;
         element->element_flags = 0;
@@ -324,12 +325,51 @@ void G_ElementComponentUpdate(G_Entity **entity) {
   } 
 }
 
-void G_ElementFluid(G_Entity **entity) {
-
-}
-
 void G_ElementDiffuse(G_Entity **entity) {
+  unsigned int i, x, y;
+  G_QTreeLeaf *leaf;
+  G_Entity *e = *entity, *nearby, *subentity;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT), *subrender;
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT), *subelement;
+  G_Position position;
 
+  if (element->group->amount/element->group->node_count < 2) {
+    return;
+  }
+
+  for (i = EE; i <= SE; i *= 2) {
+    position = G_GetDirectionComponents(i);
+
+    x = render->x+position.x;
+    y = render->y+position.y;
+
+    leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
+    nearby = (leaf) ? leaf->entities[render->layer] : NULL;
+
+    if (nearby) {
+      /* nearby elements */
+      continue;
+    } else if (G_SceneTileObstructs(&active_scene, x, y) ||
+              (G_SceneTileObstructs(&active_scene, render->x, y) &&
+              (G_SceneTileObstructs(&active_scene, x, render->y)))) {
+      element->directions = element->directions ^ i;
+      continue;
+    }
+
+    subentity = G_EntityCreate();
+    subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
+    subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+
+    memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
+    memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
+
+    subrender->x = x;
+    subrender->y = y;
+
+    element->group->node_count += 1;
+
+    G_SceneEntityInsert(&active_scene, &subentity);
+  }
 }
 
 void G_ElementPropogate(G_Entity **entity) {

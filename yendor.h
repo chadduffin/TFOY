@@ -135,8 +135,7 @@ typedef enum Tile {
 } Tile;
 
 typedef enum ElementFlag {
-  SPREADS_FLUID = 0,
-  SPREADS_EXPLODE,
+  SPREADS_EXPLODE = 0,
   SPREADS_DIFFUSE,
   SPREADS_PROPOGATE,
 
@@ -347,6 +346,11 @@ typedef struct G_UIWindow {
   G_Tree *widgets, *windows;
 } G_UIWindow;
 
+typedef struct G_ElementGroup {
+  int amount, node_count;
+  G_Id id;
+} G_ElementGroup;
+
 typedef struct G_Entity {
   G_Id id;
   void *components[COMPONENT_COUNT];
@@ -368,6 +372,7 @@ typedef struct G_RenderComponent {
 
 typedef struct G_ElementComponent {
   int amount, intensity, dissipation;
+  G_ElementGroup *group;
   TileFlag tile_flags, target_flag;
   ElementFlag element_flags;
   DirectionFlags directions;
@@ -505,7 +510,6 @@ void G_EntityLightAdd(void *entity);
 void G_UIComponentUpdate(G_Entity **entity);
 void G_ControllerComponentUpdate(G_Entity **entity);
 void G_ElementComponentUpdate(G_Entity **entity);
-void G_ElementFluid(G_Entity **entity);
 void G_ElementDiffuse(G_Entity **entity);
 void G_ElementPropogate(G_Entity **entity);
 void G_ElementExplode(G_Entity **entity);

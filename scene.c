@@ -79,7 +79,11 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
     element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
 
-    element->amount = 32;
+    element->amount = 128;
+    element->group = (G_ElementGroup*)malloc(sizeof(G_ElementGroup));
+    element->group->amount = 128;
+    element->group->node_count = 1;
+    element->group->id.value = entity->id.value;
     element->tile_flags = IS_EXTINGUISHING | FLICKERS_QUICK;
     element->target_flag = 0;
     element->element_flags = SPREADS_DIFFUSE;
