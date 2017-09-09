@@ -297,7 +297,9 @@ void G_ElementComponentUpdate(G_Entity **entity) {
 
             G_SceneEntityDelete(&active_scene, entity);
           } else {
-            G_ElementDiffuse(entity);
+            if (element->group->amount/element->group->node_count >= 2) {
+              G_ElementDiffuse(entity);
+            }
           }
         }
         break;
@@ -316,7 +318,8 @@ void G_ElementComponentUpdate(G_Entity **entity) {
         break;
       case SPREADS_EXPLODE:
         {
-          // spreads explode
+          G_ElementExplode(entity);
+          G_SceneEntityDelete(&active_scene, entity);
         }
         break;
       default:
@@ -333,42 +336,42 @@ void G_ElementDiffuse(G_Entity **entity) {
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT), *subelement;
   G_Position position;
 
-  if (element->group->amount/element->group->node_count < 2) {
-    return;
-  }
-
   for (i = EE; i <= SE; i *= 2) {
-    position = G_GetDirectionComponents(i);
+    if (element->directions & i) {
+      position = G_GetDirectionComponents(i);
 
-    x = render->x+position.x;
-    y = render->y+position.y;
+      x = render->x+position.x;
+      y = render->y+position.y;
 
-    leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
-    nearby = (leaf) ? leaf->entities[render->layer] : NULL;
+      leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
+      nearby = (leaf) ? leaf->entities[render->layer] : NULL;
 
-    if (nearby) {
-      /* nearby elements */
-      continue;
-    } else if (G_SceneTileObstructs(&active_scene, x, y) ||
-              (G_SceneTileObstructs(&active_scene, render->x, y) &&
-              (G_SceneTileObstructs(&active_scene, x, render->y)))) {
-      element->directions = element->directions ^ i;
-      continue;
+      if (nearby) {
+        /* nearby elements */
+        continue;
+      } else if (G_SceneTileObstructs(&active_scene, x, y) ||
+                (G_SceneTileObstructs(&active_scene, render->x, y) &&
+                (G_SceneTileObstructs(&active_scene, x, render->y)))) {
+        element->directions = element->directions ^ i;
+        continue;
+      }
+
+      subentity = G_EntityCreate();
+      subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
+      subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+
+      memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
+      memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
+
+      subrender->x = x;
+      subrender->y = y;
+
+      subelement->directions = AL;
+
+      element->group->node_count += 1;
+
+      G_SceneEntityInsert(&active_scene, &subentity);
     }
-
-    subentity = G_EntityCreate();
-    subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
-    subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
-
-    memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
-    memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
-
-    subrender->x = x;
-    subrender->y = y;
-
-    element->group->node_count += 1;
-
-    G_SceneEntityInsert(&active_scene, &subentity);
   }
 }
 
@@ -381,20 +384,19 @@ void G_ElementPropogate(G_Entity **entity) {
 
   element->amount -= 1;
 
-  if (((element->directions & CA) != NA) && (element->intensity > 0)) {
-    unsigned int i, x, y, value, amount;
+  if ((element->directions & CA) && (element->intensity > 0)) {
+    unsigned int i, x, y, amount;
     G_Entity *subentity = NULL;
     G_RenderComponent *subrender = NULL;
     G_ElementComponent *subelement = NULL;
+    Tile tile;
 
     for (i = EE; i <= SE; i *= 2) {
-      if ((element->directions & i) != NA) {
+      if ((element->directions & i) && (G_RandomNumber(0, 100) < element->intensity)) {
         position = G_GetDirectionComponents(i);
 
         x = render->x+position.x;
         y = render->y+position.y;
-
-        value = G_RandomNumber(0, 100);
 
         leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
         nearby = (leaf) ? leaf->entities[render->layer] : NULL;
@@ -409,34 +411,32 @@ void G_ElementPropogate(G_Entity **entity) {
           continue;
         }
 
-        if (value < element->intensity) {
-          Tile tile = G_SceneGetTile(&active_scene, x, y);
+        tile = G_SceneGetTile(&active_scene, x, y);
 
-          if (G_TileFlags(tile) & element->target_flag) {
-            if (element->target_flag == FLAMMABLE) {
-              amount = G_RandomNumber(0, G_TileFlags(tile) & FLAMMABLE);
-            } else {
-              amount = G_RandomNumber(0, 4);
-            }
-
-            subentity = G_EntityCreate();
-            subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
-            subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
-
-            memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
-            memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
-
-            subrender->x = x;
-            subrender->y = y;
-
-            element->directions = element->directions ^ i;
-
-            subelement->amount += amount;
-            subelement->intensity -= subelement->dissipation;
-            subelement->directions = AL ^ ((i > NW) ? (i >> 4) : (i << 4));
-
-            G_SceneEntityInsert(&active_scene, &subentity);
+        if (G_TileFlags(tile) & element->target_flag) {
+          if (element->target_flag == FLAMMABLE) {
+            amount = G_RandomNumber(0, G_TileFlags(tile) & FLAMMABLE);
+          } else {
+            amount = G_RandomNumber(0, 4);
           }
+
+          subentity = G_EntityCreate();
+          subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
+          subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+
+          memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
+          memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
+
+          subrender->x = x;
+          subrender->y = y;
+
+          element->directions = element->directions ^ i;
+
+          subelement->amount += amount;
+          subelement->intensity -= subelement->dissipation;
+          subelement->directions = AL ^ ((i > NW) ? (i >> 4) : (i << 4));
+
+          G_SceneEntityInsert(&active_scene, &subentity);
         }
       }
     }
@@ -444,5 +444,50 @@ void G_ElementPropogate(G_Entity **entity) {
 }
 
 void G_ElementExplode(G_Entity **entity) {
+  unsigned int i, x, y;
+  G_QTreeLeaf *leaf;
+  G_Entity *e = *entity, *nearby, *subentity;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT), *subrender;
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT), *subelement;
+  G_Position position;
 
+  element->intensity -= element->dissipation;
+
+  for (i = EE; i <= SE; i *= 2) {
+    if (element->directions & i) {
+      position = G_GetDirectionComponents(i);
+
+      x = render->x+position.x;
+      y = render->y+position.y;
+
+      leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
+      nearby = (leaf) ? leaf->entities[render->layer] : NULL;
+
+      if (G_SceneTileObstructs(&active_scene, x, y) ||
+                (G_SceneTileObstructs(&active_scene, render->x, y) &&
+                (G_SceneTileObstructs(&active_scene, x, render->y)))) {
+        element->directions = element->directions ^ i;
+        continue;
+      } else if (nearby) {
+        /* nearby elements */
+        continue;
+      }
+
+      subentity = G_EntityCreate();
+      subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
+      subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+
+      memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
+      memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
+
+      element->directions = element->directions ^ i;
+
+      subrender->x = x;
+      subrender->y = y;
+
+      subelement->directions = (i & CA) ? (i) : (i >> 1) | (i) | ((i == SE) ? (EE) : (i << 1));
+    
+      G_SceneEntityInsert(&active_scene, &subentity);
+    }
+  }
 }
