@@ -2,7 +2,7 @@
 #include "globals.h"
 
 G_TileInformation tile_info[TILE_COUNT] = {
-  {"Nothing", "", 0, 0, &white, &black, 0},
+  {"Nothing", "", 0, 0, &bad_color, &bad_color, 0},
 
   {"Ground", "", 14, 2, &brown, &dblue, 0},
   {"Stone", "", 14, 2, &dgrey, &grey, 0},
@@ -11,9 +11,9 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"Grass", "", 2, 2, &green, &dblue, HIGHLY_FLAMMABLE | FREEZABLE},
   {"Tall Grass", "", 2, 14, &green, &dblue, FLAMMABLE},
   {"Burnt Grass", "", 2, 2, &brown, &dblue, 0},
-  {"Frozen Grass", "", 2, 2, &white, &scott_blue, 0},
   {"Fungus", "", 2, 2, &teal, &dblue, FLAMMABLE | LUMINESCENT},
   {"Water", "", 14, 7, &dblue, &scott_blue, FLICKERS_REGULAR | DISABLES_ACTIONS},
+  {"Frozen Grass", "", 2, 2, &white, &scott_blue, 0},
 
   {"Ice", "", 10, 2, &white, &scott_blue, 0},
   {"Lava", "", 14, 7, &red, &orange, FLICKERS_SLOW | DISABLES_ACTIONS | ILLUMINATING},

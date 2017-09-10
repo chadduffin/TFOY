@@ -110,8 +110,8 @@ typedef enum Tile {
   TALL_GRASS,
   BURNT_GRASS,
   FROZEN_GRASS,
-  FUNGUS,
   WATER,
+  FUNGUS,
 
   ICE,
   LAVA,
@@ -347,7 +347,7 @@ typedef struct G_UIWindow {
 } G_UIWindow;
 
 typedef struct G_ElementGroup {
-  int amount, node_count;
+  int amount, node_count, saturation;
   G_Id id;
 } G_ElementGroup;
 
@@ -513,6 +513,15 @@ void G_ElementComponentUpdate(G_Entity **entity);
 void G_ElementDiffuse(G_Entity **entity);
 void G_ElementPropogate(G_Entity **entity);
 void G_ElementExplode(G_Entity **entity);
+void G_ElementDiffuseCreate(int x, int y, int amount, int saturation,
+                            Tile tile, TileLayer layer, TileFlag tile_flags, DirectionFlags direction,
+                            void (*func)(int, int, unsigned int));
+void G_ElementPropogateCreate(int x, int y, int amount, int intensity, int dissipation,
+                            Tile tile, TileFlag tile_flags, TileFlag target_flag, DirectionFlags direction,
+                            void (*func)(int, int, unsigned int));
+void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
+                            Tile tile, TileFlag tile_flags, DirectionFlags direction,
+                            void (*func)(int, int, unsigned int));
 
 /* scene.c */
 G_Scene* G_SceneCreate(int w, int h, boolean persistent);
@@ -539,7 +548,8 @@ boolean G_TileFlagCompare(Tile tile, TileFlag flag);
 
 /* ui.c */
 G_UIWindow* G_UIWindowCreate(int x, int y, int w, int h, int depth, boolean visible);
-G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int depth, int length, void(*func)(void*), void *data, char *text);
+G_UIWidget* G_UIWidgetCreate(int x, int y, int w, int h, int depth, int length,
+                             void(*func)(void*), void *data, char *text);
 void G_UIWindowAddWidget(G_UIWindow **window, G_UIWidget **widget);
 void G_UIWindowAddWindow(G_UIWindow **window, G_UIWindow **subwindow);
 void G_UIWidgetHotkey(G_UIWidget **widget, SDL_Scancode hotkey, int index);
@@ -573,7 +583,6 @@ G_TreeNode* G_TreeNodeMinimum(G_Tree **tree);
 G_TreeNode* G_TreeNodeSuccessor(G_Tree **tree, G_TreeNode **node);
 
 /* qtree.c */
-
 G_QTree* G_QTreeCreate(void);
 int G_QTreeQuadrant(int *x, int *y, int *size);
 void G_QTreeDestroy(G_QTree **tree);

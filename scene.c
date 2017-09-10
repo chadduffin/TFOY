@@ -52,80 +52,11 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     G_Entity *entity = G_EntityCreate();
     G_LightComponent *light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
     G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-    G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
 
     light->light.r = 255;
     light->light.g = 255;
     light->light.b = 255;
-    light->light.intensity = 2;
-
-    element->amount = 128;
-    element->intensity = 32;
-    element->dissipation = 1;
-    element->tile_flags = IS_BURNING | FLICKERS_REGULAR | ILLUMINATING;
-    element->target_flag = FLAMMABLE;
-    element->element_flags = SPREADS_EXPLODE;
-    element->directions = AL;
-    element->func = &G_BurnTile;
-
-    render->x = 35;
-    render->y = 80;
-    render->tile = BASIC_FIRE;
-    render->layer = PROPOGATE_LAYER;
-
-    scene->focus = entity;
-    G_SceneEntityInsert(&scene, &entity);
-
-    entity = G_EntityCreate();
-    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-    element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
-
-    element->amount = 128;
-    element->group = (G_ElementGroup*)malloc(sizeof(G_ElementGroup));
-    element->group->amount = 128;
-    element->group->node_count = 1;
-    element->group->id.value = entity->id.value;
-    element->tile_flags = IS_EXTINGUISHING | FLICKERS_QUICK;
-    element->target_flag = 0;
-    element->element_flags = SPREADS_DIFFUSE;
-    element->directions = AL;
-    element->func = NULL;
-
-    render->x = 30;
-    render->y = 70;
-    render->tile = WATER;
-    render->layer = PROPOGATE_LAYER;
-
-    G_SceneEntityInsert(&scene, &entity);
-
-    entity = G_EntityCreate();
-    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-    element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
-
-    element->amount = 1024;
-    element->intensity = 32;
-    element->dissipation = 1;
-    element->tile_flags = IS_FREEZING | FLICKERS_REGULAR | ILLUMINATING;
-    element->target_flag = FREEZABLE;
-    element->element_flags = SPREADS_PROPOGATE;
-    element->func = &G_FreezeTile;
-
-    render->x = 28;
-    render->y = 60;
-    render->tile = ICE;
-    render->layer = PROPOGATE_LAYER;
-
-    G_SceneEntityInsert(&scene, &entity);
-
-    entity = G_EntityCreate();
-    G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
-    light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-    light->light.r = 255;
-    light->light.g = 255;
-    light->light.b = 255;
-    light->light.intensity = 48;
+    light->light.intensity = 28;
 
     render->x = 30;
     render->y = 80;
@@ -133,38 +64,7 @@ G_Scene* G_SceneCreate(int w, int h, boolean persistent) {
     render->layer = CREATURE_LAYER;
 
     scene->focus = entity;
-    G_SceneEntityInsert(&scene, &entity);
-
-    entity = G_EntityCreate();
-    light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-    light->light.r = 255;
-    light->light.g = 0;
-    light->light.b = 0;
-    light->light.intensity = 24;
-
-    render->x = 64;
-    render->y = 32;
-    render->tile = HUMAN;
-    render->layer = ORNAMENT_LAYER;
-
-    G_SceneEntityInsert(&scene, &entity);
-
-    entity = G_EntityCreate();
-    light = G_EntityComponentInsert(&entity, LIGHT_COMPONENT);
-    render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-
-    light->light.r = 0;
-    light->light.g = 127;
-    light->light.b = 255;
-    light->light.intensity = 30;
-
-    render->x = 32;
-    render->y = 32;
-    render->tile = HUMAN;
-    render->layer = ORNAMENT_LAYER;
-
+    G_EntityComponentInsert(&entity, CONTROLLER_COMPONENT);
     G_SceneEntityInsert(&scene, &entity);
   }
 

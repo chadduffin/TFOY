@@ -227,7 +227,12 @@ int G_Update(void *data) {
         }
 
         tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[BASE_LAYER] = tile;
-        G_TileUpdate(tile, x, y);
+
+        if (tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[PROPOGATE_LAYER] != NOTHING) {
+          G_TileUpdate(tilemap[x+DCOLS_OFFSET][y+DROWS_OFFSET].layers[PROPOGATE_LAYER], x, y);
+        } else {
+          G_TileUpdate(tile, x, y);
+        }
 
         if (dx < 0) {
           if (x <= 0) {
@@ -313,7 +318,11 @@ int G_PollEvents(void* data) {
               G_Tile tile;
               tile.tile = WALL;
 
-              G_SceneSetGTile(&active_scene, tile, x, y);
+              //G_SceneSetGTile(&active_scene, tile, x, y);
+              //G_ElementPropogateCreate(x, y, 200, 32, 1, BASIC_FIRE, IS_BURNING, FLAMMABLE, AL, &G_BurnTile);
+              G_ElementDiffuseCreate(x, y, G_RandomNumber(2048, 8192), 32, WATER, PROPOGATE_LAYER, IS_EXTINGUISHING, AL, NULL);
+              //G_ElementExplodeCreate(x, y, 32, 4, BASIC_FIRE, 0, AL, &G_BurnTile);
+
             } else {
               int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
                   y = (game_info.mouse_y-game_info.display_y)/game_info.tile_h;

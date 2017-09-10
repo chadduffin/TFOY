@@ -297,7 +297,7 @@ void G_ElementComponentUpdate(G_Entity **entity) {
 
             G_SceneEntityDelete(&active_scene, entity);
           } else {
-            if (element->group->amount/element->group->node_count >= 2) {
+            if (element->group->amount/element->group->node_count >= element->group->saturation) {
               G_ElementDiffuse(entity);
             }
           }
@@ -318,7 +318,10 @@ void G_ElementComponentUpdate(G_Entity **entity) {
         break;
       case SPREADS_EXPLODE:
         {
-          G_ElementExplode(entity);
+          if (element->intensity) {
+            G_ElementExplode(entity);
+          }
+
           G_SceneEntityDelete(&active_scene, entity);
         }
         break;
@@ -366,13 +369,23 @@ void G_ElementDiffuse(G_Entity **entity) {
       subrender->x = x;
       subrender->y = y;
 
-      subelement->directions = AL;
+      if (element->directions != AL) {
+        subelement->directions = AL ^ element->directions;
+      } else {
+        subelement->directions = CA;
+      }
+
+      if (i & DI) {
+        subelement->directions = subelement->directions | ((i > NE) ? (i >> 4) : (i << 4));
+      }
 
       element->group->node_count += 1;
 
       G_SceneEntityInsert(&active_scene, &subentity);
     }
   }
+
+  element->directions = AL;
 }
 
 void G_ElementPropogate(G_Entity **entity) {
@@ -490,4 +503,83 @@ void G_ElementExplode(G_Entity **entity) {
       G_SceneEntityInsert(&active_scene, &subentity);
     }
   }
+}
+
+void G_ElementDiffuseCreate(int x, int y, int amount, int saturation,
+                            Tile tile, TileLayer layer, TileFlag tile_flags, DirectionFlags direction,
+                            void (*func)(int, int, unsigned int)) {
+  G_Entity *entity = G_EntityCreate();
+  G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+  G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+
+  render->x = x;
+  render->y = y;
+  render->tile = tile;
+  render->layer = layer;
+
+  element->amount = amount;
+  element->intensity = 0;
+  element->dissipation = 0;
+  element->group = (G_ElementGroup*)malloc(sizeof(G_ElementGroup));
+  element->tile_flags = tile_flags;
+  element->target_flag = 0;
+  element->element_flags = SPREADS_DIFFUSE;
+  element->directions = AL;
+  element->func = func;
+
+  element->group->amount = amount;
+  element->group->node_count = 1;
+  element->group->saturation = saturation;
+
+  G_SceneEntityInsert(&active_scene, &entity);
+}
+
+void G_ElementPropogateCreate(int x, int y, int amount, int intensity, int dissipation,
+                            Tile tile, TileFlag tile_flags, TileFlag target_flag, DirectionFlags direction,
+                            void (*func)(int, int, unsigned int)) {
+  G_Entity *entity = G_EntityCreate();
+  G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+  G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+
+  render->x = x;
+  render->y = y;
+  render->tile = tile;
+  render->layer = PROPOGATE_LAYER;
+
+  element->amount = amount;
+  element->intensity = intensity;
+  element->dissipation = dissipation;
+  element->group = NULL;
+  element->tile_flags = tile_flags;
+  element->target_flag = target_flag;
+  element->element_flags = SPREADS_PROPOGATE;
+  element->directions = AL;
+  element->func = func;
+
+  G_SceneEntityInsert(&active_scene, &entity);
+}
+
+void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
+                            Tile tile, TileFlag tile_flags, DirectionFlags direction,
+                            void (*func)(int, int, unsigned int)) {
+  G_Entity *entity = G_EntityCreate();
+  G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+  G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+
+  render->x = x;
+  render->y = y;
+  render->tile = tile;
+  render->layer = EXPLODE_LAYER;
+
+  element->amount = 0;
+  element->intensity = intensity;
+  element->dissipation = dissipation;
+  element->group = NULL;
+  element->tile_flags = tile_flags;
+  element->target_flag = 0;
+  element->element_flags = SPREADS_EXPLODE;
+  element->directions = AL;
+  element->func = func;
+
+  G_SceneEntityInsert(&active_scene, &entity);
 }
