@@ -266,6 +266,11 @@ typedef struct G_GameInformation {
   boolean running, redraw, full;
 } G_GameInformation;
 
+typedef struct G_Node {
+  void *data;
+  struct G_Node *prev, *next;
+} G_Node;
+
 typedef struct G_Position {
   int x, y;
 } G_Position;
@@ -571,6 +576,7 @@ G_Tree* G_TreeCreate(void);
 void G_TreeDestroy(G_Tree **tree);
 void G_TreeNodeInsert(G_Tree **tree, G_TreeNode **node);
 void G_TreeNodeInsertInner(G_Tree **tree, G_TreeNode **node);
+void G_TreeNodeInsertCreate(G_Tree **tree, long int key, void *data);
 void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node);
 void G_TreeNodeSucceed(G_Tree **tree, G_TreeNode **node);
 void G_TreeNodeRotateLeft(G_Tree **tree, G_TreeNode **node);

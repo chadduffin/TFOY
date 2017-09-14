@@ -138,6 +138,17 @@ void G_TreeNodeInsertInner(G_Tree **tree, G_TreeNode **node) {
   }
 }
 
+void G_TreeNodeInsertCreate(G_Tree **tree, long int key, void *data) {
+  assert((tree) && (*tree));
+
+  G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+
+  node->key = key;
+  node->data = data;
+
+  G_TreeNodeInsert(tree, &node);
+}
+
 void G_TreeNodeDelete(G_Tree **tree, G_TreeNode **node) {
   assert((tree) && (*tree) &&
         (node) && (*node));

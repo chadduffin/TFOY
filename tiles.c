@@ -31,7 +31,7 @@ G_TileInformation tile_info[TILE_COUNT] = {
   {"blue", "", 0, 0, &blue, &blue, 0},
   {"magenta", "", 0, 0, &magenta, &magenta, 0},
 
-  {"error", "", 1, 11, &magenta, &black, OBSTRUCTS_MOVEMENT},
+  {"error", "", 1, 11, &magenta, &black, OBSTRUCTS},
 };
 
 void G_TileUpdate(Tile tile, int x, int y) {

@@ -375,10 +375,6 @@ void G_ElementDiffuse(G_Entity **entity) {
         subelement->directions = CA;
       }
 
-      if (i & DI) {
-        subelement->directions = subelement->directions | ((i > NE) ? (i >> 4) : (i << 4));
-      }
-
       element->group->node_count += 1;
 
       G_SceneEntityInsert(&active_scene, &subentity);
@@ -459,9 +455,9 @@ void G_ElementPropogate(G_Entity **entity) {
 void G_ElementExplode(G_Entity **entity) {
   unsigned int i, x, y;
   G_QTreeLeaf *leaf;
-  G_Entity *e = *entity, *nearby, *subentity;
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT), *subrender;
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT), *subelement;
+  G_Entity *e = *entity, *nearby;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
   G_Position position;
 
   element->intensity -= element->dissipation;
@@ -485,22 +481,6 @@ void G_ElementExplode(G_Entity **entity) {
         /* nearby elements */
         continue;
       }
-
-      subentity = G_EntityCreate();
-      subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
-      subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
-
-      memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
-      memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
-
-      element->directions = element->directions ^ i;
-
-      subrender->x = x;
-      subrender->y = y;
-
-      subelement->directions = (i & CA) ? (i) : (i >> 1) | (i) | ((i == SE) ? (EE) : (i << 1));
-    
-      G_SceneEntityInsert(&active_scene, &subentity);
     }
   }
 }
@@ -562,24 +542,63 @@ void G_ElementPropogateCreate(int x, int y, int amount, int intensity, int dissi
 void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
                             Tile tile, TileFlag tile_flags, DirectionFlags direction,
                             void (*func)(int, int, unsigned int)) {
-  G_Entity *entity = G_EntityCreate();
-  G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
-  G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+  int i, dist;
+  G_Entity *nearby;
+  G_Tree *tree = G_TreeCreate();
+  G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
+  G_QTreeLeaf *leaf;
+  G_Position origin, current, *position = (G_Position*)malloc(sizeof(G_Position));
 
-  render->x = x;
-  render->y = y;
-  render->tile = tile;
-  render->layer = EXPLODE_LAYER;
+  position->x = origin.x = x;
+  position->y = origin.y = y;
 
-  element->amount = 0;
-  element->intensity = intensity;
-  element->dissipation = dissipation;
-  element->group = NULL;
-  element->tile_flags = tile_flags;
-  element->target_flag = 0;
-  element->element_flags = SPREADS_EXPLODE;
-  element->directions = AL;
-  element->func = func;
+  G_TreeNodeInsertCreate(&tree, 0, (void*)position);
 
-  G_SceneEntityInsert(&active_scene, &entity);
+  while (((node = G_TreeNodeMinimum(&tree)) != tree->nil) && (intensity > 0)) {
+    for (i = EE; i <= SE; i *= 2) {
+      position = (G_Position*)(node->data);
+      current = G_GetDirectionComponents(i);
+
+      x = current.x+position->x;
+      y = current.y+position->y;
+
+      leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
+      nearby = (leaf) ? leaf->entities[PROPOGATE_LAYER] : NULL;
+
+      if ((!nearby) && (!G_SceneTileObstructs(&active_scene, x, y))) {
+        G_Entity *entity = G_EntityCreate();
+        G_RenderComponent *render = G_EntityComponentInsert(&entity, RENDER_COMPONENT);
+        G_ElementComponent *element = G_EntityComponentInsert(&entity, ELEMENT_COMPONENT);
+
+        dist = ((origin.x-x)*(origin.x-x)+(origin.y-y)*(origin.y-y));
+
+        render->x = x;
+        render->y = y;
+        render->tile = tile;
+        render->layer = PROPOGATE_LAYER;
+
+        element->amount = 0;
+        element->intensity = 0;
+        element->dissipation = 0;
+        element->group = NULL;
+        element->tile_flags = tile_flags;
+        element->target_flag = 0;
+        element->element_flags = SPREADS_EXPLODE;
+        element->directions = AL;
+        element->func = func;
+
+        G_SceneEntityInsert(&active_scene, &entity);
+
+        position = (G_Position*)malloc(sizeof(G_Position));
+        position->x = x;
+        position->y = y;
+
+        G_TreeNodeInsertCreate(&tree, dist, (void*)position);
+
+        intensity -= 1;
+      }
+    }
+
+    G_TreeNodeDelete(&tree, &node);
+  } 
 }

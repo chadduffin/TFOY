@@ -130,8 +130,10 @@ void G_RenderChanges(void) {
               if (tile_info[tile-NOTHING].bg == &bad_color) {
                 if (tile_info[console.tilemap[x][y].layers[PROPOGATE_LAYER]-NOTHING].bg != &bad_color) {
                   bg = *(tile_info[console.tilemap[x][y].layers[PROPOGATE_LAYER]-NOTHING].bg);
-                } else {
+                } else if (console.tilemap[x][y].layers[BASE_LAYER] >= NOTHING) {
                   bg = *(tile_info[console.tilemap[x][y].layers[BASE_LAYER]-NOTHING].bg);
+                } else {
+                  bg = black;
                 }
               } else {
                 bg = *(tile_info[tile-NOTHING].bg);
