@@ -229,6 +229,25 @@ G_Entity* G_QTreeEntityFind(G_QTree **tree, TileLayer layer, int x, int y) {
   return (leaf) ? leaf->entities[layer] : NULL;
 }
 
+G_Entity** G_QTreeEntityFindRef(G_QTree **tree, TileLayer layer, int x, int y) {
+  assert((tree) && (*tree));
+
+  int z;
+  G_QTree *t = *tree;
+  
+  while (t->size > 1) {
+    z = G_QTreeQuadrant(&x, &y, &(t->size));
+
+    if ((!t->children[z]) || (t->size == 2)) {
+      return (t->children[z]) ? &(((G_QTreeLeaf*)(t->children[z]))->entities[layer]) : NULL;
+    }
+
+    t = (G_QTree*)(t->children[z]);
+  }
+  
+  return NULL;
+}
+
 G_QTreeLeaf* G_QTreeNodeFind(G_QTree **tree, int x, int y) {
   assert((tree) && (*tree));
 

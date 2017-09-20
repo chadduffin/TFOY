@@ -320,7 +320,11 @@ int G_PollEvents(void* data) {
 
               //G_SceneSetGTile(&active_scene, tile, x, y);
               //G_ElementPropogateCreate(x, y, 200, 32, 1, BASIC_FIRE, IS_BURNING, FLAMMABLE, AL, &G_BurnTile);
-              G_ElementDiffuseCreate(x, y, G_RandomNumber(1024, 4096), 32, SOLID_MAGENTA, DIFFUSE_LAYER, IS_EXTINGUISHING, AL, NULL);
+              if (G_RandomNumber(0, 10) > 5) {
+                G_ElementDiffuseCreate(x, y, G_RandomNumber(1024, 4096), 32, WATER, PROPOGATE_LAYER, IS_EXTINGUISHING, AL, NULL);
+              } else {
+                G_ElementDiffuseCreate(x, y, G_RandomNumber(1024, 4096), 32, SOLID_MAGENTA, DIFFUSE_LAYER, IS_EXTINGUISHING, AL, NULL);
+              }
               //G_ElementExplodeCreate(x, y, G_RandomNumber(8, 16), 4, BASIC_FIRE, 0, AL, &G_BurnTile);
 
             } else {
@@ -1041,7 +1045,7 @@ boolean G_CellChanged(int x, int y, int a, int b) {
     return 1;
   }
 
-  if (tilemap[x][y].layers[DIFFUSE_LAYER] != NOTHING) {
+  if (tilemap[x][y].layers[DIFFUSE_LAYER] != console.tilemap[a][b].layers[DIFFUSE_LAYER]) {
     return 1;
   }
 

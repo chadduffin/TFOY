@@ -339,8 +339,7 @@ void G_ElementComponentUpdate(G_Entity **entity) {
 
 void G_ElementDiffuse(G_Entity **entity) {
   unsigned int i, x, y;
-  G_QTreeLeaf *leaf;
-  G_Entity *nearby, *subentity;
+  G_Entity *subentity, **nearby;
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT), *subrender;
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT), *subelement;
   G_Position position;
@@ -352,11 +351,18 @@ void G_ElementDiffuse(G_Entity **entity) {
       x = render->x+position.x;
       y = render->y+position.y;
 
-      leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
-      nearby = (leaf) ? leaf->entities[render->layer] : NULL;
+      nearby = G_QTreeEntityFindRef(&(active_scene->collision), render->layer, x, y);
 
-      if (nearby) {
-        /* nearby elements */
+      if ((nearby) && (*nearby)) {
+        if ((subelement = (G_ElementComponent*)G_EntityComponentFind(nearby, ELEMENT_COMPONENT))) {
+          if (*(element->group) != *(subelement->group)) {
+            int amount = (*(element->group))->amount+(*(subelement->group))->amount;
+            double proportion = ((double)(*(element->group))->node_count)/((*(subelement->group))->node_count+((double)(*(element->group))->node_count));
+
+            (*(element->group))->amount = amount*proportion;
+            (*(subelement->group))->amount = amount-(*(element->group))->amount;
+          }
+        }
         continue;
       } else if (G_SceneTileObstructs(&active_scene, x, y) ||
                 (G_SceneTileObstructs(&active_scene, render->x, y) &&
@@ -368,6 +374,9 @@ void G_ElementDiffuse(G_Entity **entity) {
       subentity = G_EntityCreate();
       subrender = G_EntityComponentInsert(&subentity, RENDER_COMPONENT);
       subelement = G_EntityComponentInsert(&subentity, ELEMENT_COMPONENT);
+
+      subelement->group = (G_ElementGroup**)malloc(sizeof(G_ElementGroup*));
+      subelement->group = element->group;
 
       memcpy((void*)subrender, (void*)render, sizeof(G_RenderComponent));
       memcpy((void*)subelement, (void*)element, sizeof(G_ElementComponent));
@@ -395,7 +404,6 @@ void G_ElementDiffuse(G_Entity **entity) {
 }
 
 void G_ElementPropogate(G_Entity **entity) {
-  G_QTreeLeaf *leaf;
   G_Entity *e = *entity, *nearby;
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
@@ -417,8 +425,7 @@ void G_ElementPropogate(G_Entity **entity) {
         x = render->x+position.x;
         y = render->y+position.y;
 
-        leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
-        nearby = (leaf) ? leaf->entities[render->layer] : NULL;
+        nearby = G_QTreeEntityFind(&(active_scene->collision), render->layer, x, y);
 
         if (nearby) {
           /* nearby elements */
@@ -464,7 +471,6 @@ void G_ElementPropogate(G_Entity **entity) {
 
 void G_ElementExplode(G_Entity **entity) {
   unsigned int i, x, y;
-  G_QTreeLeaf *leaf;
   G_Entity *nearby;
   G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
   G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT);
@@ -483,8 +489,7 @@ void G_ElementExplode(G_Entity **entity) {
       x = render->x+position.x;
       y = render->y+position.y;
 
-      leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
-      nearby = (leaf) ? leaf->entities[render->layer] : NULL;
+      nearby = G_QTreeEntityFind(&(active_scene->collision), render->layer, x, y);
 
       if (G_SceneTileObstructs(&active_scene, x, y) ||
                 (G_SceneTileObstructs(&active_scene, render->x, y) &&
@@ -562,7 +567,6 @@ void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
   G_Entity *nearby;
   G_Tree *tree = G_TreeCreate();
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
-  G_QTreeLeaf *leaf;
   G_Position origin, current, *position = (G_Position*)malloc(sizeof(G_Position));
 
   j = intensity*intensity*3.14;
@@ -580,8 +584,7 @@ void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
       x = current.x+position->x;
       y = current.y+position->y;
 
-      leaf = G_QTreeNodeFind(&(active_scene->collision), x, y);
-      nearby = (leaf) ? leaf->entities[PROPOGATE_LAYER] : NULL;
+      nearby = G_QTreeEntityFind(&(active_scene->collision), EXPLODE_LAYER, x, y);
 
       if ((!nearby) && (!G_SceneTileObstructs(&active_scene, x, y))) {
         G_Entity *entity = G_EntityCreate();
