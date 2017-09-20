@@ -15,6 +15,9 @@ TARGET = TFOY
 
 all: osx
 
+run: all
+	./$(TARGET)
+
 osx: $(OBJECTS)
 	$(CC) $(OBJECTS) -Wall $(OSX) -o $(TARGET)
 

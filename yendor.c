@@ -320,8 +320,8 @@ int G_PollEvents(void* data) {
 
               //G_SceneSetGTile(&active_scene, tile, x, y);
               //G_ElementPropogateCreate(x, y, 200, 32, 1, BASIC_FIRE, IS_BURNING, FLAMMABLE, AL, &G_BurnTile);
-              //G_ElementDiffuseCreate(x, y, G_RandomNumber(2048, 8192), 32, WATER, PROPOGATE_LAYER, IS_EXTINGUISHING, AL, NULL);
-              G_ElementExplodeCreate(x, y, G_RandomNumber(8, 128), 4, BASIC_FIRE, 0, AL, &G_BurnTile);
+              G_ElementDiffuseCreate(x, y, G_RandomNumber(1024, 4096), 32, SOLID_MAGENTA, DIFFUSE_LAYER, IS_EXTINGUISHING, AL, NULL);
+              //G_ElementExplodeCreate(x, y, G_RandomNumber(8, 16), 4, BASIC_FIRE, 0, AL, &G_BurnTile);
 
             } else {
               int x = (game_info.mouse_x-game_info.display_x)/game_info.tile_w,
@@ -339,12 +339,10 @@ int G_PollEvents(void* data) {
               printf("+ blue      %i  \n", lightmap[x][y].r);
               printf("+ red       %i  \n", lightmap[x][y].r);
 
-              if (G_QTreeEntityFind(&(active_scene->collision), CREATURE_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET)) {
-                printf("Creature here.\n");
-              }
-
-              if (G_QTreeEntityFind(&(active_scene->collision), ORNAMENT_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET)) {
-                printf("Ornament here.\n");
+              G_Entity *e = G_QTreeEntityFind(&(active_scene->collision), PROPOGATE_LAYER, x+active_scene->view.x-DCOLS_OFFSET, y+active_scene->view.y-DROWS_OFFSET);
+              if (e) {
+                G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
+                printf("%p.\n", (void*)(*(element->group)));
               }
             }
 					} else if (game_info.event.button.button == SDL_BUTTON_RIGHT) {
@@ -470,6 +468,9 @@ int G_CopyBuffer(void *data) {
       for (z = 0; z < BASE_LAYER; z += 1) {
         tilemap[x][y].layers[z] = NOTHING;
       }
+
+      tilemap[x][y].layers[DIFFUSE_LAYER] = NOTHING;
+      tilemap[x][y].layers[EXPLODE_LAYER] = NOTHING;
 
       tilemap[x][y].fchange = 0;
       tilemap[x][y].fg = &bad_color;

@@ -93,7 +93,7 @@ void G_RenderSalvage(void) {
 void G_RenderChanges(void) {
   int x, y, r, g, b;
   SDL_Rect src, dst;
-  Tile tile;
+  Tile tile, diffuse;
   G_Color fg, bg;
 
 	dst.w = game_info.tile_w;
@@ -104,6 +104,7 @@ void G_RenderChanges(void) {
   for (y = 0; y < ROWS; y += 1) {
     for (x = 0; x < COLS; x += 1) {
       if (console.changed[x][y]) {
+        diffuse = console.tilemap[x][y].layers[DIFFUSE_LAYER];
         tile = G_GetTile(console.tilemap[x][y].layers);
 				dst.x = game_info.display_x+(x*game_info.tile_w);
 				dst.y = game_info.display_y+(y*game_info.tile_h);
@@ -143,14 +144,15 @@ void G_RenderChanges(void) {
             bg = *(console.tilemap[x][y].bg);
           }
 
-          G_EvaluateColor(bg, &r, &g, &b, G_TileFlags(tile) & FLICKERS);
+          G_EvaluateColor(bg, diffuse, &r, &g, &b, G_TileFlags(tile) & FLICKERS);
 
 					SDL_SetRenderDrawColor(game_info.renderer, r, g, b, 255);
 					SDL_RenderFillRect(game_info.renderer, &dst);	
 
           if (&fg != &bg) {
 						src = G_TileSource(tile);
-						G_EvaluateColor(fg, &r, &g, &b, G_TileFlags(tile) & FLICKERS);
+						G_EvaluateColor(fg, diffuse, &r, &g, &b, G_TileFlags(tile) & FLICKERS);
+
 						SDL_SetTextureColorMod(game_info.textures[0], r, g, b);
 						SDL_RenderCopy(game_info.renderer, game_info.textures[0], &src, &dst);
 						SDL_SetTextureColorMod(game_info.textures[0], 255, 255, 255);
@@ -258,7 +260,7 @@ void G_UpdateRenderingInfo(void) {
 	}
 }
 
-void G_EvaluateColor(G_Color color, int *r, int *g, int *b, boolean flicker) {
+void G_EvaluateColor(G_Color color, Tile diffuse, int *r, int *g, int *b, boolean flicker) {
   *r = color.r;
   *g = color.g;
   *b = color.b;
@@ -278,4 +280,14 @@ void G_EvaluateColor(G_Color color, int *r, int *g, int *b, boolean flicker) {
   *r = (*r > 255) ? (255) : ((*r < 0) ? (0) : (*r));
   *g = (*g > 255) ? (255) : ((*g < 0) ? (0) : (*g));
   *b = (*b > 255) ? (255) : ((*b < 0) ? (0) : (*b));
+
+  if (diffuse != NOTHING) {
+    *r += tile_info[diffuse-NOTHING].bg->r;
+    *g += tile_info[diffuse-NOTHING].bg->g;
+    *b += tile_info[diffuse-NOTHING].bg->b;
+
+    *r /= 2;
+    *g /= 2;
+    *b /= 2;
+  }
 }

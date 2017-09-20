@@ -377,7 +377,7 @@ typedef struct G_RenderComponent {
 
 typedef struct G_ElementComponent {
   int amount, intensity, dissipation;
-  G_ElementGroup *group;
+  G_ElementGroup **group;
   TileFlag tile_flags, target_flag;
   ElementFlag element_flags;
   DirectionFlags directions;
@@ -485,7 +485,7 @@ void G_RenderSalvage(void);
 void G_RenderChanges(void);
 void G_RenderLightmap(void);
 void G_UpdateRenderingInfo(void);
-void G_EvaluateColor(G_Color color, int *r, int *g, int *b, boolean flicker);
+void G_EvaluateColor(G_Color color, Tile diffuse, int *r, int *g, int *b, boolean flicker);
 
 /* filehandler.c */
 int G_LoadChunks(void *data);

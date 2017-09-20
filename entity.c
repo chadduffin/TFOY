@@ -297,7 +297,9 @@ void G_ElementComponentUpdate(G_Entity **entity) {
 
             G_SceneEntityDelete(&active_scene, entity);
           } else {
-            if (element->group->amount/element->group->node_count >= element->group->saturation) {
+            G_ElementGroup *group = (*(element->group));
+
+            if (group->amount/group->node_count >= group->saturation) {
               G_ElementDiffuse(entity);
             }
           }
@@ -318,11 +320,15 @@ void G_ElementComponentUpdate(G_Entity **entity) {
         break;
       case SPREADS_EXPLODE:
         {
-          if (element->intensity) {
-            G_ElementExplode(entity);
-          }
+          element->amount += element->intensity;
+          element->intensity += element->dissipation;
+          element->dissipation *= 2;
 
-          G_SceneEntityDelete(&active_scene, entity);
+          if ((element->intensity > 0) || (element->amount > 0)) {
+            G_ElementExplode(entity);
+          } else {
+            G_SceneEntityDelete(&active_scene, entity);
+          }
         }
         break;
       default:
@@ -334,9 +340,9 @@ void G_ElementComponentUpdate(G_Entity **entity) {
 void G_ElementDiffuse(G_Entity **entity) {
   unsigned int i, x, y;
   G_QTreeLeaf *leaf;
-  G_Entity *e = *entity, *nearby, *subentity;
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT), *subrender;
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT), *subelement;
+  G_Entity *nearby, *subentity;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT), *subrender;
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT), *subelement;
   G_Position position;
 
   for (i = EE; i <= SE; i *= 2) {
@@ -375,9 +381,13 @@ void G_ElementDiffuse(G_Entity **entity) {
         subelement->directions = CA;
       }
 
-      element->group->node_count += 1;
+      (*(element->group))->node_count += 1;
 
       G_SceneEntityInsert(&active_scene, &subentity);
+      
+      subentity = NULL;
+      subrender = NULL;
+      subelement = NULL;
     }
   }
 
@@ -455,12 +465,16 @@ void G_ElementPropogate(G_Entity **entity) {
 void G_ElementExplode(G_Entity **entity) {
   unsigned int i, x, y;
   G_QTreeLeaf *leaf;
-  G_Entity *e = *entity, *nearby;
-  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(&e, RENDER_COMPONENT);
-  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(&e, ELEMENT_COMPONENT);
+  G_Entity *nearby;
+  G_RenderComponent *render = (G_RenderComponent*)G_EntityComponentFind(entity, RENDER_COMPONENT);
+  G_ElementComponent *element = (G_ElementComponent*)G_EntityComponentFind(entity, ELEMENT_COMPONENT);
   G_Position position;
 
-  element->intensity -= element->dissipation;
+  if (element->amount > 0) {
+    render->tile = BASIC_FIRE;
+  } else {
+    render->tile = NOTHING;
+  }
 
   for (i = EE; i <= SE; i *= 2) {
     if (element->directions & i) {
@@ -500,16 +514,18 @@ void G_ElementDiffuseCreate(int x, int y, int amount, int saturation,
   element->amount = amount;
   element->intensity = 0;
   element->dissipation = 0;
-  element->group = (G_ElementGroup*)malloc(sizeof(G_ElementGroup));
+  element->group = (G_ElementGroup**)malloc(sizeof(G_ElementGroup*));
+  (*(element->group)) = (G_ElementGroup*)malloc(sizeof(G_ElementGroup));
   element->tile_flags = tile_flags;
   element->target_flag = 0;
   element->element_flags = SPREADS_DIFFUSE;
   element->directions = AL;
   element->func = func;
 
-  element->group->amount = amount;
-  element->group->node_count = 1;
-  element->group->saturation = saturation;
+  (*(element->group))->amount = amount;
+  (*(element->group))->node_count = 1;
+  (*(element->group))->saturation = saturation;
+  (*(element->group))->id.value = entity->id.value;
 
   G_SceneEntityInsert(&active_scene, &entity);
 }
@@ -542,19 +558,21 @@ void G_ElementPropogateCreate(int x, int y, int amount, int intensity, int dissi
 void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
                             Tile tile, TileFlag tile_flags, DirectionFlags direction,
                             void (*func)(int, int, unsigned int)) {
-  int i, dist;
+  int i, j, dist;
   G_Entity *nearby;
   G_Tree *tree = G_TreeCreate();
   G_TreeNode *node = (G_TreeNode*)malloc(sizeof(G_TreeNode));
   G_QTreeLeaf *leaf;
   G_Position origin, current, *position = (G_Position*)malloc(sizeof(G_Position));
 
+  j = intensity*intensity*3.14;
+
   position->x = origin.x = x;
   position->y = origin.y = y;
 
   G_TreeNodeInsertCreate(&tree, 0, (void*)position);
 
-  while (((node = G_TreeNodeMinimum(&tree)) != tree->nil) && (intensity > 0)) {
+  while (((node = G_TreeNodeMinimum(&tree)) != tree->nil) && (j > 0)) {
     for (i = EE; i <= SE; i *= 2) {
       position = (G_Position*)(node->data);
       current = G_GetDirectionComponents(i);
@@ -574,12 +592,12 @@ void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
 
         render->x = x;
         render->y = y;
-        render->tile = tile;
+        render->tile = NOTHING;
         render->layer = PROPOGATE_LAYER;
 
-        element->amount = 0;
-        element->intensity = 0;
-        element->dissipation = 0;
+        element->amount = 8-dist/2;
+        element->intensity = dist/5;
+        element->dissipation = -2;
         element->group = NULL;
         element->tile_flags = tile_flags;
         element->target_flag = 0;
@@ -595,7 +613,7 @@ void G_ElementExplodeCreate(int x, int y, int intensity, int dissipation,
 
         G_TreeNodeInsertCreate(&tree, dist, (void*)position);
 
-        intensity -= 1;
+        j -= 1;
       }
     }
 
